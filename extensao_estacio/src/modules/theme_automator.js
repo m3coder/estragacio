@@ -1,11 +1,10 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Detecção Visual do DOM e Retorno via Botão Voltar)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Retorno Fixo para /disciplinas/{id_materia}/conteudos)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
 import { waitForCards, getThemeCardsFromDom } from './dom_parser.js';
 
 let isStateMachineRunning = false;
-let autoLoopTimer = null;
 
 export function isInsideThemeUrl(url) {
   if (!url) return false;
@@ -16,11 +15,11 @@ export function isCurrentlyInsideTheme() {
   const url = window.location.href;
   if (isInsideThemeUrl(url)) return true;
 
-  // Detecção visual infalível no DOM (botão Voltar + cabeçalho do tema)
+  // Detecção visual no DOM (botão Voltar / Concluir + cabeçalho do tema)
   const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
   const hasVoltar = buttons.some(el => {
     const t = (el.innerText || el.getAttribute('aria-label') || '').trim().toLowerCase();
-    return (t === 'voltar' || t === '← voltar' || t === '←' || t.startsWith('voltar')) && !el.closest('#estacio-suite-box');
+    return (t === 'voltar' || t === '← voltar' || t === '←') && !el.closest('#estacio-suite-box');
   });
 
   const hasConcluirBtn = Array.from(document.querySelectorAll('button, [role="button"]')).some(el => {
@@ -136,21 +135,6 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
   return success;
 }
 
-export function clickNativeVoltarButton() {
-  const candidates = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
-  const voltarBtn = candidates.find(el => {
-    const t = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').trim().toLowerCase();
-    return (t === 'voltar' || t === '← voltar' || t === '←' || t.startsWith('voltar')) && !el.closest('#estacio-suite-box');
-  });
-
-  if (voltarBtn) {
-    const clickTarget = voltarBtn.closest('button, a') || voltarBtn;
-    triggerNativeClick(clickTarget);
-    return true;
-  }
-  return false;
-}
-
 export async function tryClickInPageConcludeButton() {
   const buttons = Array.from(document.querySelectorAll('button, a'));
   const concludeBtn = buttons.find(b => {
@@ -180,7 +164,7 @@ export async function processAutomatorStateMachine(onLog) {
   const insideTheme = isCurrentlyInsideTheme();
 
   // =========================================================================
-  // CENÁRIO 1: O TEMA ESTÁ ABERTO NA TELA (Dentro do Visualizador de Conteúdo)
+  // CENÁRIO 1: O TEMA ESTÁ ABERTO NA TELA (Dentro do Conteúdo)
   // =========================================================================
   if (insideTheme) {
     isStateMachineRunning = true;
@@ -188,8 +172,9 @@ export async function processAutomatorStateMachine(onLog) {
       const url = window.location.href;
       const ids = parseIdsFromUrl(url);
       const turmaId = ids.turmaId || queue.turmaId;
-      
-      // Identifica número do tema a partir do DOM ou da URL
+      const targetMateriaUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
+
+      // Identifica número do tema
       let temaId = ids.temaId;
       const headerText = document.body.innerText;
       const headerMatch = headerText.match(/Tema\s*(\d+)/i);
@@ -218,7 +203,7 @@ export async function processAutomatorStateMachine(onLog) {
           const uuid = uuidList[idx];
           await postConcluir(turmaId, temaId, uuid, token, matricula);
           if (onLog) onLog(`  └─ [Sub-Item ${idx + 1}/${uuidList.length}] Concluído com sucesso! ✅`, 'success');
-          await new Promise(r => setTimeout(r, 400));
+          await new Promise(r => setTimeout(r, 350));
         }
       } else if (ids.conteudoUuid) {
         await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
@@ -227,29 +212,17 @@ export async function processAutomatorStateMachine(onLog) {
       // Tenta clicar no botão nativo "Marcar como concluído"
       await tryClickInPageConcludeButton();
 
-      const delayMs = Math.floor(Math.random() * (3500 - 2000 + 1)) + 2000;
+      const delayMs = Math.floor(Math.random() * (3000 - 1800 + 1)) + 1800;
       const delaySec = (delayMs / 1000).toFixed(1);
-      if (onLog) onLog(`Aguardando ${delaySec}s e clicando em [← Voltar]...`, 'info');
+      if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da matéria...`, 'info');
       await new Promise(r => setTimeout(r, delayMs));
 
       queue.currentPos += 1;
       sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
-      // DISPARA O CLIQUE REAL NO BOTÃO "← VOLTAR" NA TELA
-      const clicked = clickNativeVoltarButton();
-      if (clicked) {
-        if (onLog) onLog('Botão [← Voltar] clicado com sucesso! ↩️', 'info');
-      } else {
-        if (onLog) onLog('Retornando pelo histórico do navegador...', 'info');
-        window.history.back();
-      }
-
-      // Fallback seguro se não sair da tela em 2.5s
-      setTimeout(() => {
-        if (isCurrentlyInsideTheme()) {
-          window.location.href = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
-        }
-      }, 2500);
+      // RETORNO DETERMINÍSTICO DIRETO PARA /disciplinas/{turmaId}/conteudos (NUNCA VAI PARA HOME)
+      if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos ↩️`, 'info');
+      window.location.href = targetMateriaUrl;
 
     } finally {
       isStateMachineRunning = false;
@@ -258,7 +231,7 @@ export async function processAutomatorStateMachine(onLog) {
   }
 
   // =========================================================================
-  // CENÁRIO 2: ESTAMOS NA GRADE DE TEMAS / MATÉRIA
+  // CENÁRIO 2: ESTAMOS NA GRADE DE TEMAS DA MATÉRIA (/disciplinas/.../conteudos)
   // =========================================================================
   const gridCards = getThemeCardsFromDom();
   if (gridCards.length > 0) {
@@ -272,7 +245,7 @@ export async function processAutomatorStateMachine(onLog) {
         return;
       }
 
-      if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na grade.`, 'info');
+      if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na matéria.`, 'info');
 
       queue.pendingThemes = pendentes.map(c => c.temaNum);
       queue.currentPos = 0;
@@ -306,13 +279,14 @@ export function startThemeCompletion(onLog) {
     return;
   }
 
-  if (onLog) onLog('Iniciando automação dos temas...', 'info');
+  if (onLog) onLog('Iniciando automação dos temas da matéria...', 'info');
 
-  // Se já estiver dentro de um tema, conclui o tema atual primeiro
+  // Se já estiver dentro de um tema, conclui o tema atual primeiro e volta para a matéria
   if (isCurrentlyInsideTheme()) {
     const queue = {
       active: true,
       turmaId: turmaId,
+      conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: [1],
       currentPos: 0
     };
@@ -321,7 +295,7 @@ export function startThemeCompletion(onLog) {
     return;
   }
 
-  // Se estiver na grade, lê os cards e inicia o primeiro
+  // Se estiver na grade da matéria, lê os cards e inicia o primeiro
   waitForCards(8000).then((cards) => {
     const pendentes = cards.filter(t => !t.isConcluido);
     if (onLog) onLog(`Catalogados ${pendentes.length} tema(s) pendente(s).`, 'info');
@@ -336,6 +310,7 @@ export function startThemeCompletion(onLog) {
     const queue = {
       active: true,
       turmaId: turmaId,
+      conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: pendingNumbers,
       currentPos: 0
     };

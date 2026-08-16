@@ -704,7 +704,7 @@ Responda ESTRITAMENTE em formato JSON:
     const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
     const hasVoltar = buttons.some((el) => {
       const t = (el.innerText || el.getAttribute("aria-label") || "").trim().toLowerCase();
-      return (t === "voltar" || t === "\u2190 voltar" || t === "\u2190" || t.startsWith("voltar")) && !el.closest("#estacio-suite-box");
+      return (t === "voltar" || t === "\u2190 voltar" || t === "\u2190") && !el.closest("#estacio-suite-box");
     });
     const hasConcluirBtn = Array.from(document.querySelectorAll('button, [role="button"]')).some((el) => {
       const t = (el.innerText || "").toLowerCase();
@@ -803,19 +803,6 @@ Responda ESTRITAMENTE em formato JSON:
     }
     return success;
   }
-  function clickNativeVoltarButton() {
-    const candidates = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
-    const voltarBtn = candidates.find((el) => {
-      const t = (el.innerText || el.getAttribute("aria-label") || el.getAttribute("title") || "").trim().toLowerCase();
-      return (t === "voltar" || t === "\u2190 voltar" || t === "\u2190" || t.startsWith("voltar")) && !el.closest("#estacio-suite-box");
-    });
-    if (voltarBtn) {
-      const clickTarget = voltarBtn.closest("button, a") || voltarBtn;
-      triggerNativeClick(clickTarget);
-      return true;
-    }
-    return false;
-  }
   async function tryClickInPageConcludeButton() {
     const buttons = Array.from(document.querySelectorAll("button, a"));
     const concludeBtn = buttons.find((b) => {
@@ -849,6 +836,7 @@ Responda ESTRITAMENTE em formato JSON:
         const url = window.location.href;
         const ids = parseIdsFromUrl(url);
         const turmaId = ids.turmaId || queue.turmaId;
+        const targetMateriaUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
         let temaId = ids.temaId;
         const headerText = document.body.innerText;
         const headerMatch = headerText.match(/Tema\s*(\d+)/i);
@@ -869,30 +857,20 @@ Responda ESTRITAMENTE em formato JSON:
             const uuid = uuidList[idx];
             await postConcluir(turmaId, temaId, uuid, token, matricula);
             if (onLog) onLog(`  \u2514\u2500 [Sub-Item ${idx + 1}/${uuidList.length}] Conclu\xEDdo com sucesso! \u2705`, "success");
-            await new Promise((r) => setTimeout(r, 400));
+            await new Promise((r) => setTimeout(r, 350));
           }
         } else if (ids.conteudoUuid) {
           await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
         }
         await tryClickInPageConcludeButton();
-        const delayMs = Math.floor(Math.random() * (3500 - 2e3 + 1)) + 2e3;
+        const delayMs = Math.floor(Math.random() * (3e3 - 1800 + 1)) + 1800;
         const delaySec = (delayMs / 1e3).toFixed(1);
-        if (onLog) onLog(`Aguardando ${delaySec}s e clicando em [\u2190 Voltar]...`, "info");
+        if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da mat\xE9ria...`, "info");
         await new Promise((r) => setTimeout(r, delayMs));
         queue.currentPos += 1;
         sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
-        const clicked = clickNativeVoltarButton();
-        if (clicked) {
-          if (onLog) onLog("Bot\xE3o [\u2190 Voltar] clicado com sucesso! \u21A9\uFE0F", "info");
-        } else {
-          if (onLog) onLog("Retornando pelo hist\xF3rico do navegador...", "info");
-          window.history.back();
-        }
-        setTimeout(() => {
-          if (isCurrentlyInsideTheme()) {
-            window.location.href = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
-          }
-        }, 2500);
+        if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos \u21A9\uFE0F`, "info");
+        window.location.href = targetMateriaUrl;
       } finally {
         isStateMachineRunning = false;
       }
@@ -908,7 +886,7 @@ Responda ESTRITAMENTE em formato JSON:
           if (onLog) onLog("\u{1F3C6} Todos os temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!", "success");
           return;
         }
-        if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na grade.`, "info");
+        if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na mat\xE9ria.`, "info");
         queue.pendingThemes = pendentes.map((c) => c.temaNum);
         queue.currentPos = 0;
         sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
@@ -934,11 +912,12 @@ Responda ESTRITAMENTE em formato JSON:
       if (onLog) onLog("Token n\xE3o capturado. Abra qualquer tema manualmente primeiro para salvar a sess\xE3o.", "error");
       return;
     }
-    if (onLog) onLog("Iniciando automa\xE7\xE3o dos temas...", "info");
+    if (onLog) onLog("Iniciando automa\xE7\xE3o dos temas da mat\xE9ria...", "info");
     if (isCurrentlyInsideTheme()) {
       const queue = {
         active: true,
         turmaId,
+        conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: [1],
         currentPos: 0
       };
@@ -958,6 +937,7 @@ Responda ESTRITAMENTE em formato JSON:
       const queue = {
         active: true,
         turmaId,
+        conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: pendingNumbers,
         currentPos: 0
       };
