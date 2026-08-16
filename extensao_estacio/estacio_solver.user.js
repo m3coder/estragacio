@@ -24,17 +24,62 @@
 (() => {
   // src/ui/widget.css
   if (typeof GM_addStyle !== "undefined") {
-    GM_addStyle('/* Estilo Premium do Widget Flutuante Est\xE1cio Suite AI v2.5.5 */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  --widget-idle-opacity: 0.45;\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 410px;\n  max-width: calc(100vw - 32px);\n  background: rgba(15, 23, 42, 0.96);\n  backdrop-filter: blur(20px);\n  -webkit-backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: 16px;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  opacity: var(--widget-idle-opacity, 0.45);\n  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box:hover,\n#estacio-suite-box:focus-within,\n#estacio-suite-box.is-dragging,\n#estacio-solver-widget:hover,\n#estacio-solver-widget:focus-within {\n  opacity: 1 !important;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 54px !important;\n  height: 54px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.55);\n  border: 2px solid rgba(255, 255, 255, 0.35);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 54px;\n  height: 54px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */\n.cat-dancing-avatar {\n  width: 26px;\n  height: 26px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.8s infinite ease-in-out;\n  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);\n  flex-shrink: 0;\n  display: inline-block;\n}\n\n.cat-bubble-avatar {\n  width: 46px;\n  height: 46px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite ease-in-out;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }\n  50% { transform: translateY(0) rotate(8deg) scale(1.02); }\n  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }\n  100% { transform: translateY(0) rotate(-8deg) scale(1); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-14deg) scale(1); }\n  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }\n  50% { transform: translateY(0) rotate(14deg) scale(1.05); }\n  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }\n  100% { transform: translateY(0) rotate(-14deg) scale(1); }\n}\n\n/* Header */\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.7);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  color: #f8fafc;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.title-gradient-text {\n  background: linear-gradient(135deg, #38bdf8, #a855f7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  font-weight: 800;\n  letter-spacing: -0.2px;\n}\n\n.version-badge {\n  font-size: 10px;\n  font-weight: 600;\n  color: #94a3b8;\n  background: rgba(255, 255, 255, 0.08);\n  padding: 1px 5px;\n  border-radius: 4px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 4px 6px;\n  line-height: 1;\n  border-radius: 6px;\n  transition: all 0.15s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.12);\n  transform: translateY(-1px);\n}\n\n/* Body */\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n/* Section Cards */\n.ui-card {\n  background: rgba(15, 23, 42, 0.65);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 7px;\n}\n\n.ui-card-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font-size: 11px;\n  font-weight: 700;\n  color: #cbd5e1;\n}\n\n.ui-form-row {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.ui-form-label {\n  font-size: 11px;\n  font-weight: 600;\n  color: #94a3b8;\n  white-space: nowrap;\n  min-width: 65px;\n}\n\n.ui-select {\n  background: #1e293b;\n  color: #f1f5f9;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 5px 8px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  min-width: 0;\n  transition: border-color 0.15s;\n}\n\n.ui-select:focus,\n.ui-select:hover {\n  border-color: #38bdf8;\n}\n\n.ui-input {\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  color: #fff;\n  padding: 5px 8px;\n  font-size: 11px;\n  font-family: monospace;\n  flex: 1;\n  min-width: 0;\n  outline: none;\n  transition: border-color 0.15s;\n}\n\n.ui-input:focus {\n  border-color: #38bdf8;\n  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);\n}\n\n/* Micro Action Buttons */\n.pill-btn {\n  border: none;\n  border-radius: 20px;\n  font-size: 10.5px;\n  font-weight: 700;\n  padding: 3px 10px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.pill-btn:hover {\n  transform: translateY(-1px);\n}\n\n.pill-btn-free {\n  background: #065f46;\n  color: #a7f3d0;\n  border: 1px solid #059669;\n}\n.pill-btn-free:hover {\n  background: #047857;\n  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);\n}\n\n.pill-btn-paid {\n  background: #701a75;\n  color: #f5d0fe;\n  border: 1px solid #a21caf;\n}\n.pill-btn-paid:hover {\n  background: #86198f;\n  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);\n}\n\n.btn-secondary-action {\n  background: rgba(255, 255, 255, 0.08);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #38bdf8;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 4px 8px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.btn-secondary-action:hover:not(:disabled) {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  transform: translateY(-1px);\n}\n\n.btn-secondary-action:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Primary Action Buttons */\n.box-btn,\n.widget-btn {\n  padding: 11px 16px;\n  border-radius: 10px;\n  font-size: 13px;\n  font-weight: 700;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.96;\n  transform: translateY(-1.5px);\n  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n  transform: none;\n}\n\n/* Gabarito Inteligente */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.85);\n  border: 1px solid rgba(56, 189, 248, 0.25);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-header-actions {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.btn-gabarito-apply {\n  background: linear-gradient(135deg, #0284c7, #0369a1);\n  color: #fff;\n  border: 1px solid #38bdf8;\n  border-radius: 5px;\n  font-size: 10px;\n  font-weight: 700;\n  padding: 3px 8px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n}\n\n.btn-gabarito-apply:hover:not(:disabled) {\n  background: #0ea5e9;\n  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);\n  transform: translateY(-1px);\n}\n\n.gabarito-badges {\n  display: grid;\n  grid-template-columns: repeat(5, 1fr);\n  gap: 6px;\n  max-height: 120px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 6px;\n  padding: 6px 4px;\n  font-size: 11.5px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n  text-align: center;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.04);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.16);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.28);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.2);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.35);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.25);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 11px; font-weight: 600; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 800; font-size: 13px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 800; font-size: 12px; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.1);\n  border: 1px dashed rgba(168, 85, 247, 0.3);\n  padding: 6px 10px;\n  border-radius: 8px;\n  font-size: 11px;\n}\n\n/* Log Box & Scrollbar */\n.box-log,\n.widget-log {\n  max-height: 105px;\n  min-height: 65px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.55);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n  border-radius: 8px;\n  padding: 6px 9px;\n  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;\n  font-size: 10.5px;\n  line-height: 1.4;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.box-log::-webkit-scrollbar,\n.gabarito-badges::-webkit-scrollbar {\n  width: 5px;\n  height: 5px;\n}\n\n.box-log::-webkit-scrollbar-track,\n.gabarito-badges::-webkit-scrollbar-track {\n  background: rgba(0, 0, 0, 0.3);\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb,\n.gabarito-badges::-webkit-scrollbar-thumb {\n  background: #334155;\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb:hover,\n.gabarito-badges::-webkit-scrollbar-thumb:hover {\n  background: #475569;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n/* Footer */\n.box-footer,\n.widget-footer {\n  padding: 7px 14px;\n  background: rgba(15, 23, 42, 0.75);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  font-weight: 500;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n/* Opacity Slider Control */\n.opacity-control-bar {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 12px;\n  padding: 2px 7px;\n  user-select: none;\n}\n\n.opacity-slider {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 50px;\n  height: 4px;\n  border-radius: 2px;\n  background: #334155;\n  outline: none;\n  cursor: pointer;\n  vertical-align: middle;\n}\n\n.opacity-slider::-webkit-slider-thumb {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  box-shadow: 0 0 5px rgba(56, 189, 248, 0.8);\n  transition: transform 0.15s, background 0.15s;\n}\n\n.opacity-slider::-webkit-slider-thumb:hover {\n  transform: scale(1.3);\n  background: #60a5fa;\n}\n\n.opacity-slider::-moz-range-thumb {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  border: none;\n}\n\n.opacity-val-badge {\n  font-size: 9.5px;\n  font-weight: 700;\n  color: #94a3b8;\n  min-width: 24px;\n  text-align: right;\n  font-family: monospace;\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n');
+    GM_addStyle('/* Estilo Premium do Widget Flutuante Est\xE1cio Suite AI v2.5.5 */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  --widget-idle-opacity: 0.45;\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 410px;\n  max-width: calc(100vw - 32px);\n  background: rgba(15, 23, 42, 0.96);\n  backdrop-filter: blur(20px);\n  -webkit-backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: 16px;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  opacity: var(--widget-idle-opacity, 0.45);\n  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box:hover,\n#estacio-suite-box:focus-within,\n#estacio-suite-box.is-dragging,\n#estacio-solver-widget:hover,\n#estacio-solver-widget:focus-within {\n  opacity: 1 !important;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 58px !important;\n  height: 58px !important;\n  border-radius: 50% !important;\n  cursor: pointer !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: radial-gradient(circle, #1e293b, #0f172a);\n  padding: 0;\n  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);\n  border: 2px solid rgba(56, 189, 248, 0.7);\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n#estacio-suite-box.minimized:hover,\n#estacio-solver-widget.minimized:hover {\n  transform: scale(1.1);\n  border-color: #c084fc;\n  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n  transform: scale(0.95);\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 58px;\n  height: 58px;\n  border-radius: 50%;\n  background: radial-gradient(circle, #1e293b, #0f172a);\n  color: #fff;\n  border: 2px solid rgba(56, 189, 248, 0.7);\n  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n#estacio-suite-toggle-btn:hover {\n  transform: scale(1.1);\n  border-color: #c084fc;\n  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n  transform: scale(0.95);\n}\n\n/* Anime Dancing Cat Mascot Avatar (Enlarged, Interactive, Smooth Dancing Frame) */\n.cat-dancing-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 2px solid #60a5fa;\n  box-shadow: 0 0 14px rgba(96, 165, 250, 0.75), 0 2px 8px rgba(0, 0, 0, 0.4);\n  flex-shrink: 0;\n  display: inline-block;\n  vertical-align: middle;\n  cursor: pointer;\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n.cat-dancing-avatar:hover {\n  transform: scale(1.14);\n  border-color: #c084fc;\n  box-shadow: 0 0 20px rgba(192, 132, 252, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5);\n}\n\n.cat-dancing-avatar:active {\n  transform: scale(0.92);\n}\n\n.cat-bubble-avatar {\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  object-fit: cover;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n  vertical-align: middle;\n}\n\n.box-title-info {\n  display: flex;\n  flex-direction: column;\n  gap: 1px;\n}\n\n.box-subtitle-tip {\n  font-size: 9.5px;\n  color: #94a3b8;\n  font-weight: 500;\n  letter-spacing: 0.1px;\n}\n\n/* Header */\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.7);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  color: #f8fafc;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.title-gradient-text {\n  background: linear-gradient(135deg, #38bdf8, #a855f7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  font-weight: 800;\n  letter-spacing: -0.2px;\n}\n\n.version-badge {\n  font-size: 10px;\n  font-weight: 600;\n  color: #94a3b8;\n  background: rgba(255, 255, 255, 0.08);\n  padding: 1px 5px;\n  border-radius: 4px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 4px 6px;\n  line-height: 1;\n  border-radius: 6px;\n  transition: all 0.15s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.12);\n  transform: translateY(-1px);\n}\n\n/* Body */\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n/* Section Cards */\n.ui-card {\n  background: rgba(15, 23, 42, 0.65);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 7px;\n}\n\n.ui-card-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font-size: 11px;\n  font-weight: 700;\n  color: #cbd5e1;\n}\n\n.ui-form-row {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.ui-form-label {\n  font-size: 11px;\n  font-weight: 600;\n  color: #94a3b8;\n  white-space: nowrap;\n  min-width: 65px;\n}\n\n.ui-select {\n  background: #1e293b;\n  color: #f1f5f9;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 5px 8px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  min-width: 0;\n  transition: border-color 0.15s;\n}\n\n.ui-select:focus,\n.ui-select:hover {\n  border-color: #38bdf8;\n}\n\n.ui-input {\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  color: #fff;\n  padding: 5px 8px;\n  font-size: 11px;\n  font-family: monospace;\n  flex: 1;\n  min-width: 0;\n  outline: none;\n  transition: border-color 0.15s;\n}\n\n.ui-input:focus {\n  border-color: #38bdf8;\n  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);\n}\n\n/* Micro Action Buttons */\n.pill-btn {\n  border: none;\n  border-radius: 20px;\n  font-size: 10.5px;\n  font-weight: 700;\n  padding: 3px 10px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.pill-btn:hover {\n  transform: translateY(-1px);\n}\n\n.pill-btn-free {\n  background: #065f46;\n  color: #a7f3d0;\n  border: 1px solid #059669;\n}\n.pill-btn-free:hover {\n  background: #047857;\n  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);\n}\n\n.pill-btn-paid {\n  background: #701a75;\n  color: #f5d0fe;\n  border: 1px solid #a21caf;\n}\n.pill-btn-paid:hover {\n  background: #86198f;\n  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);\n}\n\n.btn-secondary-action {\n  background: rgba(255, 255, 255, 0.08);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #38bdf8;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 4px 8px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.btn-secondary-action:hover:not(:disabled) {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  transform: translateY(-1px);\n}\n\n.btn-secondary-action:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Primary Action Buttons */\n.box-btn,\n.widget-btn {\n  padding: 11px 16px;\n  border-radius: 10px;\n  font-size: 13px;\n  font-weight: 700;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.96;\n  transform: translateY(-1.5px);\n  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n  transform: none;\n}\n\n/* Gabarito Inteligente */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.85);\n  border: 1px solid rgba(56, 189, 248, 0.25);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-header-actions {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.btn-gabarito-apply {\n  background: linear-gradient(135deg, #0284c7, #0369a1);\n  color: #fff;\n  border: 1px solid #38bdf8;\n  border-radius: 5px;\n  font-size: 10px;\n  font-weight: 700;\n  padding: 3px 8px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n}\n\n.btn-gabarito-apply:hover:not(:disabled) {\n  background: #0ea5e9;\n  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);\n  transform: translateY(-1px);\n}\n\n.gabarito-badges {\n  display: grid;\n  grid-template-columns: repeat(5, 1fr);\n  gap: 6px;\n  max-height: 120px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 6px;\n  padding: 6px 4px;\n  font-size: 11.5px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n  text-align: center;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.04);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.16);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.28);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.2);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.35);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.25);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 11px; font-weight: 600; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 800; font-size: 13px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 800; font-size: 12px; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.1);\n  border: 1px dashed rgba(168, 85, 247, 0.3);\n  padding: 6px 10px;\n  border-radius: 8px;\n  font-size: 11px;\n}\n\n/* Log Box & Scrollbar */\n.box-log,\n.widget-log {\n  max-height: 105px;\n  min-height: 65px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.55);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n  border-radius: 8px;\n  padding: 6px 9px;\n  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;\n  font-size: 10.5px;\n  line-height: 1.4;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.box-log::-webkit-scrollbar,\n.gabarito-badges::-webkit-scrollbar {\n  width: 5px;\n  height: 5px;\n}\n\n.box-log::-webkit-scrollbar-track,\n.gabarito-badges::-webkit-scrollbar-track {\n  background: rgba(0, 0, 0, 0.3);\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb,\n.gabarito-badges::-webkit-scrollbar-thumb {\n  background: #334155;\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb:hover,\n.gabarito-badges::-webkit-scrollbar-thumb:hover {\n  background: #475569;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n/* Footer */\n.box-footer,\n.widget-footer {\n  padding: 7px 14px;\n  background: rgba(15, 23, 42, 0.75);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  font-weight: 500;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n/* Opacity Slider Control */\n.opacity-control-bar {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 12px;\n  padding: 2px 7px;\n  user-select: none;\n}\n\n.opacity-slider {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 50px;\n  height: 4px;\n  border-radius: 2px;\n  background: #334155;\n  outline: none;\n  cursor: pointer;\n  vertical-align: middle;\n}\n\n.opacity-slider::-webkit-slider-thumb {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  box-shadow: 0 0 5px rgba(56, 189, 248, 0.8);\n  transition: transform 0.15s, background 0.15s;\n}\n\n.opacity-slider::-webkit-slider-thumb:hover {\n  transform: scale(1.3);\n  background: #60a5fa;\n}\n\n.opacity-slider::-moz-range-thumb {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  border: none;\n}\n\n.opacity-val-badge {\n  font-size: 9.5px;\n  font-weight: 700;\n  color: #94a3b8;\n  min-width: 24px;\n  text-align: right;\n  font-family: monospace;\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n\n@keyframes pulseConcludeGlow {\n  0% {\n    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.6);\n    transform: scale(1);\n  }\n  50% {\n    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0), 0 0 25px rgba(56, 189, 248, 0.95);\n    transform: scale(1.03);\n  }\n  100% {\n    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 0 15px rgba(56, 189, 248, 0.6);\n    transform: scale(1);\n  }\n}\n\n.estacio-conclude-pulse {\n  outline: 3px solid #38bdf8 !important;\n  outline-offset: 3px !important;\n  animation: pulseConcludeGlow 1.4s infinite ease-in-out !important;\n  position: relative !important;\n  z-index: 99999 !important;\n}\n');
   } else if (typeof document !== "undefined") {
     const styleEl = document.createElement("style");
-    styleEl.textContent = '/* Estilo Premium do Widget Flutuante Est\xE1cio Suite AI v2.5.5 */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  --widget-idle-opacity: 0.45;\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 410px;\n  max-width: calc(100vw - 32px);\n  background: rgba(15, 23, 42, 0.96);\n  backdrop-filter: blur(20px);\n  -webkit-backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: 16px;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  opacity: var(--widget-idle-opacity, 0.45);\n  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box:hover,\n#estacio-suite-box:focus-within,\n#estacio-suite-box.is-dragging,\n#estacio-solver-widget:hover,\n#estacio-solver-widget:focus-within {\n  opacity: 1 !important;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 54px !important;\n  height: 54px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.55);\n  border: 2px solid rgba(255, 255, 255, 0.35);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 54px;\n  height: 54px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */\n.cat-dancing-avatar {\n  width: 26px;\n  height: 26px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.8s infinite ease-in-out;\n  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);\n  flex-shrink: 0;\n  display: inline-block;\n}\n\n.cat-bubble-avatar {\n  width: 46px;\n  height: 46px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite ease-in-out;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }\n  50% { transform: translateY(0) rotate(8deg) scale(1.02); }\n  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }\n  100% { transform: translateY(0) rotate(-8deg) scale(1); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-14deg) scale(1); }\n  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }\n  50% { transform: translateY(0) rotate(14deg) scale(1.05); }\n  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }\n  100% { transform: translateY(0) rotate(-14deg) scale(1); }\n}\n\n/* Header */\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.7);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  color: #f8fafc;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.title-gradient-text {\n  background: linear-gradient(135deg, #38bdf8, #a855f7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  font-weight: 800;\n  letter-spacing: -0.2px;\n}\n\n.version-badge {\n  font-size: 10px;\n  font-weight: 600;\n  color: #94a3b8;\n  background: rgba(255, 255, 255, 0.08);\n  padding: 1px 5px;\n  border-radius: 4px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 4px 6px;\n  line-height: 1;\n  border-radius: 6px;\n  transition: all 0.15s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.12);\n  transform: translateY(-1px);\n}\n\n/* Body */\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n/* Section Cards */\n.ui-card {\n  background: rgba(15, 23, 42, 0.65);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 7px;\n}\n\n.ui-card-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font-size: 11px;\n  font-weight: 700;\n  color: #cbd5e1;\n}\n\n.ui-form-row {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.ui-form-label {\n  font-size: 11px;\n  font-weight: 600;\n  color: #94a3b8;\n  white-space: nowrap;\n  min-width: 65px;\n}\n\n.ui-select {\n  background: #1e293b;\n  color: #f1f5f9;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 5px 8px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  min-width: 0;\n  transition: border-color 0.15s;\n}\n\n.ui-select:focus,\n.ui-select:hover {\n  border-color: #38bdf8;\n}\n\n.ui-input {\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  color: #fff;\n  padding: 5px 8px;\n  font-size: 11px;\n  font-family: monospace;\n  flex: 1;\n  min-width: 0;\n  outline: none;\n  transition: border-color 0.15s;\n}\n\n.ui-input:focus {\n  border-color: #38bdf8;\n  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);\n}\n\n/* Micro Action Buttons */\n.pill-btn {\n  border: none;\n  border-radius: 20px;\n  font-size: 10.5px;\n  font-weight: 700;\n  padding: 3px 10px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.pill-btn:hover {\n  transform: translateY(-1px);\n}\n\n.pill-btn-free {\n  background: #065f46;\n  color: #a7f3d0;\n  border: 1px solid #059669;\n}\n.pill-btn-free:hover {\n  background: #047857;\n  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);\n}\n\n.pill-btn-paid {\n  background: #701a75;\n  color: #f5d0fe;\n  border: 1px solid #a21caf;\n}\n.pill-btn-paid:hover {\n  background: #86198f;\n  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);\n}\n\n.btn-secondary-action {\n  background: rgba(255, 255, 255, 0.08);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #38bdf8;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 4px 8px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.btn-secondary-action:hover:not(:disabled) {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  transform: translateY(-1px);\n}\n\n.btn-secondary-action:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Primary Action Buttons */\n.box-btn,\n.widget-btn {\n  padding: 11px 16px;\n  border-radius: 10px;\n  font-size: 13px;\n  font-weight: 700;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.96;\n  transform: translateY(-1.5px);\n  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n  transform: none;\n}\n\n/* Gabarito Inteligente */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.85);\n  border: 1px solid rgba(56, 189, 248, 0.25);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-header-actions {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.btn-gabarito-apply {\n  background: linear-gradient(135deg, #0284c7, #0369a1);\n  color: #fff;\n  border: 1px solid #38bdf8;\n  border-radius: 5px;\n  font-size: 10px;\n  font-weight: 700;\n  padding: 3px 8px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n}\n\n.btn-gabarito-apply:hover:not(:disabled) {\n  background: #0ea5e9;\n  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);\n  transform: translateY(-1px);\n}\n\n.gabarito-badges {\n  display: grid;\n  grid-template-columns: repeat(5, 1fr);\n  gap: 6px;\n  max-height: 120px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 6px;\n  padding: 6px 4px;\n  font-size: 11.5px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n  text-align: center;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.04);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.16);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.28);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.2);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.35);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.25);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 11px; font-weight: 600; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 800; font-size: 13px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 800; font-size: 12px; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.1);\n  border: 1px dashed rgba(168, 85, 247, 0.3);\n  padding: 6px 10px;\n  border-radius: 8px;\n  font-size: 11px;\n}\n\n/* Log Box & Scrollbar */\n.box-log,\n.widget-log {\n  max-height: 105px;\n  min-height: 65px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.55);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n  border-radius: 8px;\n  padding: 6px 9px;\n  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;\n  font-size: 10.5px;\n  line-height: 1.4;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.box-log::-webkit-scrollbar,\n.gabarito-badges::-webkit-scrollbar {\n  width: 5px;\n  height: 5px;\n}\n\n.box-log::-webkit-scrollbar-track,\n.gabarito-badges::-webkit-scrollbar-track {\n  background: rgba(0, 0, 0, 0.3);\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb,\n.gabarito-badges::-webkit-scrollbar-thumb {\n  background: #334155;\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb:hover,\n.gabarito-badges::-webkit-scrollbar-thumb:hover {\n  background: #475569;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n/* Footer */\n.box-footer,\n.widget-footer {\n  padding: 7px 14px;\n  background: rgba(15, 23, 42, 0.75);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  font-weight: 500;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n/* Opacity Slider Control */\n.opacity-control-bar {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 12px;\n  padding: 2px 7px;\n  user-select: none;\n}\n\n.opacity-slider {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 50px;\n  height: 4px;\n  border-radius: 2px;\n  background: #334155;\n  outline: none;\n  cursor: pointer;\n  vertical-align: middle;\n}\n\n.opacity-slider::-webkit-slider-thumb {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  box-shadow: 0 0 5px rgba(56, 189, 248, 0.8);\n  transition: transform 0.15s, background 0.15s;\n}\n\n.opacity-slider::-webkit-slider-thumb:hover {\n  transform: scale(1.3);\n  background: #60a5fa;\n}\n\n.opacity-slider::-moz-range-thumb {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  border: none;\n}\n\n.opacity-val-badge {\n  font-size: 9.5px;\n  font-weight: 700;\n  color: #94a3b8;\n  min-width: 24px;\n  text-align: right;\n  font-family: monospace;\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n';
+    styleEl.textContent = '/* Estilo Premium do Widget Flutuante Est\xE1cio Suite AI v2.5.5 */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  --widget-idle-opacity: 0.45;\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 410px;\n  max-width: calc(100vw - 32px);\n  background: rgba(15, 23, 42, 0.96);\n  backdrop-filter: blur(20px);\n  -webkit-backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  border-radius: 16px;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);\n  color: #f8fafc;\n  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  opacity: var(--widget-idle-opacity, 0.45);\n  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box:hover,\n#estacio-suite-box:focus-within,\n#estacio-suite-box.is-dragging,\n#estacio-solver-widget:hover,\n#estacio-solver-widget:focus-within {\n  opacity: 1 !important;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 58px !important;\n  height: 58px !important;\n  border-radius: 50% !important;\n  cursor: pointer !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: radial-gradient(circle, #1e293b, #0f172a);\n  padding: 0;\n  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);\n  border: 2px solid rgba(56, 189, 248, 0.7);\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n#estacio-suite-box.minimized:hover,\n#estacio-solver-widget.minimized:hover {\n  transform: scale(1.1);\n  border-color: #c084fc;\n  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n  transform: scale(0.95);\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 58px;\n  height: 58px;\n  border-radius: 50%;\n  background: radial-gradient(circle, #1e293b, #0f172a);\n  color: #fff;\n  border: 2px solid rgba(56, 189, 248, 0.7);\n  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n#estacio-suite-toggle-btn:hover {\n  transform: scale(1.1);\n  border-color: #c084fc;\n  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n  transform: scale(0.95);\n}\n\n/* Anime Dancing Cat Mascot Avatar (Enlarged, Interactive, Smooth Dancing Frame) */\n.cat-dancing-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 2px solid #60a5fa;\n  box-shadow: 0 0 14px rgba(96, 165, 250, 0.75), 0 2px 8px rgba(0, 0, 0, 0.4);\n  flex-shrink: 0;\n  display: inline-block;\n  vertical-align: middle;\n  cursor: pointer;\n  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;\n}\n\n.cat-dancing-avatar:hover {\n  transform: scale(1.14);\n  border-color: #c084fc;\n  box-shadow: 0 0 20px rgba(192, 132, 252, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5);\n}\n\n.cat-dancing-avatar:active {\n  transform: scale(0.92);\n}\n\n.cat-bubble-avatar {\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  object-fit: cover;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n  vertical-align: middle;\n}\n\n.box-title-info {\n  display: flex;\n  flex-direction: column;\n  gap: 1px;\n}\n\n.box-subtitle-tip {\n  font-size: 9.5px;\n  color: #94a3b8;\n  font-weight: 500;\n  letter-spacing: 0.1px;\n}\n\n/* Header */\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.7);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  color: #f8fafc;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.title-gradient-text {\n  background: linear-gradient(135deg, #38bdf8, #a855f7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  font-weight: 800;\n  letter-spacing: -0.2px;\n}\n\n.version-badge {\n  font-size: 10px;\n  font-weight: 600;\n  color: #94a3b8;\n  background: rgba(255, 255, 255, 0.08);\n  padding: 1px 5px;\n  border-radius: 4px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 4px 6px;\n  line-height: 1;\n  border-radius: 6px;\n  transition: all 0.15s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.12);\n  transform: translateY(-1px);\n}\n\n/* Body */\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n/* Section Cards */\n.ui-card {\n  background: rgba(15, 23, 42, 0.65);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 7px;\n}\n\n.ui-card-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  font-size: 11px;\n  font-weight: 700;\n  color: #cbd5e1;\n}\n\n.ui-form-row {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.ui-form-label {\n  font-size: 11px;\n  font-weight: 600;\n  color: #94a3b8;\n  white-space: nowrap;\n  min-width: 65px;\n}\n\n.ui-select {\n  background: #1e293b;\n  color: #f1f5f9;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 5px 8px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  min-width: 0;\n  transition: border-color 0.15s;\n}\n\n.ui-select:focus,\n.ui-select:hover {\n  border-color: #38bdf8;\n}\n\n.ui-input {\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 6px;\n  color: #fff;\n  padding: 5px 8px;\n  font-size: 11px;\n  font-family: monospace;\n  flex: 1;\n  min-width: 0;\n  outline: none;\n  transition: border-color 0.15s;\n}\n\n.ui-input:focus {\n  border-color: #38bdf8;\n  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);\n}\n\n/* Micro Action Buttons */\n.pill-btn {\n  border: none;\n  border-radius: 20px;\n  font-size: 10.5px;\n  font-weight: 700;\n  padding: 3px 10px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.pill-btn:hover {\n  transform: translateY(-1px);\n}\n\n.pill-btn-free {\n  background: #065f46;\n  color: #a7f3d0;\n  border: 1px solid #059669;\n}\n.pill-btn-free:hover {\n  background: #047857;\n  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);\n}\n\n.pill-btn-paid {\n  background: #701a75;\n  color: #f5d0fe;\n  border: 1px solid #a21caf;\n}\n.pill-btn-paid:hover {\n  background: #86198f;\n  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);\n}\n\n.btn-secondary-action {\n  background: rgba(255, 255, 255, 0.08);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #38bdf8;\n  border-radius: 6px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 4px 8px;\n  cursor: pointer;\n  white-space: nowrap;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.btn-secondary-action:hover:not(:disabled) {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  transform: translateY(-1px);\n}\n\n.btn-secondary-action:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Primary Action Buttons */\n.box-btn,\n.widget-btn {\n  padding: 11px 16px;\n  border-radius: 10px;\n  font-size: 13px;\n  font-weight: 700;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  width: 100%;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);\n  color: #fff;\n  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.96;\n  transform: translateY(-1.5px);\n  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n  transform: none;\n}\n\n/* Gabarito Inteligente */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.85);\n  border: 1px solid rgba(56, 189, 248, 0.25);\n  border-radius: 10px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-header-actions {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.btn-gabarito-apply {\n  background: linear-gradient(135deg, #0284c7, #0369a1);\n  color: #fff;\n  border: 1px solid #38bdf8;\n  border-radius: 5px;\n  font-size: 10px;\n  font-weight: 700;\n  padding: 3px 8px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n}\n\n.btn-gabarito-apply:hover:not(:disabled) {\n  background: #0ea5e9;\n  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);\n  transform: translateY(-1px);\n}\n\n.gabarito-badges {\n  display: grid;\n  grid-template-columns: repeat(5, 1fr);\n  gap: 6px;\n  max-height: 120px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 6px;\n  padding: 6px 4px;\n  font-size: 11.5px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n  text-align: center;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.04);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.16);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.28);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.2);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.35);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.25);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.18);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 11px; font-weight: 600; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 800; font-size: 13px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 800; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 800; font-size: 12px; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.1);\n  border: 1px dashed rgba(168, 85, 247, 0.3);\n  padding: 6px 10px;\n  border-radius: 8px;\n  font-size: 11px;\n}\n\n/* Log Box & Scrollbar */\n.box-log,\n.widget-log {\n  max-height: 105px;\n  min-height: 65px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.55);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n  border-radius: 8px;\n  padding: 6px 9px;\n  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;\n  font-size: 10.5px;\n  line-height: 1.4;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.box-log::-webkit-scrollbar,\n.gabarito-badges::-webkit-scrollbar {\n  width: 5px;\n  height: 5px;\n}\n\n.box-log::-webkit-scrollbar-track,\n.gabarito-badges::-webkit-scrollbar-track {\n  background: rgba(0, 0, 0, 0.3);\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb,\n.gabarito-badges::-webkit-scrollbar-thumb {\n  background: #334155;\n  border-radius: 4px;\n}\n\n.box-log::-webkit-scrollbar-thumb:hover,\n.gabarito-badges::-webkit-scrollbar-thumb:hover {\n  background: #475569;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n/* Footer */\n.box-footer,\n.widget-footer {\n  padding: 7px 14px;\n  background: rgba(15, 23, 42, 0.75);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  font-weight: 500;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n/* Opacity Slider Control */\n.opacity-control-bar {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 12px;\n  padding: 2px 7px;\n  user-select: none;\n}\n\n.opacity-slider {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 50px;\n  height: 4px;\n  border-radius: 2px;\n  background: #334155;\n  outline: none;\n  cursor: pointer;\n  vertical-align: middle;\n}\n\n.opacity-slider::-webkit-slider-thumb {\n  -webkit-appearance: none;\n  appearance: none;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  box-shadow: 0 0 5px rgba(56, 189, 248, 0.8);\n  transition: transform 0.15s, background 0.15s;\n}\n\n.opacity-slider::-webkit-slider-thumb:hover {\n  transform: scale(1.3);\n  background: #60a5fa;\n}\n\n.opacity-slider::-moz-range-thumb {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: #38bdf8;\n  cursor: pointer;\n  border: none;\n}\n\n.opacity-val-badge {\n  font-size: 9.5px;\n  font-weight: 700;\n  color: #94a3b8;\n  min-width: 24px;\n  text-align: right;\n  font-family: monospace;\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n\n@keyframes pulseConcludeGlow {\n  0% {\n    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.6);\n    transform: scale(1);\n  }\n  50% {\n    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0), 0 0 25px rgba(56, 189, 248, 0.95);\n    transform: scale(1.03);\n  }\n  100% {\n    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 0 15px rgba(56, 189, 248, 0.6);\n    transform: scale(1);\n  }\n}\n\n.estacio-conclude-pulse {\n  outline: 3px solid #38bdf8 !important;\n  outline-offset: 3px !important;\n  animation: pulseConcludeGlow 1.4s infinite ease-in-out !important;\n  position: relative !important;\n  z-index: 99999 !important;\n}\n';
     document.head.appendChild(styleEl);
   }
 
   // src/config/mascot.js
-  var CAT_MASCOT_DATA_URI = "data:image/png;base64,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";
+  var CAT_MASCOT_DATA_URI = "data:image/png;base64,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";
+  function getMascotUrl() {
+    try {
+      if (typeof chrome !== "undefined" && chrome?.runtime?.getURL) {
+        return chrome.runtime.getURL("icons/cat_dancing.gif");
+      }
+    } catch (e) {
+    }
+    return CAT_MASCOT_DATA_URI;
+  }
 
   // src/ui/draggable.js
+  function clampElementToViewport(targetElement, margin = 16) {
+    if (!targetElement) return;
+    const rect = targetElement.getBoundingClientRect();
+    const winW = window.innerWidth || document.documentElement.clientWidth;
+    const winH = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.width === 0 || rect.height === 0) return;
+    let currentLeft = rect.left;
+    let currentTop = rect.top;
+    let changed = false;
+    if (currentLeft + rect.width > winW - margin) {
+      currentLeft = Math.max(margin, winW - rect.width - margin);
+      changed = true;
+    }
+    if (currentLeft < margin) {
+      currentLeft = margin;
+      changed = true;
+    }
+    if (currentTop + rect.height > winH - margin) {
+      currentTop = Math.max(margin, winH - rect.height - margin);
+      changed = true;
+    }
+    if (currentTop < margin) {
+      currentTop = margin;
+      changed = true;
+    }
+    if (changed || targetElement.style.right || targetElement.style.bottom) {
+      const leftPx = `${Math.round(currentLeft)}px`;
+      const topPx = `${Math.round(currentTop)}px`;
+      targetElement.style.left = leftPx;
+      targetElement.style.top = topPx;
+      targetElement.style.right = "auto";
+      targetElement.style.bottom = "auto";
+      localStorage.setItem("estacio_pos_left", leftPx);
+      localStorage.setItem("estacio_pos_top", topPx);
+    }
+  }
   function setupUniversalDraggable(targetElement, handleElement = null, onClickCallback = null) {
     const dragHandle = handleElement || targetElement;
     let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
@@ -46,9 +91,14 @@
       targetElement.style.top = savedTop;
       targetElement.style.right = "auto";
       targetElement.style.bottom = "auto";
+      requestAnimationFrame(() => {
+        clampElementToViewport(targetElement);
+      });
     }
     dragHandle.addEventListener("mousedown", (e) => {
-      if (e.target.tagName === "BUTTON" || e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "SELECT" || e.target.tagName === "INPUT" || e.target.closest("button") || e.target.closest("#box-header-cat")) {
+        return;
+      }
       e.preventDefault();
       startX = e.clientX;
       startY = e.clientY;
@@ -64,8 +114,16 @@
             isDragging = true;
             targetElement.classList.add("is-dragging");
           }
-          const newLeft = `${initialLeft + dx}px`;
-          const newTop = `${initialTop + dy}px`;
+          const winW = window.innerWidth || document.documentElement.clientWidth;
+          const winH = window.innerHeight || document.documentElement.clientHeight;
+          const elemW = targetElement.offsetWidth || 50;
+          const elemH = targetElement.offsetHeight || 50;
+          let targetL = initialLeft + dx;
+          let targetT = initialTop + dy;
+          targetL = Math.max(8, Math.min(winW - elemW - 8, targetL));
+          targetT = Math.max(8, Math.min(winH - elemH - 8, targetT));
+          const newLeft = `${Math.round(targetL)}px`;
+          const newTop = `${Math.round(targetT)}px`;
           targetElement.style.left = newLeft;
           targetElement.style.top = newTop;
           targetElement.style.right = "auto";
@@ -78,7 +136,9 @@
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         targetElement.classList.remove("is-dragging");
-        if (!isDragging && onClickCallback) {
+        if (isDragging) {
+          clampElementToViewport(targetElement);
+        } else if (onClickCallback) {
           onClickCallback(upEvent);
         }
       }
@@ -101,18 +161,15 @@
     },
     gemini: {
       name: "Google Gemini",
-      defaultModel: "gemini-2.5-flash",
+      defaultModel: "gemini-3.7-flash",
       endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       models: [
-        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)", isFree: true },
-        { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
-        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido)", isFree: true },
+        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido \u2022 Recomendado)", isFree: true },
         { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite (\u26A1 Gr\xE1tis)", isFree: true },
-        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)", isFree: true },
-        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)", isFree: false },
-        { id: "gemini-flash-latest", name: "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)", isFree: true }
+        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)", isFree: true },
+        { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
+        { id: "gemini-flash-latest", name: "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)", isFree: true },
+        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)", isFree: true }
       ]
     },
     openrouter: {
@@ -284,17 +341,53 @@
       }
     });
   }
+  if (typeof window !== "undefined") {
+    window.addEventListener("estacio_token_captured", (e) => {
+      if (e.detail && e.detail.token) {
+        window.__estacio_bearer = e.detail.token;
+        try {
+          sessionStorage.setItem("estacio_bearer", e.detail.token);
+        } catch (err) {
+        }
+        try {
+          localStorage.setItem("estacio_bearer", e.detail.token);
+        } catch (err) {
+        }
+        storageListeners.forEach((cb) => {
+          try {
+            cb({ estacio_bearer: { newValue: e.detail.token } });
+          } catch (err) {
+          }
+        });
+      }
+    });
+  }
   syncStorageFromChromeExtension();
   function getBearerToken() {
     if (typeof window !== "undefined" && window.__estacio_bearer) {
       return window.__estacio_bearer;
     }
-    let token = sessionStorage.getItem("estacio_bearer");
-    if (token) return token;
-    const candidateKeys = ["token", "accessToken", "access_token", "bearer", "auth_token"];
+    let token = sessionStorage.getItem("estacio_bearer") || localStorage.getItem("estacio_bearer");
+    if (token && token.length > 20) return token.replace(/^Bearer\s+/i, "").trim();
+    const candidateKeys = ["token", "accessToken", "access_token", "bearer", "auth_token", "jwt", "auth"];
     for (const k of candidateKeys) {
       const val = localStorage.getItem(k) || sessionStorage.getItem(k);
       if (val && val.length > 20) return val.replace(/^Bearer\s+/i, "").trim();
+    }
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("oidc.user") || key.includes("authority") || key.includes("token") || key.includes("auth"))) {
+          try {
+            const item = JSON.parse(localStorage.getItem(key));
+            if (item && item.access_token) {
+              return item.access_token.replace(/^Bearer\s+/i, "").trim();
+            }
+          } catch (e) {
+          }
+        }
+      }
+    } catch (e) {
     }
     return null;
   }
@@ -730,8 +823,8 @@ Responda ESTRITAMENTE em formato JSON:
           }
         }
       }
-      if (provider === "gemini" && /quota|rate limit|429/i.test(err.message)) {
-        const geminiFallbacks = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-flash-latest"];
+      if (provider === "gemini" && /quota|rate limit|429|no longer available|not_found|404/i.test(err.message)) {
+        const geminiFallbacks = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
         for (const fbModel of geminiFallbacks) {
           if (fbModel !== modelToTest) {
             try {
@@ -743,7 +836,7 @@ Responda ESTRITAMENTE em formato JSON:
                   success: true,
                   result: fbResult,
                   model: fbModel,
-                  warning: `O modelo ${modelToTest} estava em cooldown de 1 min na API do Google. Chave validada via ${fbModel}!`
+                  warning: `O modelo ${modelToTest} estava indispon\xEDvel na API do Google. Chave validada automaticamente via ${fbModel}!`
                 };
               }
             } catch (fbErr) {
@@ -845,24 +938,49 @@ Responda ESTRITAMENTE em formato JSON:
   }
   function triggerNativeClick(element) {
     if (!element) return;
-    element.scrollIntoView({ behavior: "smooth", block: "center" });
-    const btn = element.tagName === "BUTTON" || element.tagName === "A" ? element : element.querySelector("button, a") || element;
-    const propKey = Object.keys(btn).find((k) => k.startsWith("__reactProps$") || k.startsWith("__reactEventHandlers$"));
-    if (propKey && btn[propKey]?.onClick) {
-      try {
-        btn[propKey].onClick({ preventDefault: () => {
-        }, stopPropagation: () => {
-        }, target: btn, currentTarget: btn, bubbles: true });
-      } catch (e) {
-      }
-    }
     try {
-      btn.click();
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (e) {
     }
-    ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach((evtName) => {
-      const evt = new MouseEvent(evtName, { bubbles: true, cancelable: true, view: window });
-      btn.dispatchEvent(evt);
+    const btn = element.tagName === "BUTTON" || element.tagName === "A" ? element : element.querySelector("button, a") || element;
+    try {
+      btn.removeAttribute("disabled");
+      btn.setAttribute("aria-disabled", "false");
+      if (btn.style) btn.style.pointerEvents = "auto";
+    } catch (e) {
+    }
+    try {
+      btn.focus();
+    } catch (e) {
+    }
+    const triggerReactHandler = (target) => {
+      if (!target) return false;
+      const propKey = Object.keys(target).find((k) => k.startsWith("__reactProps$") || k.startsWith("__reactEventHandlers$"));
+      if (propKey && target[propKey]?.onClick) {
+        try {
+          target[propKey].onClick({ preventDefault: () => {
+          }, stopPropagation: () => {
+          }, target, currentTarget: target, bubbles: true });
+          return true;
+        } catch (err) {
+        }
+      }
+      return false;
+    };
+    triggerReactHandler(element);
+    if (btn && btn !== element) triggerReactHandler(btn);
+    element.querySelectorAll("*").forEach((c) => triggerReactHandler(c));
+    try {
+      if (typeof btn.click === "function") btn.click();
+      else if (typeof element.click === "function") element.click();
+    } catch (e) {
+    }
+    ["pointerover", "mouseover", "pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach((evtName) => {
+      try {
+        const evt = new MouseEvent(evtName, { bubbles: true, cancelable: true, view: window });
+        (btn || element).dispatchEvent(evt);
+      } catch (e) {
+      }
     });
   }
 
@@ -971,19 +1089,24 @@ Responda ESTRITAMENTE em formato JSON:
     const cardsMap = /* @__PURE__ */ new Map();
     const candidates = Array.from(document.querySelectorAll('button, a[href*="/conteudos/"], [role="button"], article, section, [class*="card"], div'));
     candidates.forEach((el) => {
+      if (el.closest("#estacio-suite-box")) return;
       let card = el.closest('article, section, [class*="card"], div');
-      if (!card) return;
+      if (!card || card.closest("#estacio-suite-box")) return;
       const text = (card.innerText || "").replace(/\s+/g, " ").trim();
       if (text.toLowerCase().includes("continue de onde parou") && !text.match(/Tema\s*1\s*\|/i)) {
         return;
       }
       const match = text.match(/Tema\s*(\d+)/i);
-      if (match && text.length < 400) {
-        const temaNum = parseInt(match[1]);
+      if (match && text.length < 450) {
+        const temaNum = parseInt(match[1], 10);
         if (!cardsMap.has(temaNum)) {
-          const isConcluido = /conclu[ií]do/i.test(text);
+          const lowerText = text.toLowerCase();
+          const hasConcluidoKeyword = /conclu[ií]d[oa]/i.test(text);
+          const isActionToConclude = lowerText.includes("marcar como conclu");
+          const hasCheckmarkIcon = Boolean(card.querySelector('[class*="check"], [class*="conclu"], [data-status="completed"], [data-status="concluido"], [aria-label*="conclu" i]'));
+          const isConcluido = hasConcluidoKeyword && !isActionToConclude || hasCheckmarkIcon;
           const itemsMatch = text.match(/(\d+)\s*Itens?/i);
-          const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
+          const totalItems = itemsMatch ? parseInt(itemsMatch[1], 10) : 1;
           const link = card.querySelector('a[href*="/conteudos/"]');
           const href = link ? link.href : card.getAttribute("href") || "";
           const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
@@ -1064,6 +1187,79 @@ Responda ESTRITAMENTE em formato JSON:
     }
   }
 
+  // src/modules/audio_alerts.js
+  var audioCtx = null;
+  function getAudioContext() {
+    if (typeof window === "undefined") return null;
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {
+      });
+    }
+    return audioCtx;
+  }
+  function isSoundEnabled() {
+    return getSaved("sound_enabled", "true") !== "false";
+  }
+  function setSoundEnabled(enabled) {
+    setSaved("sound_enabled", enabled ? "true" : "false");
+  }
+  function isAudioMuted() {
+    return !isSoundEnabled();
+  }
+  function setAudioMuted(muted) {
+    setSoundEnabled(!muted);
+  }
+  function playTone(freq, duration = 0.15, type = "sine", startTimeOffset = 0, gainLevel = 0.15) {
+    try {
+      if (!isSoundEnabled()) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTimeOffset);
+      gain.gain.setValueAtTime(1e-4, ctx.currentTime + startTimeOffset);
+      gain.gain.exponentialRampToValueAtTime(gainLevel, ctx.currentTime + startTimeOffset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(1e-4, ctx.currentTime + startTimeOffset + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + startTimeOffset);
+      osc.stop(ctx.currentTime + startTimeOffset + duration + 0.05);
+    } catch (e) {
+    }
+  }
+  function playAttentionSound() {
+    try {
+      playTone(587.33, 0.12, "sine", 0, 0.12);
+      playTone(880, 0.18, "sine", 0.1, 0.15);
+    } catch (e) {
+    }
+  }
+  function playSuccessSound() {
+    try {
+      playTone(523.25, 0.12, "sine", 0, 0.12);
+      playTone(659.25, 0.12, "sine", 0.1, 0.12);
+      playTone(783.99, 0.25, "sine", 0.2, 0.18);
+    } catch (e) {
+    }
+  }
+  function playCelebrationFanfare() {
+    try {
+      playTone(523.25, 0.15, "triangle", 0, 0.15);
+      playTone(659.25, 0.15, "triangle", 0.12, 0.15);
+      playTone(783.99, 0.18, "triangle", 0.24, 0.18);
+      playTone(1046.5, 0.5, "triangle", 0.38, 0.22);
+      playTone(1318.51, 0.6, "sine", 0.42, 0.15);
+    } catch (e) {
+    }
+  }
+
   // src/modules/exam_solver.js
   async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
     const total = getTotalExamQuestionsCount();
@@ -1123,6 +1319,10 @@ Responda ESTRITAMENTE em formato JSON:
         if (target && target.element) {
           clickOptionReact(target.element);
         }
+        try {
+          playAttentionSound();
+        } catch (e) {
+        }
         updateGabaritoQuestion(qNum, {
           status: "done",
           letter: chosenLetter,
@@ -1146,6 +1346,10 @@ Responda ESTRITAMENTE em formato JSON:
     const finalData = getSavedGabarito();
     const finalDone = finalData?.answers?.filter((a) => a.status === "done" || a.letter).length || 0;
     if (finalDone >= total) {
+      try {
+        playCelebrationFanfare();
+      } catch (e) {
+      }
       if (onLog) onLog("\u{1F389} Todas as 10 quest\xF5es foram respondidas e salvas com sucesso! \u{1F4DD}\u{1F3C6}", "success");
     } else {
       if (onLog) onLog(`\u26A0\uFE0F Prova em andamento: ${finalDone}/${total} conclu\xEDdas. Clique nos badges vermelhos para tentar novamente!`, "warning");
@@ -1184,6 +1388,10 @@ Responda ESTRITAMENTE em formato JSON:
       const target = alternatives.find((o) => o.letter === chosenLetter);
       if (target && target.element) {
         clickOptionReact(target.element);
+      }
+      try {
+        playSuccessSound();
+      } catch (e) {
       }
       updateGabaritoQuestion(qNum, {
         status: "done",
@@ -1279,11 +1487,16 @@ Responda ESTRITAMENTE em formato JSON:
   }
   function parseIdsFromUrl(url) {
     if (!url) return { turmaId: null, conteudoUuid: null, temaId: null };
-    const turmaMatch = url.match(/\/disciplinas\/(estacio_\d+)/i);
+    const turmaMatch = url.match(/\/disciplinas\/(estacio_\d+|\d+)/i);
     const uuidMatch = url.match(/\/conteudos\/([a-f0-9-]{36})/i);
     const temaMatch = url.match(/[?&]tema=([A-Za-z0-9_-]+)/i) || url.match(/\/temas\/([A-Za-z0-9_-]+)/i);
+    let turmaId = null;
+    if (turmaMatch) {
+      const raw = turmaMatch[1];
+      turmaId = raw.startsWith("estacio_") ? raw : `estacio_${raw}`;
+    }
     return {
-      turmaId: turmaMatch ? turmaMatch[1] : null,
+      turmaId,
       conteudoUuid: uuidMatch ? uuidMatch[1] : null,
       temaId: temaMatch ? temaMatch[1] : null
     };
@@ -1309,12 +1522,13 @@ Responda ESTRITAMENTE em formato JSON:
     ];
     for (const url of endpoints) {
       try {
-        const res = await fetch(url, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Accept": "application/json, text/plain, */*"
-          }
-        });
+        const headers = {
+          "Accept": "application/json, text/plain, */*"
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const res = await universalFetch(url, { headers });
         if (res.ok) {
           const data = await res.json();
           const items = Array.isArray(data) ? data : data.conteudos || data.itens || data.items || [];
@@ -1333,50 +1547,83 @@ Responda ESTRITAMENTE em formato JSON:
     return Array.from(discoveredUuids);
   }
   async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula, onLog = null) {
-    const matriculaParam = matricula ? `?matricula=${matricula}` : "";
-    const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
+    const normalizedTurmaId = turmaId && !String(turmaId).startsWith("estacio_") ? `estacio_${turmaId}` : turmaId;
     const endpointNovo = `https://apis.estudante.estacio.br/rest/me/conteudos/${conteudoUuid}/concluir`;
+    const matriculaParam = matricula ? `?matricula=${matricula}` : "";
+    const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${normalizedTurmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
     const headersBase = {
-      "Authorization": `Bearer ${token}`,
       "Accept": "application/json, text/plain, */*"
     };
-    let statusInfo = "";
-    try {
-      const res = await fetch(endpointLegado, {
-        method: "POST",
-        headers: headersBase
-      });
-      statusInfo += `Legado: HTTP ${res.status} `;
-      if (res.status >= 200 && res.status < 300) {
-        if (onLog) onLog(`[POST Conclus\xF5es] /temas/${temaId}/conteudos/${conteudoUuid.slice(0, 8)}... \u2192 HTTP ${res.status} OK \u2705`, "success");
-        return true;
-      }
-    } catch (e) {
-      statusInfo += `Legado: ${e.message} `;
+    if (token) {
+      headersBase["Authorization"] = `Bearer ${token}`;
     }
+    const shortUuid = conteudoUuid ? conteudoUuid.slice(0, 8) : "...";
     try {
-      const res = await fetch(endpointNovo, {
+      let res = await universalFetch(endpointNovo, {
         method: "POST",
         headers: {
           ...headersBase,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          idTurma: turmaId,
+          idTurma: normalizedTurmaId,
           idTema: temaId,
           idConteudo: conteudoUuid
         })
       });
-      statusInfo += `Novo: HTTP ${res.status}`;
       if (res.status >= 200 && res.status < 300) {
-        if (onLog) onLog(`[POST Concluir] /me/conteudos/${conteudoUuid.slice(0, 8)}... \u2192 HTTP ${res.status} OK \u2705`, "success");
+        if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... \u2192 HTTP ${res.status} OK \u2705`, "success");
         return true;
+      } else if (res.status === 409) {
+        if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... \u2192 HTTP 409 (J\xE1 conclu\xEDdo) \u26A1`, "info");
+        return true;
+      } else if (res.status === 403) {
+        if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... \u2192 HTTP 403 (Aguardando 2.5s para retry)... \u23F3`, "warning");
+        await new Promise((r) => setTimeout(r, 2500));
+        res = await universalFetch(endpointNovo, {
+          method: "POST",
+          headers: {
+            ...headersBase,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            idTurma: normalizedTurmaId,
+            idTema: temaId,
+            idConteudo: conteudoUuid
+          })
+        });
+        if (res.status >= 200 && res.status < 300) {
+          if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... \u2192 HTTP ${res.status} OK \u2705`, "success");
+          return true;
+        } else if (res.status === 409) {
+          if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... \u2192 HTTP 409 (J\xE1 conclu\xEDdo) \u26A1`, "info");
+          return true;
+        } else {
+          if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... \u2192 HTTP ${res.status} \u26A0\uFE0F`, "warning");
+        }
+      } else {
+        if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... \u2192 HTTP ${res.status} \u26A0\uFE0F`, "warning");
       }
     } catch (e) {
-      statusInfo += `Novo: ${e.message}`;
+      if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... \u2192 Erro: ${e.message}`, "warning");
     }
-    if (onLog) {
-      onLog(`[Aviso POST] Resposta da API: ${statusInfo}`, "warning");
+    await new Promise((r) => setTimeout(r, 800));
+    try {
+      const res = await universalFetch(endpointLegado, {
+        method: "POST",
+        headers: headersBase
+      });
+      if (res.status >= 200 && res.status < 300) {
+        if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... \u2192 HTTP ${res.status} OK \u2705`, "success");
+        return true;
+      } else if (res.status === 409) {
+        if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... \u2192 HTTP 409 (J\xE1 conclu\xEDdo) \u26A1`, "info");
+        return true;
+      } else {
+        if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... \u2192 HTTP ${res.status} \u26A0\uFE0F`, "warning");
+      }
+    } catch (e) {
+      if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... \u2192 Erro: ${e.message}`, "warning");
     }
     return false;
   }
@@ -1397,6 +1644,10 @@ Responda ESTRITAMENTE em formato JSON:
       targetBtn.setAttribute("aria-disabled", "false");
       dispatchFullMouseEvents(targetBtn);
       triggerNativeClick(targetBtn);
+      try {
+        playAttentionSound();
+      } catch (e) {
+      }
       if (onLog) onLog("Bot\xE3o [Marcar como conclu\xEDdo] liberado e clicado na tela! \u{1F3AF}", "success");
       await new Promise((r) => setTimeout(r, 800));
       const currentTxt = (targetBtn.innerText || "").toLowerCase();
@@ -1439,6 +1690,26 @@ Responda ESTRITAMENTE em formato JSON:
     }
     return true;
   }
+  function cancelAllAutomations(onLog = null) {
+    isStateMachineRunning = false;
+    localStorage.removeItem("estacio_catalog_queue");
+    localStorage.removeItem("estacio_multi_queue");
+    localStorage.removeItem("estacio_multi_materia_queue");
+    sessionStorage.removeItem("estacio_catalog_queue");
+    sessionStorage.removeItem("estacio_multi_queue");
+    if (onLog) onLog("\u23F9\uFE0F Automa\xE7\xE3o cancelada pelo usu\xE1rio.", "info");
+  }
+  function isAnyAutomationRunning() {
+    const q = localStorage.getItem("estacio_catalog_queue");
+    if (q) {
+      try {
+        const parsed = JSON.parse(q);
+        if (parsed && parsed.active) return true;
+      } catch (e) {
+      }
+    }
+    return isStateMachineRunning;
+  }
   async function processAutomatorStateMachine(onLog) {
     if (isStateMachineRunning) return;
     const queueRaw = localStorage.getItem("estacio_catalog_queue");
@@ -1459,13 +1730,19 @@ Responda ESTRITAMENTE em formato JSON:
         const url = window.location.href;
         const ids = parseIdsFromUrl(url);
         const turmaId = ids.turmaId || queue.turmaId;
-        const targetMateriaUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
+        const targetMateriaUrl = queue.conteudosUrl || `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
         let temaId = ids.temaId;
         const headerText = document.body.innerText;
         const headerMatch = headerText.match(/Tema\s*(\d+)/i);
-        const temaNum = headerMatch ? parseInt(headerMatch[1]) : queue.pendingThemes[queue.currentPos] || 1;
+        const temaNum = headerMatch ? parseInt(headerMatch[1], 10) : queue.pendingThemes?.[queue.currentPos] || 1;
         if (!temaId) temaId = `tema_${temaNum}`;
-        if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando sub-conte\xFAdos...`, "info");
+        if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Aguardando estabiliza\xE7\xE3o da sess\xE3o... \u23F3`, "info");
+        try {
+          window.scrollTo({ top: Math.min(600, document.body.scrollHeight / 2), behavior: "smooth" });
+        } catch (e) {
+        }
+        await new Promise((r) => setTimeout(r, 2200));
+        if (onLog) onLog(`[Tema ${temaNum}] Coletando sub-conte\xFAdos...`, "info");
         const allUuids = /* @__PURE__ */ new Set();
         if (ids.conteudoUuid) allUuids.add(ids.conteudoUuid);
         harvestInPageContentUuids().forEach((u) => allUuids.add(u));
@@ -1479,7 +1756,7 @@ Responda ESTRITAMENTE em formato JSON:
           for (let idx = 0; idx < uuidList.length; idx++) {
             const uuid = uuidList[idx];
             await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
-            await new Promise((r) => setTimeout(r, 300));
+            await new Promise((r) => setTimeout(r, 800));
           }
         } else if (ids.conteudoUuid) {
           await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
@@ -1488,17 +1765,22 @@ Responda ESTRITAMENTE em formato JSON:
         if (uuidList.length > 0) {
           for (const uuid of uuidList) {
             await postConcluir(turmaId, temaId, uuid, token, matricula);
+            await new Promise((r) => setTimeout(r, 800));
           }
         }
-        const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
+        const delayMs = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
         const delaySec = (delayMs / 1e3).toFixed(1);
+        try {
+          playSuccessSound();
+        } catch (e) {
+        }
         if (onLog) onLog(`[Tema ${temaNum}] Conclu\xEDdo com sucesso! Aguardando ${delaySec}s e voltando para a grade...`, "success");
         await new Promise((r) => setTimeout(r, delayMs));
         queue.completedThemes = queue.completedThemes || [];
         if (!queue.completedThemes.includes(temaNum)) {
           queue.completedThemes.push(temaNum);
         }
-        queue.currentPos += 1;
+        queue.currentPos = (queue.currentPos || 0) + 1;
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos \u21A9\uFE0F`, "info");
         window.location.href = targetMateriaUrl;
@@ -1510,7 +1792,7 @@ Responda ESTRITAMENTE em formato JSON:
     if (!insideTheme) {
       isStateMachineRunning = true;
       try {
-        await new Promise((r) => setTimeout(r, 1200));
+        await new Promise((r) => setTimeout(r, 1800));
         const gridCards = await waitForCards(15e3);
         if (gridCards.length === 0) {
           return;
@@ -1520,10 +1802,20 @@ Responda ESTRITAMENTE em formato JSON:
         const expectedTotal = queue.totalThemes || gridCards.length;
         if (pendentes.length === 0 && gridCards.length >= expectedTotal) {
           localStorage.removeItem("estacio_catalog_queue");
+          try {
+            playCelebrationFanfare();
+          } catch (e) {
+          }
           if (onLog) onLog(`\u{1F3C6} Todos os ${gridCards.length} temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!`, "success");
           return;
         }
         if (pendentes.length === 0) {
+          localStorage.removeItem("estacio_catalog_queue");
+          try {
+            playCelebrationFanfare();
+          } catch (e) {
+          }
+          if (onLog) onLog(`\u{1F3C6} Todos os temas pendentes desta mat\xE9ria foram conclu\xEDdos!`, "success");
           return;
         }
         if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na mat\xE9ria.`, "info");
@@ -1531,7 +1823,7 @@ Responda ESTRITAMENTE em formato JSON:
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         const nextTema = pendentes[0];
         if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
-        await new Promise((r) => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 1500));
         openThemeByIndex(nextTema.temaNum);
       } finally {
         isStateMachineRunning = false;
@@ -1540,8 +1832,8 @@ Responda ESTRITAMENTE em formato JSON:
   }
   function startThemeCompletion(onLog) {
     const currentUrl = window.location.href;
-    const turmaMatch = currentUrl.match(/\/disciplinas\/(estacio_\d+)/i);
-    const turmaId = turmaMatch ? turmaMatch[1] : null;
+    const turmaMatch = currentUrl.match(/\/disciplinas\/(estacio_\d+|\d+)/i);
+    const turmaId = turmaMatch ? turmaMatch[1].startsWith("estacio_") ? turmaMatch[1] : `estacio_${turmaMatch[1]}` : null;
     if (!turmaId) {
       if (onLog) onLog("Acesse a p\xE1gina de conte\xFAdos da mat\xE9ria (/disciplinas/estacio_...) para concluir.", "error");
       return;
@@ -1570,6 +1862,10 @@ Responda ESTRITAMENTE em formato JSON:
       const pendentes = cards.filter((t) => !t.isConcluido);
       if (onLog) onLog(`Detectados ${cards.length} temas no total (${pendentes.length} pendentes).`, "info");
       if (pendentes.length === 0) {
+        try {
+          playCelebrationFanfare();
+        } catch (e) {
+        }
         if (onLog) onLog("Todos os temas desta mat\xE9ria j\xE1 est\xE3o 100% conclu\xEDdos! \u{1F3C6}", "success");
         localStorage.removeItem("estacio_catalog_queue");
         return;
@@ -1608,6 +1904,7 @@ Responda ESTRITAMENTE em formato JSON:
     try {
       if (Array.isArray(modelsList) && modelsList.length > 0) {
         setSaved(`models_${provider}`, modelsList);
+        setSaved(`models_ts_${provider}`, Date.now());
       }
     } catch (e) {
     }
@@ -1661,16 +1958,15 @@ Responda ESTRITAMENTE em formato JSON:
       if (modelId.includes("gpt-oss-20b")) return "GPT-OSS 20B (\u{1F525} 100% Gr\xE1tis)";
       if (modelId.includes("compound")) return `Groq Compound (${modelId}) (\u{1F525} 100% Gr\xE1tis)`;
     } else if (provider === "gemini") {
-      if (modelId === "gemini-2.5-flash") return "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)";
-      if (modelId === "gemini-2.5-flash-lite") return "Gemini 2.5 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)";
-      if (modelId === "gemini-3.7-flash") return "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido)";
+      if (modelId === "gemini-3.7-flash") return "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido \u2022 Recomendado)";
       if (modelId === "gemini-3.6-flash") return "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
-      if (modelId === "gemini-3.5-flash") return "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
-      if (modelId === "gemini-3.5-flash-lite") return "Gemini 3.5 Flash-Lite (\u26A1 Gr\xE1tis)";
-      if (modelId === "gemini-3.1-flash-lite") return "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis)";
-      if (modelId === "gemini-3-flash-preview") return "Gemini 3 Flash Preview (\u{1F381} Gr\xE1tis)";
+      if (modelId === "gemini-3.5-flash") return "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)";
+      if (modelId === "gemini-3.1-flash-lite") return "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)";
       if (modelId === "gemini-flash-latest") return "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)";
-      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F48E} Pago \u2022 Racioc\xEDnio Avan\xE7ado)";
+      if (modelId === "gemini-3-flash-preview") return "Gemini 3 Flash Preview (\u{1F381} Gr\xE1tis)";
+      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)";
+      if (modelId === "gemini-2.5-flash") return "Gemini 2.5 Flash (Descontinuado)";
+      if (modelId === "gemini-2.5-flash-lite") return "Gemini 2.5 Flash-Lite (Descontinuado)";
       if (modelId === "gemini-2.5-pro") return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)";
       if (modelId === "gemini-pro-latest") return "Gemini Pro Latest (\u{1F48E} Pago AI Studio)";
     } else if (provider === "openrouter") {
@@ -1721,98 +2017,100 @@ Responda ESTRITAMENTE em formato JSON:
     if (rawName && rawName !== modelId) return `${rawName} (${modelId})`;
     return modelId;
   }
-  async function fetchLiveModels(provider, apiKey, showPaid = null) {
+  var inFlightFetches = /* @__PURE__ */ new Map();
+  var CACHE_TTL_MS = 60 * 60 * 1e3;
+  async function fetchLiveModels(provider, apiKey, showPaid = null, force = false) {
     const allowPaid = showPaid !== null ? showPaid : getShowPaidModels();
     if (!apiKey && provider !== "ollama") return getModelsForProvider(provider, allowPaid);
-    try {
-      if (provider === "groq") {
-        const res = await universalFetch("https://api.groq.com/openai/v1/models", {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const rawList = Array.isArray(json) ? json : json.data || [];
-          const filtered = rawList.filter((m) => isModelFree("groq", m.id, m.display_name)).map((m) => ({
-            id: m.id,
-            name: formatDisplayName("groq", m),
-            isFree: true
-          }));
-          filtered.sort((a, b) => {
-            const priority = (id) => {
-              if (id.includes("llama-3.3-70b")) return 1;
-              if (id.includes("deepseek-r1-distill-llama-70b")) return 2;
-              if (id.includes("qwen")) return 3;
-              if (id.includes("llama-3.1-8b")) return 4;
-              if (id.includes("gpt-oss")) return 5;
-              return 10;
-            };
-            return priority(a.id) - priority(b.id);
-          });
-          if (filtered.length > 0) {
-            saveCachedModels(provider, filtered);
-            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
-          }
-        }
+    if (!force) {
+      const cached = getCachedModels(provider);
+      const lastFetch = Number(getSaved(`models_ts_${provider}`, 0));
+      const isFresh = Date.now() - lastFetch < CACHE_TTL_MS;
+      if (cached && cached.length > 0 && isFresh) {
+        return allowPaid ? cached : cached.filter((m) => m.isFree !== false);
       }
-      if (provider === "openrouter") {
-        const res = await universalFetch("https://openrouter.ai/api/v1/models", {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const rawList = Array.isArray(json) ? json : json.data || [];
-          const filtered = rawList.filter((m) => !/audio|whisper|moderation|embedding/i.test(m.id)).map((m) => {
-            const isFree = isModelFree("openrouter", m.id, m.name);
-            return {
-              id: m.id,
-              name: formatDisplayName("openrouter", m),
-              isFree
-            };
-          });
-          filtered.sort((a, b) => {
-            if (a.isFree && !b.isFree) return -1;
-            if (!a.isFree && b.isFree) return 1;
-            if (a.id.includes("llama-3.3-70b") && !b.id.includes("llama-3.3-70b")) return -1;
-            if (a.id.includes("deepseek-r1") && !b.id.includes("deepseek-r1")) return -1;
-            return a.id.localeCompare(b.id);
-          });
-          if (filtered.length > 0) {
-            saveCachedModels(provider, filtered);
-            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
-          }
-        }
+    }
+    if (inFlightFetches.has(provider)) {
+      try {
+        const list = await inFlightFetches.get(provider);
+        return allowPaid ? list : list.filter((m) => m.isFree !== false);
+      } catch (e) {
       }
-      if (provider === "ollama") {
-        try {
-          const res = await universalFetch("http://localhost:11434/v1/models");
+    }
+    const fetchPromise = (async () => {
+      try {
+        if (provider === "groq") {
+          const res = await universalFetch("https://api.groq.com/openai/v1/models", {
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            }
+          });
           if (res.ok) {
             const json = await res.json();
             const rawList = Array.isArray(json) ? json : json.data || [];
-            const models = rawList.map((m) => ({
+            const filtered = rawList.filter((m) => isModelFree("groq", m.id, m.display_name)).map((m) => ({
               id: m.id,
-              name: formatDisplayName("ollama", m),
+              name: formatDisplayName("groq", m),
               isFree: true
             }));
-            if (models.length > 0) {
-              saveCachedModels(provider, models);
-              return models;
+            filtered.sort((a, b) => {
+              const priority = (id) => {
+                if (id.includes("llama-3.3-70b")) return 1;
+                if (id.includes("deepseek-r1-distill-llama-70b")) return 2;
+                if (id.includes("qwen")) return 3;
+                if (id.includes("llama-3.1-8b")) return 4;
+                if (id.includes("gpt-oss")) return 5;
+                return 10;
+              };
+              return priority(a.id) - priority(b.id);
+            });
+            if (filtered.length > 0) {
+              saveCachedModels(provider, filtered);
+              return allowPaid ? filtered : filtered.filter((m) => m.isFree);
             }
           }
-        } catch (e) {
+        }
+        if (provider === "openrouter") {
+          const res = await universalFetch("https://openrouter.ai/api/v1/models", {
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const rawList = Array.isArray(json) ? json : json.data || [];
+            const filtered = rawList.filter((m) => !/audio|whisper|moderation|embedding/i.test(m.id)).map((m) => {
+              const isFree = isModelFree("openrouter", m.id, m.name);
+              return {
+                id: m.id,
+                name: formatDisplayName("openrouter", m),
+                isFree
+              };
+            });
+            filtered.sort((a, b) => {
+              if (a.isFree && !b.isFree) return -1;
+              if (!a.isFree && b.isFree) return 1;
+              if (a.id.includes("llama-3.3-70b") && !b.id.includes("llama-3.3-70b")) return -1;
+              if (a.id.includes("deepseek-r1") && !b.id.includes("deepseek-r1")) return -1;
+              return a.id.localeCompare(b.id);
+            });
+            if (filtered.length > 0) {
+              saveCachedModels(provider, filtered);
+              return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+            }
+          }
+        }
+        if (provider === "ollama") {
           try {
-            const resTags = await universalFetch("http://localhost:11434/api/tags");
-            if (resTags.ok) {
-              const jsonTags = await resTags.json();
-              const rawModels = jsonTags.models || [];
-              const models = rawModels.map((m) => ({
-                id: m.name,
-                name: formatDisplayName("ollama", { id: m.name }),
+            const res = await universalFetch("http://localhost:11434/v1/models");
+            if (res.ok) {
+              const json = await res.json();
+              const rawList = Array.isArray(json) ? json : json.data || [];
+              const models = rawList.map((m) => ({
+                id: m.id,
+                name: formatDisplayName("ollama", m),
                 isFree: true
               }));
               if (models.length > 0) {
@@ -1820,42 +2118,170 @@ Responda ESTRITAMENTE em formato JSON:
                 return models;
               }
             }
-          } catch (e2) {
+          } catch (e) {
+            try {
+              const resTags = await universalFetch("http://localhost:11434/api/tags");
+              if (resTags.ok) {
+                const jsonTags = await resTags.json();
+                const rawModels = jsonTags.models || [];
+                const models = rawModels.map((m) => ({
+                  id: m.name,
+                  name: formatDisplayName("ollama", { id: m.name }),
+                  isFree: true
+                }));
+                if (models.length > 0) {
+                  saveCachedModels(provider, models);
+                  return models;
+                }
+              }
+            } catch (e2) {
+            }
           }
+          const curatedOllama = PROVIDERS_CONFIG.ollama.models;
+          saveCachedModels(provider, curatedOllama);
+          return curatedOllama;
         }
-        const curatedOllama = PROVIDERS_CONFIG.ollama.models;
-        saveCachedModels(provider, curatedOllama);
-        return curatedOllama;
-      }
-      if (provider === "claude") {
-        try {
-          const res = await universalFetch("https://api.anthropic.com/v1/models", {
+        if (provider === "claude") {
+          try {
+            const res = await universalFetch("https://api.anthropic.com/v1/models", {
+              headers: {
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
+                "anthropic-dangerous-direct-browser-access": "true",
+                "Content-Type": "application/json"
+              }
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const rawList = Array.isArray(json) ? json : json.data || [];
+              const filtered = rawList.map((m) => ({
+                id: m.id,
+                name: formatDisplayName("claude", m),
+                created_at: m.created_at,
+                isFree: false
+              }));
+              filtered.sort((a, b) => {
+                if (a.created_at && b.created_at) {
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                }
+                const priority = (id) => {
+                  if (id.includes("opus-4")) return 1;
+                  if (id.includes("3-7-sonnet")) return 2;
+                  if (id.includes("3-5-sonnet")) return 3;
+                  if (id.includes("3-5-haiku")) return 4;
+                  if (id.includes("3-opus")) return 5;
+                  return 10;
+                };
+                return priority(a.id) - priority(b.id);
+              });
+              if (filtered.length > 0) {
+                saveCachedModels(provider, filtered);
+                return filtered;
+              }
+            }
+          } catch (e) {
+          }
+          const curatedClaude = PROVIDERS_CONFIG.claude.models;
+          saveCachedModels(provider, curatedClaude);
+          return curatedClaude;
+        }
+        if (provider === "mistral") {
+          const res = await universalFetch("https://api.mistral.ai/v1/models", {
             headers: {
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-              "anthropic-dangerous-direct-browser-access": "true",
+              "Authorization": `Bearer ${apiKey}`,
               "Content-Type": "application/json"
             }
           });
           if (res.ok) {
             const json = await res.json();
             const rawList = Array.isArray(json) ? json : json.data || [];
-            const filtered = rawList.map((m) => ({
+            const filtered = rawList.filter((m) => !m.archived && m.capabilities?.completion_chat !== false && !/embed|moderation|ocr|audio/i.test(m.id)).map((m) => ({
               id: m.id,
-              name: formatDisplayName("claude", m),
-              created_at: m.created_at,
+              name: formatDisplayName("mistral", m),
+              isFree: isModelFree("mistral", m.id, m.name)
+            }));
+            filtered.sort((a, b) => {
+              const priority = (id) => {
+                if (id === "codestral-latest") return 1;
+                if (id === "mistral-small-latest") return 2;
+                if (id === "mistral-large-latest") return 3;
+                return 10;
+              };
+              return priority(a.id) - priority(b.id);
+            });
+            if (filtered.length > 0) {
+              saveCachedModels(provider, filtered);
+              return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+            }
+          }
+        }
+        if (provider === "gemini") {
+          const res = await universalFetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+            headers: { "Content-Type": "application/json" }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const rawList = json.models || (Array.isArray(json) ? json : []);
+            const filtered = rawList.filter((m) => {
+              const clean = (m.name || "").replace(/^models\//, "").toLowerCase();
+              const dName = (m.displayName || "").toLowerCase();
+              const methods = m.supportedGenerationMethods || [];
+              const isGen = methods.length === 0 || methods.includes("generateContent");
+              const isGarbage = /embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research|image|custom-tools/i.test(clean) || /banana|image|vision|embedding|robotics/i.test(dName);
+              return isGen && !isGarbage;
+            }).map((m) => {
+              const cleanId = m.name.replace(/^models\//, "");
+              const isFree = isModelFree("gemini", cleanId, m.displayName);
+              return {
+                id: cleanId,
+                name: formatDisplayName("gemini", { id: cleanId, displayName: m.displayName }),
+                isFree
+              };
+            });
+            filtered.sort((a, b) => {
+              const priority = (id) => {
+                if (id === "gemini-3.7-flash") return 1;
+                if (id === "gemini-3.6-flash") return 2;
+                if (id === "gemini-3.5-flash") return 3;
+                if (id === "gemini-3.1-flash-lite") return 4;
+                if (id === "gemini-flash-latest") return 5;
+                if (id === "gemini-3-flash-preview") return 6;
+                if (id === "gemini-3.1-pro-preview") return 7;
+                if (id === "gemini-2.5-pro") return 8;
+                if (id === "gemini-pro-latest") return 9;
+                if (id === "gemini-2.5-flash") return 50;
+                if (id === "gemini-2.5-flash-lite") return 51;
+                return 20;
+              };
+              return priority(a.id) - priority(b.id);
+            });
+            if (filtered.length > 0) {
+              saveCachedModels(provider, filtered);
+              return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+            }
+          }
+        }
+        if (provider === "openai") {
+          const res = await universalFetch("https://api.openai.com/v1/models", {
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const rawList = Array.isArray(json) ? json : json.data || [];
+            const filtered = rawList.filter((m) => /^(gpt-|o1|o3|chatgpt)/i.test(m.id) && !/realtime|audio|transcription|tts|embedding|moderation|preview-2024|instruct/i.test(m.id)).map((m) => ({
+              id: m.id,
+              name: formatDisplayName("openai", m),
               isFree: false
             }));
             filtered.sort((a, b) => {
-              if (a.created_at && b.created_at) {
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-              }
               const priority = (id) => {
-                if (id.includes("opus-4")) return 1;
-                if (id.includes("3-7-sonnet")) return 2;
-                if (id.includes("3-5-sonnet")) return 3;
-                if (id.includes("3-5-haiku")) return 4;
-                if (id.includes("3-opus")) return 5;
+                if (id === "gpt-4o-mini") return 1;
+                if (id === "gpt-4o") return 2;
+                if (id.startsWith("o3-mini")) return 3;
+                if (id.startsWith("o1")) return 4;
                 return 10;
               };
               return priority(a.id) - priority(b.id);
@@ -1865,151 +2291,47 @@ Responda ESTRITAMENTE em formato JSON:
               return filtered;
             }
           }
-        } catch (e) {
         }
-        const curatedClaude = PROVIDERS_CONFIG.claude.models;
-        saveCachedModels(provider, curatedClaude);
-        return curatedClaude;
-      }
-      if (provider === "mistral") {
-        const res = await universalFetch("https://api.mistral.ai/v1/models", {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const rawList = Array.isArray(json) ? json : json.data || [];
-          const filtered = rawList.filter((m) => !m.archived && m.capabilities?.completion_chat !== false && !/embed|moderation|ocr|audio/i.test(m.id)).map((m) => ({
-            id: m.id,
-            name: formatDisplayName("mistral", m),
-            isFree: isModelFree("mistral", m.id, m.name)
-          }));
-          filtered.sort((a, b) => {
-            const priority = (id) => {
-              if (id === "codestral-latest") return 1;
-              if (id === "mistral-small-latest") return 2;
-              if (id === "mistral-large-latest") return 3;
-              return 10;
-            };
-            return priority(a.id) - priority(b.id);
-          });
-          if (filtered.length > 0) {
-            saveCachedModels(provider, filtered);
-            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
-          }
-        }
-      }
-      if (provider === "gemini") {
-        const res = await universalFetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
-          headers: { "Content-Type": "application/json" }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const rawList = json.models || (Array.isArray(json) ? json : []);
-          const filtered = rawList.filter((m) => {
-            const clean = (m.name || "").replace(/^models\//, "").toLowerCase();
-            const dName = (m.displayName || "").toLowerCase();
-            const methods = m.supportedGenerationMethods || [];
-            const isGen = methods.length === 0 || methods.includes("generateContent");
-            const isGarbage = /embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research|image|custom-tools/i.test(clean) || /banana|image|vision|embedding|robotics/i.test(dName);
-            return isGen && !isGarbage;
-          }).map((m) => {
-            const cleanId = m.name.replace(/^models\//, "");
-            const isFree = isModelFree("gemini", cleanId, m.displayName);
-            return {
-              id: cleanId,
-              name: formatDisplayName("gemini", { id: cleanId, displayName: m.displayName }),
-              isFree
-            };
-          });
-          filtered.sort((a, b) => {
-            const priority = (id) => {
-              if (id === "gemini-2.5-flash") return 1;
-              if (id === "gemini-2.5-flash-lite") return 2;
-              if (id === "gemini-3.7-flash") return 3;
-              if (id === "gemini-3.6-flash") return 4;
-              if (id === "gemini-3.5-flash") return 5;
-              if (id === "gemini-3.5-flash-lite") return 6;
-              if (id === "gemini-3.1-flash-lite") return 7;
-              if (id === "gemini-flash-latest") return 8;
-              if (id === "gemini-3-flash-preview") return 9;
-              if (id === "gemini-2.5-pro") return 10;
-              if (id === "gemini-3.1-pro-preview") return 11;
-              if (id === "gemini-pro-latest") return 12;
-              return 20;
-            };
-            return priority(a.id) - priority(b.id);
-          });
-          if (filtered.length > 0) {
-            saveCachedModels(provider, filtered);
-            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
-          }
-        }
-      }
-      if (provider === "openai") {
-        const res = await universalFetch("https://api.openai.com/v1/models", {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const rawList = Array.isArray(json) ? json : json.data || [];
-          const filtered = rawList.filter((m) => /^(gpt-|o1|o3|chatgpt)/i.test(m.id) && !/realtime|audio|transcription|tts|embedding|moderation|preview-2024|instruct/i.test(m.id)).map((m) => ({
-            id: m.id,
-            name: formatDisplayName("openai", m),
-            isFree: false
-          }));
-          filtered.sort((a, b) => {
-            const priority = (id) => {
-              if (id === "gpt-4o-mini") return 1;
-              if (id === "gpt-4o") return 2;
-              if (id.startsWith("o3-mini")) return 3;
-              if (id.startsWith("o1")) return 4;
-              return 10;
-            };
-            return priority(a.id) - priority(b.id);
-          });
-          if (filtered.length > 0) {
-            saveCachedModels(provider, filtered);
-            return filtered;
-          }
-        }
-      }
-      if (provider === "deepseek") {
-        try {
-          const res = await universalFetch("https://api.deepseek.com/models", {
-            headers: {
-              "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json"
+        if (provider === "deepseek") {
+          try {
+            const res = await universalFetch("https://api.deepseek.com/models", {
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+              }
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const rawList = Array.isArray(json) ? json : json.data || [];
+              const models = rawList.map((m) => ({
+                id: m.id,
+                name: formatDisplayName("deepseek", m),
+                isFree: false
+              }));
+              if (models.length > 0) {
+                saveCachedModels(provider, models);
+                return models;
+              }
             }
-          });
-          if (res.ok) {
-            const json = await res.json();
-            const rawList = Array.isArray(json) ? json : json.data || [];
-            const models = rawList.map((m) => ({
-              id: m.id,
-              name: formatDisplayName("deepseek", m),
-              isFree: false
-            }));
-            if (models.length > 0) {
-              saveCachedModels(provider, models);
-              return models;
-            }
+          } catch (e) {
           }
-        } catch (e) {
+          const curatedDeepSeek = PROVIDERS_CONFIG.deepseek.models;
+          saveCachedModels(provider, curatedDeepSeek);
+          return curatedDeepSeek;
         }
-        const curatedDeepSeek = PROVIDERS_CONFIG.deepseek.models;
-        saveCachedModels(provider, curatedDeepSeek);
-        return curatedDeepSeek;
+        return getModelsForProvider(provider, allowPaid);
+      } catch (e) {
+        console.warn(`[ModelFetcher] Erro ao buscar modelos ao vivo de ${provider}:`, e);
+        return getModelsForProvider(provider, allowPaid);
       }
-    } catch (e) {
-      console.warn(`[ModelFetcher] Erro ao buscar modelos ao vivo de ${provider}:`, e);
+    })();
+    inFlightFetches.set(provider, fetchPromise);
+    try {
+      const result = await fetchPromise;
+      return allowPaid ? result : result.filter((m) => m.isFree !== false);
+    } finally {
+      inFlightFetches.delete(provider);
     }
-    return getModelsForProvider(provider, allowPaid);
   }
 
   // src/ui/widget.js
@@ -2029,17 +2351,24 @@ Responda ESTRITAMENTE em formato JSON:
       initialLogs = JSON.parse(savedLogsRaw) || [];
     } catch (e) {
     }
+    const mascotUrl = getMascotUrl();
     const box = document.createElement("div");
     box.id = "estacio-suite-box";
     box.innerHTML = `
     <div class="box-inner">
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
-          <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
-          <span class="title-gradient-text">Est\xE1cio Suite AI</span>
-          <span class="version-badge">v2.5.5</span>
+          <img src="${mascotUrl}" id="box-header-cat" class="cat-dancing-avatar" alt="Mascote" title="Clique no gatinho para recolher para a bolinha \u{1F43E}">
+          <div class="box-title-info">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="title-gradient-text">Est\xE1cio Suite AI</span>
+              <span class="version-badge">v2.5.5</span>
+            </div>
+            <span class="box-subtitle-tip">Clique no gatinho para recolher</span>
+          </div>
         </div>
         <div class="box-controls">
+          <button id="btn-audio-toggle" class="box-ctrl-btn" title="Ativar/Desativar Alertas Sonoros">${isAudioMuted() ? "\u{1F507}" : "\u{1F50A}"}</button>
           <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">\u{1F9F9}</button>
           <button id="btn-copy-header" class="box-ctrl-btn" title="Copiar Logs">\u{1F4CB}</button>
           <button id="btn-min" class="box-ctrl-btn" title="Minimizar (vira bolha)">_</button>
@@ -2109,10 +2438,10 @@ Responda ESTRITAMENTE em formato JSON:
         ` : `
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:0 2px;">
             <span style="color:#38bdf8; font-weight:700;">\u{1F4CD} Portal do Aluno</span>
-            <span style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">\u26A1 Auto-Temas</span>
+            <span id="badge-automator-status" style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">\u26A1 Auto-Temas</span>
           </div>
           <button id="btn-action-main" class="box-btn box-btn-success">
-            <span>\u{1F4DA}</span> Concluir Todos os Temas Desta Mat\xE9ria
+            <span>\u{1F4DA}</span> Concluir Temas Desta Mat\xE9ria
           </button>
         `}
 
@@ -2157,28 +2486,47 @@ Responda ESTRITAMENTE em formato JSON:
     </div>
   `;
     const minMascotImg = document.createElement("img");
-    minMascotImg.src = CAT_MASCOT_DATA_URI;
+    minMascotImg.src = mascotUrl;
     minMascotImg.className = "cat-bubble-avatar";
     minMascotImg.style.display = "none";
     box.appendChild(minMascotImg);
     const toggleBtn = document.createElement("div");
     toggleBtn.id = "estacio-suite-toggle-btn";
-    toggleBtn.innerHTML = `<img src="${CAT_MASCOT_DATA_URI}" class="cat-bubble-avatar" alt="Mascote">`;
+    toggleBtn.innerHTML = `<img src="${mascotUrl}" class="cat-bubble-avatar" alt="Mascote">`;
     toggleBtn.title = "Mostrar Est\xE1cio Suite AI";
     document.body.appendChild(box);
     document.body.appendChild(toggleBtn);
-    setupUniversalDraggable(box, document.getElementById("box-drag-handle"));
-    setupUniversalDraggable(box, box, () => {
-      if (box.classList.contains("minimized")) {
-        box.classList.remove("minimized");
-        minMascotImg.style.display = "none";
-      }
-    });
-    setupUniversalDraggable(toggleBtn, toggleBtn, () => {
+    function expandWidget() {
       box.classList.remove("hidden-box");
       box.classList.remove("minimized");
       minMascotImg.style.display = "none";
       toggleBtn.style.display = "none";
+      requestAnimationFrame(() => {
+        clampElementToViewport(box);
+      });
+    }
+    function toggleMinimize() {
+      const isMin = box.classList.toggle("minimized");
+      minMascotImg.style.display = isMin ? "block" : "none";
+      if (!isMin) {
+        requestAnimationFrame(() => {
+          clampElementToViewport(box);
+        });
+      }
+    }
+    setupUniversalDraggable(box, document.getElementById("box-drag-handle"));
+    setupUniversalDraggable(box, box, () => {
+      if (box.classList.contains("minimized")) {
+        expandWidget();
+      }
+    });
+    setupUniversalDraggable(toggleBtn, toggleBtn, () => {
+      expandWidget();
+    });
+    window.addEventListener("resize", () => {
+      if (!box.classList.contains("minimized") && !box.classList.contains("hidden-box")) {
+        clampElementToViewport(box);
+      }
     });
     const logBox = document.getElementById("box-log");
     if (initialLogs.length > 0) {
@@ -2217,7 +2565,9 @@ Responda ESTRITAMENTE em formato JSON:
       localStorage.removeItem("estacio_suite_logs");
       localStorage.removeItem("estacio_last_gabarito");
       localStorage.removeItem("estacio_catalog_queue");
+      localStorage.removeItem("estacio_multi_queue");
       sessionStorage.removeItem("estacio_catalog_queue");
+      sessionStorage.removeItem("estacio_multi_queue");
       if (logBox) logBox.innerHTML = "";
       const gabaritoPanel = document.getElementById("gabarito-panel");
       const gabaritoBadges = document.getElementById("gabarito-badges");
@@ -2294,13 +2644,13 @@ Responda ESTRITAMENTE em formato JSON:
         modelSelect2.value = currentModel;
       }
     }
-    async function refreshDynamicModelsFromAPI(providerKey, showLogs = false) {
+    async function refreshDynamicModelsFromAPI(providerKey, showLogs = false, force = false) {
       const key = getApiKeyFor(providerKey);
       if (!key && providerKey !== "ollama") return;
       const pName = PROVIDERS_CONFIG[providerKey]?.name || providerKey;
       if (showLogs) log(`\u{1F50D} Consultando modelos dispon\xEDveis na API de ${pName}...`, "info");
       try {
-        const liveModels = await fetchLiveModels(providerKey, key, showPaidModels);
+        const liveModels = await fetchLiveModels(providerKey, key, showPaidModels, force);
         if (liveModels.length > 0 && providerKey === currentProvider) {
           renderModelOptions(currentProvider, currentModel);
           updateFooterLabel();
@@ -2433,7 +2783,7 @@ Responda ESTRITAMENTE em formato JSON:
         e.preventDefault();
         btnRefreshModels.disabled = true;
         btnRefreshModels.textContent = "\u23F3 Buscando...";
-        await refreshDynamicModelsFromAPI(currentProvider, true);
+        await refreshDynamicModelsFromAPI(currentProvider, true, true);
         btnRefreshModels.disabled = false;
         btnRefreshModels.innerHTML = "<span>\u{1F504}</span> Sincronizar";
       });
@@ -2459,7 +2809,7 @@ Responda ESTRITAMENTE em formato JSON:
         setApiKeyFor(p, val || (p === "ollama" ? "http://localhost:11434" : ""));
         setSaved("active_provider", p);
         currentProvider = p;
-        const dynamicModels = await fetchLiveModels(p, val, showPaidModels);
+        const dynamicModels = await fetchLiveModels(p, val, showPaidModels, true);
         if (testRes.model) {
           currentModel = testRes.model;
         } else if (dynamicModels.length > 0 && !dynamicModels.some((m) => m.id === currentModel)) {
@@ -2495,6 +2845,22 @@ Responda ESTRITAMENTE em formato JSON:
       e.stopPropagation();
       clearAllStoredData();
     });
+    const btnAudio = document.getElementById("btn-audio-toggle");
+    if (btnAudio) {
+      btnAudio.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isMuted = !isAudioMuted();
+        setAudioMuted(isMuted);
+        btnAudio.textContent = isMuted ? "\u{1F507}" : "\u{1F50A}";
+        if (!isMuted) {
+          try {
+            playAttentionSound();
+          } catch (err) {
+          }
+        }
+        log(isMuted ? "\u{1F507} Alertas sonoros desativados." : "\u{1F50A} Alertas sonoros ativados!", "info");
+      });
+    }
     document.getElementById("btn-copy-header").addEventListener("click", (e) => {
       e.stopPropagation();
       copyAllLogs(document.getElementById("box-log"));
@@ -2507,15 +2873,24 @@ Responda ESTRITAMENTE em formato JSON:
       e.stopPropagation();
       copyGabarito();
     });
+    const headerCat = document.getElementById("box-header-cat");
+    if (headerCat) {
+      headerCat.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMinimize();
+      });
+    }
     document.getElementById("btn-min").addEventListener("click", (e) => {
       e.stopPropagation();
-      const isMin = box.classList.toggle("minimized");
-      minMascotImg.style.display = isMin ? "block" : "none";
+      toggleMinimize();
     });
     document.getElementById("btn-hide").addEventListener("click", (e) => {
       e.stopPropagation();
       box.classList.add("hidden-box");
       toggleBtn.style.display = "flex";
+      requestAnimationFrame(() => {
+        clampElementToViewport(toggleBtn);
+      });
     });
     const actionBtn = document.getElementById("btn-action-main");
     if (isExam) {
@@ -2531,8 +2906,40 @@ Responda ESTRITAMENTE em formato JSON:
         }
       });
     } else {
+      let updateAutomatorBtn = function() {
+        const isRunning = isAnyAutomationRunning();
+        if (isRunning) {
+          actionBtn.innerHTML = "<span>\u23F9\uFE0F</span> Parar Automa\xE7\xE3o";
+          actionBtn.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+          actionBtn.style.borderColor = "#ef4444";
+          if (statusBadge) {
+            statusBadge.textContent = "\u26A1 Concluindo...";
+            statusBadge.style.color = "#fbbf24";
+            statusBadge.style.background = "rgba(251,191,36,0.15)";
+            statusBadge.style.borderColor = "rgba(251,191,36,0.3)";
+          }
+        } else {
+          actionBtn.innerHTML = "<span>\u{1F4DA}</span> Concluir Temas Desta Mat\xE9ria";
+          actionBtn.style.background = "";
+          actionBtn.style.borderColor = "";
+          if (statusBadge) {
+            statusBadge.textContent = "\u26A1 Pronto";
+            statusBadge.style.color = "#34d399";
+            statusBadge.style.background = "rgba(16,185,129,0.15)";
+            statusBadge.style.borderColor = "rgba(16,185,129,0.3)";
+          }
+        }
+      };
+      const statusBadge = document.getElementById("badge-automator-status");
+      updateAutomatorBtn();
       actionBtn.addEventListener("click", () => {
-        startThemeCompletion(log);
+        if (isAnyAutomationRunning()) {
+          cancelAllAutomations(log);
+          updateAutomatorBtn();
+        } else {
+          startThemeCompletion(log);
+          updateAutomatorBtn();
+        }
       });
     }
     processAutomatorStateMachine(log);
@@ -2552,16 +2959,39 @@ Responda ESTRITAMENTE em formato JSON:
   // src/index.js
   (function initEstacioSuite() {
     "use strict";
+    function saveCapturedToken(token) {
+      if (!token || typeof token !== "string" || token.length < 20) return;
+      const clean = token.replace(/^Bearer\s+/i, "").trim();
+      if (clean) {
+        window.__estacio_bearer = clean;
+        try {
+          sessionStorage.setItem("estacio_bearer", clean);
+        } catch (e) {
+        }
+        try {
+          localStorage.setItem("estacio_bearer", clean);
+        } catch (e) {
+        }
+      }
+    }
     if (typeof window !== "undefined" && window.location.hostname.includes("estudante.estacio.br")) {
       const origFetch = window.fetch;
       window.fetch = async function(...args) {
         try {
-          const headers = args[1]?.headers || {};
-          let auth = headers["Authorization"] || headers["authorization"];
-          if (auth && auth.startsWith("Bearer ")) {
-            const token = auth.replace(/^Bearer\s+/i, "").trim();
-            sessionStorage.setItem("estacio_bearer", token);
-            window.__estacio_bearer = token;
+          const headers = args[1]?.headers;
+          if (headers) {
+            let auth = null;
+            if (typeof headers.get === "function") {
+              auth = headers.get("Authorization") || headers.get("authorization");
+            } else if (Array.isArray(headers)) {
+              const entry = headers.find(([k]) => k.toLowerCase() === "authorization");
+              if (entry) auth = entry[1];
+            } else if (typeof headers === "object") {
+              auth = headers["Authorization"] || headers["authorization"];
+            }
+            if (auth && auth.startsWith("Bearer ")) {
+              saveCapturedToken(auth);
+            }
           }
         } catch (e) {
         }
@@ -2570,12 +3000,54 @@ Responda ESTRITAMENTE em formato JSON:
       const origXHR = window.XMLHttpRequest.prototype.setRequestHeader;
       window.XMLHttpRequest.prototype.setRequestHeader = function(header, value) {
         if (header && header.toLowerCase() === "authorization" && value && value.startsWith("Bearer ")) {
-          const token = value.replace(/^Bearer\s+/i, "").trim();
-          sessionStorage.setItem("estacio_bearer", token);
-          window.__estacio_bearer = token;
+          saveCapturedToken(value);
         }
         return origXHR.apply(this, arguments);
       };
+      const pageWindow = typeof unsafeWindow !== "undefined" ? unsafeWindow : null;
+      if (pageWindow && pageWindow !== window) {
+        try {
+          const uFetch = pageWindow.fetch;
+          if (typeof uFetch === "function") {
+            pageWindow.fetch = async function(...args) {
+              try {
+                const headers = args[1]?.headers;
+                if (headers) {
+                  let auth = null;
+                  if (typeof headers.get === "function") {
+                    auth = headers.get("Authorization") || headers.get("authorization");
+                  } else if (Array.isArray(headers)) {
+                    const entry = headers.find(([k]) => k.toLowerCase() === "authorization");
+                    if (entry) auth = entry[1];
+                  } else if (typeof headers === "object") {
+                    auth = headers["Authorization"] || headers["authorization"];
+                  }
+                  if (auth && auth.startsWith("Bearer ")) {
+                    saveCapturedToken(auth);
+                  }
+                }
+              } catch (e) {
+              }
+              return uFetch.apply(this, args);
+            };
+          }
+          if (pageWindow.XMLHttpRequest && pageWindow.XMLHttpRequest.prototype) {
+            const uXHR = pageWindow.XMLHttpRequest.prototype.setRequestHeader;
+            pageWindow.XMLHttpRequest.prototype.setRequestHeader = function(header, value) {
+              if (header && header.toLowerCase() === "authorization" && value && value.startsWith("Bearer ")) {
+                saveCapturedToken(value);
+              }
+              return uXHR.apply(this, arguments);
+            };
+          }
+        } catch (e) {
+        }
+      }
+      window.addEventListener("estacio_token_captured", (e) => {
+        if (e.detail && e.detail.token) {
+          saveCapturedToken(e.detail.token);
+        }
+      });
     }
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", createSuiteWidget);

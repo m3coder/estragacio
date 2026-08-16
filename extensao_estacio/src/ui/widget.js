@@ -1,16 +1,17 @@
 // Widget In-Page Flutuante - Sincronização Unificada com Popup e Multi-Provedores de IA
 
-import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
-import { setupUniversalDraggable } from './draggable.js';
+import { CAT_MASCOT_DATA_URI, getMascotUrl } from '../config/mascot.js';
+import { setupUniversalDraggable, clampElementToViewport } from './draggable.js';
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { getSaved, setSaved, getApiKeyFor, setApiKeyFor, getProviderStatus, setProviderStatus, onStorageChange, getShowPaidModels, setShowPaidModels } from '../config/storage.js';
 import { copyAllLogs, copyGabarito, renderSavedGabarito, initGabaritoStructure } from '../modules/gabarito.js';
 import { reviewSingleQuestion } from '../modules/reviewer.js';
 import { runExamQueue, solveSingleQuestion, applySavedGabaritoToDOM } from '../modules/exam_solver.js';
-import { startThemeCompletion, processAutomatorStateMachine } from '../modules/theme_automator.js';
+import { startThemeCompletion, cancelAllAutomations, isAnyAutomationRunning, processAutomatorStateMachine } from '../modules/theme_automator.js';
 import { testProviderKey } from '../core/ai_engine.js';
 import { fetchLiveModels, getModelsForProvider } from '../modules/model_fetcher.js';
 import { getTotalExamQuestionsCount } from '../modules/dom_parser.js';
+import { isAudioMuted, setAudioMuted, playAttentionSound } from '../modules/audio_alerts.js';
 
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;
@@ -29,17 +30,25 @@ export function createSuiteWidget() {
   let initialLogs = [];
   try { initialLogs = JSON.parse(savedLogsRaw) || []; } catch(e) {}
 
+  const mascotUrl = getMascotUrl();
+
   const box = document.createElement('div');
   box.id = 'estacio-suite-box';
   box.innerHTML = `
     <div class="box-inner">
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
-          <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
-          <span class="title-gradient-text">Estácio Suite AI</span>
-          <span class="version-badge">v2.5.5</span>
+          <img src="${mascotUrl}" id="box-header-cat" class="cat-dancing-avatar" alt="Mascote" title="Clique no gatinho para recolher para a bolinha 🐾">
+          <div class="box-title-info">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="title-gradient-text">Estácio Suite AI</span>
+              <span class="version-badge">v2.5.5</span>
+            </div>
+            <span class="box-subtitle-tip">Clique no gatinho para recolher</span>
+          </div>
         </div>
         <div class="box-controls">
+          <button id="btn-audio-toggle" class="box-ctrl-btn" title="Ativar/Desativar Alertas Sonoros">${isAudioMuted() ? '🔇' : '🔊'}</button>
           <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">🧹</button>
           <button id="btn-copy-header" class="box-ctrl-btn" title="Copiar Logs">📋</button>
           <button id="btn-min" class="box-ctrl-btn" title="Minimizar (vira bolha)">_</button>
@@ -109,10 +118,10 @@ export function createSuiteWidget() {
         ` : `
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:0 2px;">
             <span style="color:#38bdf8; font-weight:700;">📍 Portal do Aluno</span>
-            <span style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">⚡ Auto-Temas</span>
+            <span id="badge-automator-status" style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">⚡ Auto-Temas</span>
           </div>
           <button id="btn-action-main" class="box-btn box-btn-success">
-            <span>📚</span> Concluir Todos os Temas Desta Matéria
+            <span>📚</span> Concluir Temas Desta Matéria
           </button>
         `}
 
@@ -159,33 +168,55 @@ export function createSuiteWidget() {
 
   // Imagem do mascote na bolha minimizada
   const minMascotImg = document.createElement('img');
-  minMascotImg.src = CAT_MASCOT_DATA_URI;
+  minMascotImg.src = mascotUrl;
   minMascotImg.className = 'cat-bubble-avatar';
   minMascotImg.style.display = 'none';
   box.appendChild(minMascotImg);
 
   const toggleBtn = document.createElement('div');
   toggleBtn.id = 'estacio-suite-toggle-btn';
-  toggleBtn.innerHTML = `<img src="${CAT_MASCOT_DATA_URI}" class="cat-bubble-avatar" alt="Mascote">`;
+  toggleBtn.innerHTML = `<img src="${mascotUrl}" class="cat-bubble-avatar" alt="Mascote">`;
   toggleBtn.title = 'Mostrar Estácio Suite AI';
 
   document.body.appendChild(box);
   document.body.appendChild(toggleBtn);
 
-  setupUniversalDraggable(box, document.getElementById('box-drag-handle'));
-
-  setupUniversalDraggable(box, box, () => {
-    if (box.classList.contains('minimized')) {
-      box.classList.remove('minimized');
-      minMascotImg.style.display = 'none';
-    }
-  });
-
-  setupUniversalDraggable(toggleBtn, toggleBtn, () => {
+  function expandWidget() {
     box.classList.remove('hidden-box');
     box.classList.remove('minimized');
     minMascotImg.style.display = 'none';
     toggleBtn.style.display = 'none';
+    requestAnimationFrame(() => {
+      clampElementToViewport(box);
+    });
+  }
+
+  function toggleMinimize() {
+    const isMin = box.classList.toggle('minimized');
+    minMascotImg.style.display = isMin ? 'block' : 'none';
+    if (!isMin) {
+      requestAnimationFrame(() => {
+        clampElementToViewport(box);
+      });
+    }
+  }
+
+  setupUniversalDraggable(box, document.getElementById('box-drag-handle'));
+
+  setupUniversalDraggable(box, box, () => {
+    if (box.classList.contains('minimized')) {
+      expandWidget();
+    }
+  });
+
+  setupUniversalDraggable(toggleBtn, toggleBtn, () => {
+    expandWidget();
+  });
+
+  window.addEventListener('resize', () => {
+    if (!box.classList.contains('minimized') && !box.classList.contains('hidden-box')) {
+      clampElementToViewport(box);
+    }
   });
 
   const logBox = document.getElementById('box-log');
@@ -229,7 +260,9 @@ export function createSuiteWidget() {
     localStorage.removeItem('estacio_suite_logs');
     localStorage.removeItem('estacio_last_gabarito');
     localStorage.removeItem('estacio_catalog_queue');
+    localStorage.removeItem('estacio_multi_queue');
     sessionStorage.removeItem('estacio_catalog_queue');
+    sessionStorage.removeItem('estacio_multi_queue');
 
     if (logBox) logBox.innerHTML = '';
 
@@ -321,7 +354,7 @@ export function createSuiteWidget() {
     }
   }
 
-  async function refreshDynamicModelsFromAPI(providerKey, showLogs = false) {
+  async function refreshDynamicModelsFromAPI(providerKey, showLogs = false, force = false) {
     const key = getApiKeyFor(providerKey);
     if (!key && providerKey !== 'ollama') return;
 
@@ -329,7 +362,7 @@ export function createSuiteWidget() {
     if (showLogs) log(`🔍 Consultando modelos disponíveis na API de ${pName}...`, 'info');
 
     try {
-      const liveModels = await fetchLiveModels(providerKey, key, showPaidModels);
+      const liveModels = await fetchLiveModels(providerKey, key, showPaidModels, force);
       if (liveModels.length > 0 && providerKey === currentProvider) {
         renderModelOptions(currentProvider, currentModel);
         updateFooterLabel();
@@ -493,7 +526,7 @@ export function createSuiteWidget() {
       e.preventDefault();
       btnRefreshModels.disabled = true;
       btnRefreshModels.textContent = '⏳ Buscando...';
-      await refreshDynamicModelsFromAPI(currentProvider, true);
+      await refreshDynamicModelsFromAPI(currentProvider, true, true);
       btnRefreshModels.disabled = false;
       btnRefreshModels.innerHTML = '<span>🔄</span> Sincronizar';
     });
@@ -525,8 +558,8 @@ export function createSuiteWidget() {
       setSaved('active_provider', p);
       currentProvider = p;
 
-      // Puxa lista real de modelos retornada pela API
-      const dynamicModels = await fetchLiveModels(p, val, showPaidModels);
+      // Puxa lista real de modelos retornada pela API (forçando refresh)
+      const dynamicModels = await fetchLiveModels(p, val, showPaidModels, true);
       if (testRes.model) {
         currentModel = testRes.model;
       } else if (dynamicModels.length > 0 && !dynamicModels.some(m => m.id === currentModel)) {
@@ -567,6 +600,21 @@ export function createSuiteWidget() {
     clearAllStoredData();
   });
 
+  // Botão de Áudio
+  const btnAudio = document.getElementById('btn-audio-toggle');
+  if (btnAudio) {
+    btnAudio.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isMuted = !isAudioMuted();
+      setAudioMuted(isMuted);
+      btnAudio.textContent = isMuted ? '🔇' : '🔊';
+      if (!isMuted) {
+        try { playAttentionSound(); } catch (err) {}
+      }
+      log(isMuted ? '🔇 Alertas sonoros desativados.' : '🔊 Alertas sonoros ativados!', 'info');
+    });
+  }
+
   // Botões de Cópia Silenciosa
   document.getElementById('btn-copy-header').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -582,16 +630,26 @@ export function createSuiteWidget() {
     copyGabarito();
   });
 
+  const headerCat = document.getElementById('box-header-cat');
+  if (headerCat) {
+    headerCat.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMinimize();
+    });
+  }
+
   document.getElementById('btn-min').addEventListener('click', (e) => {
     e.stopPropagation();
-    const isMin = box.classList.toggle('minimized');
-    minMascotImg.style.display = isMin ? 'block' : 'none';
+    toggleMinimize();
   });
 
   document.getElementById('btn-hide').addEventListener('click', (e) => {
     e.stopPropagation();
     box.classList.add('hidden-box');
     toggleBtn.style.display = 'flex';
+    requestAnimationFrame(() => {
+      clampElementToViewport(toggleBtn);
+    });
   });
 
   const actionBtn = document.getElementById('btn-action-main');
@@ -608,8 +666,44 @@ export function createSuiteWidget() {
       }
     });
   } else {
+    const statusBadge = document.getElementById('badge-automator-status');
+
+    function updateAutomatorBtn() {
+      const isRunning = isAnyAutomationRunning();
+
+      if (isRunning) {
+        actionBtn.innerHTML = '<span>⏹️</span> Parar Automação';
+        actionBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        actionBtn.style.borderColor = '#ef4444';
+        if (statusBadge) {
+          statusBadge.textContent = '⚡ Concluindo...';
+          statusBadge.style.color = '#fbbf24';
+          statusBadge.style.background = 'rgba(251,191,36,0.15)';
+          statusBadge.style.borderColor = 'rgba(251,191,36,0.3)';
+        }
+      } else {
+        actionBtn.innerHTML = '<span>📚</span> Concluir Temas Desta Matéria';
+        actionBtn.style.background = '';
+        actionBtn.style.borderColor = '';
+        if (statusBadge) {
+          statusBadge.textContent = '⚡ Pronto';
+          statusBadge.style.color = '#34d399';
+          statusBadge.style.background = 'rgba(16,185,129,0.15)';
+          statusBadge.style.borderColor = 'rgba(16,185,129,0.3)';
+        }
+      }
+    }
+
+    updateAutomatorBtn();
+
     actionBtn.addEventListener('click', () => {
-      startThemeCompletion(log);
+      if (isAnyAutomationRunning()) {
+        cancelAllAutomations(log);
+        updateAutomatorBtn();
+      } else {
+        startThemeCompletion(log);
+        updateAutomatorBtn();
+      }
     });
   }
 

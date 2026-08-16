@@ -3,6 +3,8 @@
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
 import { waitForCards, getThemeCardsFromDom } from './dom_parser.js';
+import { universalFetch } from '../core/network.js';
+import { playAttentionSound, playSuccessSound, playCelebrationFanfare } from './audio_alerts.js';
 
 let isStateMachineRunning = false;
 
@@ -49,12 +51,18 @@ export function isCurrentlyInsideTheme() {
 
 export function parseIdsFromUrl(url) {
   if (!url) return { turmaId: null, conteudoUuid: null, temaId: null };
-  const turmaMatch = url.match(/\/disciplinas\/(estacio_\d+)/i);
+  const turmaMatch = url.match(/\/disciplinas\/(estacio_\d+|\d+)/i);
   const uuidMatch = url.match(/\/conteudos\/([a-f0-9-]{36})/i);
   const temaMatch = url.match(/[?&]tema=([A-Za-z0-9_-]+)/i) || url.match(/\/temas\/([A-Za-z0-9_-]+)/i);
 
+  let turmaId = null;
+  if (turmaMatch) {
+    const raw = turmaMatch[1];
+    turmaId = raw.startsWith('estacio_') ? raw : `estacio_${raw}`;
+  }
+
   return {
-    turmaId: turmaMatch ? turmaMatch[1] : null,
+    turmaId: turmaId,
     conteudoUuid: uuidMatch ? uuidMatch[1] : null,
     temaId: temaMatch ? temaMatch[1] : null
   };
@@ -87,12 +95,13 @@ export async function fetchAllThemeSubContents(turmaId, temaId, token) {
 
   for (const url of endpoints) {
     try {
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json, text/plain, */*'
-        }
-      });
+      const headers = {
+        'Accept': 'application/json, text/plain, */*'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await universalFetch(url, { headers });
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data) ? data : (data.conteudos || data.itens || data.items || []);
@@ -112,57 +121,97 @@ export async function fetchAllThemeSubContents(turmaId, temaId, token) {
 }
 
 export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula, onLog = null) {
-  const matriculaParam = matricula ? `?matricula=${matricula}` : '';
-  const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
+  const normalizedTurmaId = turmaId && !String(turmaId).startsWith('estacio_') ? `estacio_${turmaId}` : turmaId;
   const endpointNovo = `https://apis.estudante.estacio.br/rest/me/conteudos/${conteudoUuid}/concluir`;
+  const matriculaParam = matricula ? `?matricula=${matricula}` : '';
+  const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${normalizedTurmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
 
   const headersBase = {
-    'Authorization': `Bearer ${token}`,
     'Accept': 'application/json, text/plain, */*'
   };
-
-  let statusInfo = '';
-
-  // 1. Tenta Endpoint Principal de Conclusões da Turma
-  try {
-    const res = await fetch(endpointLegado, {
-      method: 'POST',
-      headers: headersBase
-    });
-    statusInfo += `Legado: HTTP ${res.status} `;
-    if (res.status >= 200 && res.status < 300) {
-      if (onLog) onLog(`[POST Conclusões] /temas/${temaId}/conteudos/${conteudoUuid.slice(0, 8)}... → HTTP ${res.status} OK ✅`, 'success');
-      return true;
-    }
-  } catch (e) {
-    statusInfo += `Legado: ${e.message} `;
+  if (token) {
+    headersBase['Authorization'] = `Bearer ${token}`;
   }
 
-  // 2. Tenta Endpoint Secundário /me/conteudos/concluir
+  const shortUuid = conteudoUuid ? conteudoUuid.slice(0, 8) : '...';
+
+  // 1. Tenta Endpoint Oficial de Conclusão /me/conteudos/{id}/concluir
   try {
-    const res = await fetch(endpointNovo, {
+    let res = await universalFetch(endpointNovo, {
       method: 'POST',
       headers: {
         ...headersBase,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        idTurma: turmaId,
+        idTurma: normalizedTurmaId,
         idTema: temaId,
         idConteudo: conteudoUuid
       })
     });
-    statusInfo += `Novo: HTTP ${res.status}`;
+
     if (res.status >= 200 && res.status < 300) {
-      if (onLog) onLog(`[POST Concluir] /me/conteudos/${conteudoUuid.slice(0, 8)}... → HTTP ${res.status} OK ✅`, 'success');
+      if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... → HTTP ${res.status} OK ✅`, 'success');
       return true;
+    } else if (res.status === 409) {
+      if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... → HTTP 409 (Já concluído) ⚡`, 'info');
+      return true;
+    } else if (res.status === 403) {
+      // 403 = Backend ainda inicializando sessão ou rate-limiting da API
+      if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... → HTTP 403 (Aguardando 2.5s para retry)... ⏳`, 'warning');
+      await new Promise(r => setTimeout(r, 2500));
+
+      // Retry após aguardar
+      res = await universalFetch(endpointNovo, {
+        method: 'POST',
+        headers: {
+          ...headersBase,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          idTurma: normalizedTurmaId,
+          idTema: temaId,
+          idConteudo: conteudoUuid
+        })
+      });
+
+      if (res.status >= 200 && res.status < 300) {
+        if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... → HTTP ${res.status} OK ✅`, 'success');
+        return true;
+      } else if (res.status === 409) {
+        if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... → HTTP 409 (Já concluído) ⚡`, 'info');
+        return true;
+      } else {
+        if (onLog) onLog(`[POST Oficial - Retry] /me/conteudos/${shortUuid}... → HTTP ${res.status} ⚠️`, 'warning');
+      }
+    } else {
+      if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... → HTTP ${res.status} ⚠️`, 'warning');
     }
   } catch (e) {
-    statusInfo += `Novo: ${e.message}`;
+    if (onLog) onLog(`[POST Oficial] /me/conteudos/${shortUuid}... → Erro: ${e.message}`, 'warning');
   }
 
-  if (onLog) {
-    onLog(`[Aviso POST] Resposta da API: ${statusInfo}`, 'warning');
+  // Intervalo de segurança antes do fallback
+  await new Promise(r => setTimeout(r, 800));
+
+  // 2. Fallback para Endpoint Legado de Conclusões da Turma
+  try {
+    const res = await universalFetch(endpointLegado, {
+      method: 'POST',
+      headers: headersBase
+    });
+
+    if (res.status >= 200 && res.status < 300) {
+      if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... → HTTP ${res.status} OK ✅`, 'success');
+      return true;
+    } else if (res.status === 409) {
+      if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... → HTTP 409 (Já concluído) ⚡`, 'info');
+      return true;
+    } else {
+      if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... → HTTP ${res.status} ⚠️`, 'warning');
+    }
+  } catch (e) {
+    if (onLog) onLog(`[POST Legado] /temas/${temaId}/conteudos/${shortUuid}... → Erro: ${e.message}`, 'warning');
   }
 
   return false;
@@ -188,6 +237,7 @@ export async function clickConcludeButtonActiveLoop(onLog = null) {
 
     dispatchFullMouseEvents(targetBtn);
     triggerNativeClick(targetBtn);
+    try { playAttentionSound(); } catch (e) {}
     if (onLog) onLog('Botão [Marcar como concluído] liberado e clicado na tela! 🎯', 'success');
 
     await new Promise(r => setTimeout(r, 800));
@@ -241,6 +291,27 @@ export function openThemeByIndex(temaNum) {
   return true;
 }
 
+export function cancelAllAutomations(onLog = null) {
+  isStateMachineRunning = false;
+  localStorage.removeItem('estacio_catalog_queue');
+  localStorage.removeItem('estacio_multi_queue');
+  localStorage.removeItem('estacio_multi_materia_queue');
+  sessionStorage.removeItem('estacio_catalog_queue');
+  sessionStorage.removeItem('estacio_multi_queue');
+  if (onLog) onLog('⏹️ Automação cancelada pelo usuário.', 'info');
+}
+
+export function isAnyAutomationRunning() {
+  const q = localStorage.getItem('estacio_catalog_queue');
+  if (q) {
+    try {
+      const parsed = JSON.parse(q);
+      if (parsed && parsed.active) return true;
+    } catch (e) {}
+  }
+  return isStateMachineRunning;
+}
+
 export async function processAutomatorStateMachine(onLog) {
   if (isStateMachineRunning) return;
 
@@ -264,16 +335,24 @@ export async function processAutomatorStateMachine(onLog) {
       const url = window.location.href;
       const ids = parseIdsFromUrl(url);
       const turmaId = ids.turmaId || queue.turmaId;
-      const targetMateriaUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
+      const targetMateriaUrl = queue.conteudosUrl || `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
 
       // Identifica número do tema
       let temaId = ids.temaId;
       const headerText = document.body.innerText;
       const headerMatch = headerText.match(/Tema\s*(\d+)/i);
-      const temaNum = headerMatch ? parseInt(headerMatch[1]) : (queue.pendingThemes[queue.currentPos] || 1);
+      const temaNum = headerMatch ? parseInt(headerMatch[1], 10) : (queue.pendingThemes?.[queue.currentPos] || 1);
       if (!temaId) temaId = `tema_${temaNum}`;
 
-      if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando sub-conteúdos...`, 'info');
+      if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Aguardando estabilização da sessão... ⏳`, 'info');
+
+      // Aguarda 2.2s com rolagem suave para disparar os observadores de tela (IntersectionObserver)
+      try {
+        window.scrollTo({ top: Math.min(600, document.body.scrollHeight / 2), behavior: 'smooth' });
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 2200));
+
+      if (onLog) onLog(`[Tema ${temaNum}] Coletando sub-conteúdos...`, 'info');
 
       // Coleta todos os UUIDs disponíveis
       const allUuids = new Set();
@@ -294,7 +373,7 @@ export async function processAutomatorStateMachine(onLog) {
         for (let idx = 0; idx < uuidList.length; idx++) {
           const uuid = uuidList[idx];
           await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
-          await new Promise(r => setTimeout(r, 300));
+          await new Promise(r => setTimeout(r, 800));
         }
       } else if (ids.conteudoUuid) {
         await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
@@ -307,11 +386,13 @@ export async function processAutomatorStateMachine(onLog) {
       if (uuidList.length > 0) {
         for (const uuid of uuidList) {
           await postConcluir(turmaId, temaId, uuid, token, matricula);
+          await new Promise(r => setTimeout(r, 800));
         }
       }
 
-      const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
+      const delayMs = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
       const delaySec = (delayMs / 1000).toFixed(1);
+      try { playSuccessSound(); } catch (e) {}
       if (onLog) onLog(`[Tema ${temaNum}] Concluído com sucesso! Aguardando ${delaySec}s e voltando para a grade...`, 'success');
       await new Promise(r => setTimeout(r, delayMs));
 
@@ -320,7 +401,7 @@ export async function processAutomatorStateMachine(onLog) {
       if (!queue.completedThemes.includes(temaNum)) {
         queue.completedThemes.push(temaNum);
       }
-      queue.currentPos += 1;
+      queue.currentPos = (queue.currentPos || 0) + 1;
       localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
       // Retorno determinístico direto para /disciplinas/{turmaId}/conteudos
@@ -340,7 +421,7 @@ export async function processAutomatorStateMachine(onLog) {
     isStateMachineRunning = true;
     try {
       // Aguarda o React estabilizar e carregar os cards da grade
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise(r => setTimeout(r, 1800));
       const gridCards = await waitForCards(15000);
       if (gridCards.length === 0) {
         return;
@@ -355,11 +436,15 @@ export async function processAutomatorStateMachine(onLog) {
       const expectedTotal = queue.totalThemes || gridCards.length;
       if (pendentes.length === 0 && gridCards.length >= expectedTotal) {
         localStorage.removeItem('estacio_catalog_queue');
+        try { playCelebrationFanfare(); } catch (e) {}
         if (onLog) onLog(`🏆 Todos os ${gridCards.length} temas desta matéria estão 100% CONCLUÍDOS! Parabéns!`, 'success');
         return;
       }
 
       if (pendentes.length === 0) {
+        localStorage.removeItem('estacio_catalog_queue');
+        try { playCelebrationFanfare(); } catch (e) {}
+        if (onLog) onLog(`🏆 Todos os temas pendentes desta matéria foram concluídos!`, 'success');
         return;
       }
 
@@ -371,7 +456,7 @@ export async function processAutomatorStateMachine(onLog) {
       const nextTema = pendentes[0];
       if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
 
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 1500));
       openThemeByIndex(nextTema.temaNum);
 
     } finally {
@@ -382,8 +467,8 @@ export async function processAutomatorStateMachine(onLog) {
 
 export function startThemeCompletion(onLog) {
   const currentUrl = window.location.href;
-  const turmaMatch = currentUrl.match(/\/disciplinas\/(estacio_\d+)/i);
-  const turmaId = turmaMatch ? turmaMatch[1] : null;
+  const turmaMatch = currentUrl.match(/\/disciplinas\/(estacio_\d+|\d+)/i);
+  const turmaId = turmaMatch ? (turmaMatch[1].startsWith('estacio_') ? turmaMatch[1] : `estacio_${turmaMatch[1]}`) : null;
 
   if (!turmaId) {
     if (onLog) onLog('Acesse a página de conteúdos da matéria (/disciplinas/estacio_...) para concluir.', 'error');
@@ -420,6 +505,7 @@ export function startThemeCompletion(onLog) {
     if (onLog) onLog(`Detectados ${cards.length} temas no total (${pendentes.length} pendentes).`, 'info');
 
     if (pendentes.length === 0) {
+      try { playCelebrationFanfare(); } catch (e) {}
       if (onLog) onLog('Todos os temas desta matéria já estão 100% concluídos! 🏆', 'success');
       localStorage.removeItem('estacio_catalog_queue');
       return;
@@ -440,7 +526,7 @@ export function startThemeCompletion(onLog) {
 
     const firstTema = pendentes[0];
     if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, 'info');
-    
+
     openThemeByIndex(firstTema.temaNum);
   });
 }

@@ -10,6 +10,7 @@
   },
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab"
   ],
   "host_permissions": [
@@ -44,12 +45,35 @@
         "https://estudante.estacio.br/*"
       ],
       "js": [
+        "content/interceptor.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://estacio.saladeavaliacoes.com.br/*",
+        "https://estudante.estacio.br/*"
+      ],
+      "js": [
         "content/content.js"
       ],
       "css": [
         "content/overlay.css"
       ],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "content/*"
+      ],
+      "matches": [
+        "https://estacio.saladeavaliacoes.com.br/*",
+        "https://estudante.estacio.br/*"
+      ]
     }
   ]
 }

@@ -45,11 +45,12 @@
 5. **🔄 Sincronização em Tempo Real (`chrome.storage.local` $\leftrightarrow$ `localStorage`)**:
    - As chaves de API e configurações salvas no popup refletem na hora no widget flutuante da página sem precisar dar F5.
 
-6. **📚 Auto-Conclusão de Matérias com Ciclo Completo de 2 Ondas**:
-   - **1ª Onda POST (`/conclusoes`)**: Registra leitura no backend e libera o botão físico na interface.
-   - **Clique Ativo React**: Rola a tela e clica no botão destravado `[Marcar como concluído]`.
-   - **2ª Onda POST**: Confirmação de persistência no banco da Estácio.
-   - **Deduplicação Estrita**: Reconhece perfeitamente temas de múltiplos sub-itens (`Tema 1 | 2 Itens`) e avança sequencialmente sem interrupção.
+6. **📚 Auto-Conclusão de Matérias com Alerta Sonoro e Verificação Contínua de "Concluído"**:
+   - **Disparo de Leitura & Bypass de CORS**: Envio de confirmação via Universal Fetch no Chrome MV3 e Tampermonkey.
+   - **Clique Ativo React Fiber**: Disparo de eventos `pointerdown`, `mousedown`, `pointerup`, `mouseup` e `click`.
+   - **🔔 Alerta Sonoro Nativo (Web Audio API)**: Toca um bipe suave de atenção quando o botão está pronto para ação.
+   - **🎯 Detecção Inteligente de Status "Concluído"**: Monitora ativamente o DOM da página; assim que o status "Concluído" é registrado (seja por auto-clique ou intervenção do aluno), toca um som de sucesso e retorna automaticamente para a grade da matéria para avançar ao próximo tema.
+   - **🏆 Fanfarra de Conclusão Total**: Ao finalizar 100% dos temas da disciplina, dispara comemoração sonora e encerra o ciclo.
 
 ---
 
@@ -58,7 +59,7 @@
 | Provedor | Modelo Padrão Free | Modelos Disponíveis | Onde Obter Chave |
 | :--- | :--- | :--- | :--- |
 | **Groq** *(100% Free / Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
-| **Google Gemini** | `gemini-2.5-flash` | `Gemini 2.5 Flash`, `Gemini 3.7 Flash`, `Gemini 3.5 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| **Google Gemini** | `gemini-3.7-flash` | `Gemini 3.7 Flash`, `Gemini 3.6 Flash`, `Gemini 3.5 Flash`, `Gemini 3.1 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** *(Nous Hermes)* | `meta-llama/llama-3.3-70b-instruct:free` | `Hermes 3`, `DeepSeek R1 (free)`, `Gemini 2.0 Flash (free)` | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Ollama** *(100% Local Offline)* | `llama3.3` | `Llama 3.3`, `DeepSeek R1`, `Hermes 3`, `Qwen 2.5`, `Mistral` | [ollama.com](https://ollama.com) |
 | **Mistral AI** *(PhD)* | `codestral-latest` | `Codestral Latest`, `Mistral Small`, `Mistral Large` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |

@@ -33,22 +33,31 @@
 
 #estacio-suite-box.minimized,
 #estacio-solver-widget.minimized {
-  width: 54px !important;
-  height: 54px !important;
+  width: 58px !important;
+  height: 58px !important;
   border-radius: 50% !important;
-  cursor: grab !important;
+  cursor: pointer !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: radial-gradient(circle, #1e293b, #0f172a);
   padding: 0;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.55);
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(56, 189, 248, 0.7);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+#estacio-suite-box.minimized:hover,
+#estacio-solver-widget.minimized:hover {
+  transform: scale(1.1);
+  border-color: #c084fc;
+  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);
 }
 
 #estacio-suite-box.minimized:active,
 #estacio-solver-widget.minimized:active {
   cursor: grabbing !important;
+  transform: scale(0.95);
 }
 
 #estacio-suite-box.minimized .box-inner,
@@ -67,63 +76,80 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: radial-gradient(circle, #1e293b, #0f172a);
   color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 10px 25px rgba(0, 0, 0, 0.6);
   display: none;
   align-items: center;
   justify-content: center;
-  cursor: grab;
+  cursor: pointer;
   z-index: 99999999;
   overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+#estacio-suite-toggle-btn:hover {
+  transform: scale(1.1);
+  border-color: #c084fc;
+  box-shadow: 0 0 26px rgba(192, 132, 252, 0.9), 0 12px 30px rgba(0, 0, 0, 0.7);
 }
 
 #estacio-suite-toggle-btn:active {
   cursor: grabbing;
+  transform: scale(0.95);
 }
 
-/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */
+/* Anime Dancing Cat Mascot Avatar (Enlarged, Interactive, Smooth Dancing Frame) */
 .cat-dancing-avatar {
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid #60a5fa;
-  animation: catBop 0.8s infinite ease-in-out;
-  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);
+  border: 2px solid #60a5fa;
+  box-shadow: 0 0 14px rgba(96, 165, 250, 0.75), 0 2px 8px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
   display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cat-dancing-avatar:hover {
+  transform: scale(1.14);
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.95), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.cat-dancing-avatar:active {
+  transform: scale(0.92);
 }
 
 .cat-bubble-avatar {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  animation: catDance 0.8s infinite ease-in-out;
   box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);
   pointer-events: none;
   display: inline-block;
+  vertical-align: middle;
 }
 
-@keyframes catBop {
-  0% { transform: translateY(0) rotate(-8deg) scale(1); }
-  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }
-  50% { transform: translateY(0) rotate(8deg) scale(1.02); }
-  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }
-  100% { transform: translateY(0) rotate(-8deg) scale(1); }
+.box-title-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-@keyframes catDance {
-  0% { transform: translateY(0) rotate(-14deg) scale(1); }
-  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }
-  50% { transform: translateY(0) rotate(14deg) scale(1.05); }
-  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }
-  100% { transform: translateY(0) rotate(-14deg) scale(1); }
+.box-subtitle-tip {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.1px;
 }
 
 /* Header */
@@ -685,4 +711,27 @@
   outline: 3px solid #10b981 !important;
   outline-offset: 2px;
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;
+}
+
+@keyframes pulseConcludeGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8), 0 0 15px rgba(56, 189, 248, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0), 0 0 25px rgba(56, 189, 248, 0.95);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 0 15px rgba(56, 189, 248, 0.6);
+    transform: scale(1);
+  }
+}
+
+.estacio-conclude-pulse {
+  outline: 3px solid #38bdf8 !important;
+  outline-offset: 3px !important;
+  animation: pulseConcludeGlow 1.4s infinite ease-in-out !important;
+  position: relative !important;
+  z-index: 99999 !important;
 }

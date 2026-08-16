@@ -35,21 +35,45 @@ export function clickOptionReact(element) {
 
 export function triggerNativeClick(element) {
   if (!element) return;
-  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  try {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {}
 
   const btn = element.tagName === 'BUTTON' || element.tagName === 'A' ? element : element.querySelector('button, a') || element;
 
-  const propKey = Object.keys(btn).find(k => k.startsWith('__reactProps$') || k.startsWith('__reactEventHandlers$'));
-  if (propKey && btn[propKey]?.onClick) {
+  try {
+    btn.removeAttribute('disabled');
+    btn.setAttribute('aria-disabled', 'false');
+    if (btn.style) btn.style.pointerEvents = 'auto';
+  } catch (e) {}
+
+  try { btn.focus(); } catch (e) {}
+
+  const triggerReactHandler = (target) => {
+    if (!target) return false;
+    const propKey = Object.keys(target).find(k => k.startsWith('__reactProps$') || k.startsWith('__reactEventHandlers$'));
+    if (propKey && target[propKey]?.onClick) {
+      try {
+        target[propKey].onClick({ preventDefault: () => {}, stopPropagation: () => {}, target: target, currentTarget: target, bubbles: true });
+        return true;
+      } catch (err) {}
+    }
+    return false;
+  };
+
+  triggerReactHandler(element);
+  if (btn && btn !== element) triggerReactHandler(btn);
+  element.querySelectorAll('*').forEach(c => triggerReactHandler(c));
+
+  try {
+    if (typeof btn.click === 'function') btn.click();
+    else if (typeof element.click === 'function') element.click();
+  } catch (e) {}
+
+  ['pointerover', 'mouseover', 'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(evtName => {
     try {
-      btn[propKey].onClick({ preventDefault: () => {}, stopPropagation: () => {}, target: btn, currentTarget: btn, bubbles: true });
+      const evt = new MouseEvent(evtName, { bubbles: true, cancelable: true, view: window });
+      (btn || element).dispatchEvent(evt);
     } catch (e) {}
-  }
-
-  try { btn.click(); } catch (e) {}
-
-  ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(evtName => {
-    const evt = new MouseEvent(evtName, { bubbles: true, cancelable: true, view: window });
-    btn.dispatchEvent(evt);
   });
 }

@@ -5,6 +5,7 @@ import { callAIWithFallback, executeAICall } from '../core/ai_engine.js';
 import { clickOptionReact } from '../core/react_fiber.js';
 import { getQuestionCards, getTotalExamQuestionsCount, navigateToQuestionCard, extractStatement, extractAlternatives } from './dom_parser.js';
 import { getSavedGabarito, saveGabarito, initGabaritoStructure, updateGabaritoQuestion } from './gabarito.js';
+import { playSuccessSound, playCelebrationFanfare, playAttentionSound } from './audio_alerts.js';
 
 export async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
   const total = getTotalExamQuestionsCount();
@@ -85,6 +86,8 @@ export async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
         clickOptionReact(target.element);
       }
 
+      try { playAttentionSound(); } catch (e) {}
+
       // Atualiza o Gabarito com status concluído (Verde)
       updateGabaritoQuestion(qNum, {
         status: 'done',
@@ -114,6 +117,7 @@ export async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
   const finalDone = finalData?.answers?.filter(a => a.status === 'done' || a.letter).length || 0;
 
   if (finalDone >= total) {
+    try { playCelebrationFanfare(); } catch (e) {}
     if (onLog) onLog('🎉 Todas as 10 questões foram respondidas e salvas com sucesso! 📝🏆', 'success');
   } else {
     if (onLog) onLog(`⚠️ Prova em andamento: ${finalDone}/${total} concluídas. Clique nos badges vermelhos para tentar novamente!`, 'warning');
@@ -163,6 +167,8 @@ export async function solveSingleQuestion(qNum, provider, model, onLog, onGabari
     if (target && target.element) {
       clickOptionReact(target.element);
     }
+
+    try { playSuccessSound(); } catch (e) {}
 
     updateGabaritoQuestion(qNum, {
       status: 'done',

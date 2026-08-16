@@ -77,7 +77,19 @@ async function build() {
   fs.writeFileSync(contentScriptPath, `// Estácio Suite AI - Content Script Bundle (MV3)\n${bundledCode}`, 'utf8');
   console.log(`✅ Content Script gerado com sucesso: ${contentScriptPath}`);
 
-  // 3. Atualiza o overlay.css sincronizado
+  // 3. Compila o Interceptor Main World para MV3
+  const interceptorResult = await esbuild.build({
+    entryPoints: [path.join(__dirname, 'src/interceptor.js')],
+    bundle: true,
+    write: false,
+    format: 'iife',
+    target: ['es2020']
+  });
+  const interceptorPath = path.join(__dirname, 'content/interceptor.js');
+  fs.writeFileSync(interceptorPath, `// Estácio Suite AI - Main World Interceptor (MV3)\n${interceptorResult.outputFiles[0].text}`, 'utf8');
+  console.log(`✅ Interceptor Main World gerado com sucesso: ${interceptorPath}`);
+
+  // 4. Atualiza o overlay.css sincronizado
   const cssSource = path.join(__dirname, 'src/ui/widget.css');
   const cssTarget = path.join(__dirname, 'content/overlay.css');
   fs.copyFileSync(cssSource, cssTarget);

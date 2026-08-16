@@ -114,6 +114,20 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged)
   });
 }
 
+// Ouvinte para captura de token vinda do Main World Interceptor
+if (typeof window !== 'undefined') {
+  window.addEventListener('estacio_token_captured', (e) => {
+    if (e.detail && e.detail.token) {
+      window.__estacio_bearer = e.detail.token;
+      try { sessionStorage.setItem('estacio_bearer', e.detail.token); } catch (err) {}
+      try { localStorage.setItem('estacio_bearer', e.detail.token); } catch (err) {}
+      storageListeners.forEach(cb => {
+        try { cb({ estacio_bearer: { newValue: e.detail.token } }); } catch (err) {}
+      });
+    }
+  });
+}
+
 // Executa sincronização silenciosa inicial
 syncStorageFromChromeExtension();
 
@@ -121,14 +135,30 @@ export function getBearerToken() {
   if (typeof window !== 'undefined' && window.__estacio_bearer) {
     return window.__estacio_bearer;
   }
-  let token = sessionStorage.getItem('estacio_bearer');
-  if (token) return token;
+  let token = sessionStorage.getItem('estacio_bearer') || localStorage.getItem('estacio_bearer');
+  if (token && token.length > 20) return token.replace(/^Bearer\s+/i, '').trim();
 
-  const candidateKeys = ['token', 'accessToken', 'access_token', 'bearer', 'auth_token'];
+  const candidateKeys = ['token', 'accessToken', 'access_token', 'bearer', 'auth_token', 'jwt', 'auth'];
   for (const k of candidateKeys) {
     const val = localStorage.getItem(k) || sessionStorage.getItem(k);
     if (val && val.length > 20) return val.replace(/^Bearer\s+/i, '').trim();
   }
+
+  // Varredura de tokens OIDC/OAuth no localStorage
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('oidc.user') || key.includes('authority') || key.includes('token') || key.includes('auth'))) {
+        try {
+          const item = JSON.parse(localStorage.getItem(key));
+          if (item && item.access_token) {
+            return item.access_token.replace(/^Bearer\s+/i, '').trim();
+          }
+        } catch (e) {}
+      }
+    }
+  } catch (e) {}
+
   return null;
 }
 

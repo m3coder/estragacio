@@ -129,8 +129,10 @@ export function getThemeCardsFromDom() {
   const candidates = Array.from(document.querySelectorAll('button, a[href*="/conteudos/"], [role="button"], article, section, [class*="card"], div'));
 
   candidates.forEach((el) => {
+    if (el.closest('#estacio-suite-box')) return;
+
     let card = el.closest('article, section, [class*="card"], div');
-    if (!card) return;
+    if (!card || card.closest('#estacio-suite-box')) return;
 
     const text = (card.innerText || '').replace(/\s+/g, ' ').trim();
     
@@ -139,13 +141,21 @@ export function getThemeCardsFromDom() {
     }
 
     const match = text.match(/Tema\s*(\d+)/i);
-    if (match && text.length < 400) {
-      const temaNum = parseInt(match[1]);
+    if (match && text.length < 450) {
+      const temaNum = parseInt(match[1], 10);
 
       if (!cardsMap.has(temaNum)) {
-        const isConcluido = /conclu[ií]do/i.test(text);
+        // Verifica se o card contém "Concluído" (evitando 'marcar como concluído')
+        const lowerText = text.toLowerCase();
+        const hasConcluidoKeyword = /conclu[ií]d[oa]/i.test(text);
+        const isActionToConclude = lowerText.includes('marcar como conclu');
+        
+        // Verifica se há badge de status concluído ou ícone de check
+        const hasCheckmarkIcon = Boolean(card.querySelector('[class*="check"], [class*="conclu"], [data-status="completed"], [data-status="concluido"], [aria-label*="conclu" i]'));
+
+        const isConcluido = (hasConcluidoKeyword && !isActionToConclude) || hasCheckmarkIcon;
         const itemsMatch = text.match(/(\d+)\s*Itens?/i);
-        const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
+        const totalItems = itemsMatch ? parseInt(itemsMatch[1], 10) : 1;
 
         const link = card.querySelector('a[href*="/conteudos/"]');
         const href = link ? link.href : (card.getAttribute('href') || '');
@@ -179,3 +189,72 @@ export async function waitForCards(timeoutMs = 12000) {
   }
   return [];
 }
+
+/**
+ * Extrai todos os cards de disciplinas na tela /disciplinas
+ */
+export function getDisciplineCardsFromDom() {
+  const cardsMap = new Map();
+
+  const candidates = Array.from(document.querySelectorAll(
+    'a[href*="/disciplinas/"], main [data-testid^="card-disciplina-v2-"], [data-lift="lft-cardbase"], [data-lift="lft-cardshape"], article, section, [class*="card"]'
+  ));
+
+  candidates.forEach(el => {
+    if (el.closest('#estacio-suite-box') || el.closest('#estacio-suite-toggle-btn')) return;
+
+    let card = el.matches('article, section, [class*="card"], [data-lift], a[href*="/disciplinas/"]')
+      ? el
+      : el.closest('article, section, [class*="card"], [data-lift], a[href*="/disciplinas/"]');
+    if (!card || card.closest('#estacio-suite-box')) return;
+
+    const linkEl = card.matches('a[href*="/disciplinas/"]') ? card : card.querySelector('a[href*="/disciplinas/"]');
+    const href = linkEl ? linkEl.href : '';
+    const match = href.match(/\/disciplinas\/(estacio_\d+|\d+)/i);
+    if (!match) return;
+
+    const rawId = match[1];
+    const turmaId = rawId.startsWith('estacio_') ? rawId : `estacio_${rawId}`;
+
+    if (cardsMap.has(turmaId)) return;
+
+    const text = (card.innerText || '').replace(/\s+/g, ' ').trim();
+    if (text.length > 500) return;
+
+    const titleEl = card.querySelector('h1, h2, h3, h4, h5, h6, [class*="title"], [data-testid*="title"], strong, b');
+    let name = titleEl ? titleEl.innerText.trim() : '';
+    if (!name || name.length < 3) {
+      const lines = (card.innerText || '').split('\n').map(l => l.trim()).filter(l => l.length > 3 && !l.includes('%') && !l.toLowerCase().includes('conclu') && !l.toLowerCase().includes('acessar'));
+      name = lines[0] || `Disciplina ${turmaId}`;
+    }
+
+    const lowerText = text.toLowerCase();
+    const isConcluido = lowerText.includes('100%') || (lowerText.includes('concluído') && !lowerText.includes('marcar como'));
+    const conteudosUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
+
+    cardsMap.set(turmaId, {
+      turmaId: turmaId,
+      name: name,
+      url: conteudosUrl,
+      cardEl: card,
+      isConcluido: isConcluido,
+      isPendente: !isConcluido
+    });
+  });
+
+  return Array.from(cardsMap.values());
+}
+
+/**
+ * Aguarda o carregamento dos cards de disciplinas na tela /disciplinas
+ */
+export async function waitForDisciplineCards(timeoutMs = 12000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const cards = getDisciplineCardsFromDom();
+    if (cards.length > 0) return cards;
+    await new Promise(r => setTimeout(r, 400));
+  }
+  return [];
+}
+

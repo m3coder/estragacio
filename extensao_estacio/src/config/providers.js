@@ -13,18 +13,15 @@ export const PROVIDERS_CONFIG = {
   },
   gemini: {
     name: "Google Gemini",
-    defaultModel: "gemini-2.5-flash",
+    defaultModel: "gemini-3.7-flash",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
     models: [
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
-      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
-      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido)", isFree: true },
+      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)", isFree: true },
       { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-      { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite (⚡ Grátis)", isFree: true },
-      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Deep Reasoning)", isFree: false },
-      { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true }
+      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
+      { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
+      { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true },
+      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true }
     ]
   },
   openrouter: {

@@ -1,4 +1,51 @@
-// Lógica de Elemento Arrastável com Memória de Coordenadas
+// Lógica de Elemento Arrastável com Memória de Coordenadas e Clamping Inteligente de Viewport
+
+export function clampElementToViewport(targetElement, margin = 16) {
+  if (!targetElement) return;
+  const rect = targetElement.getBoundingClientRect();
+  const winW = window.innerWidth || document.documentElement.clientWidth;
+  const winH = window.innerHeight || document.documentElement.clientHeight;
+
+  if (rect.width === 0 || rect.height === 0) return;
+
+  let currentLeft = rect.left;
+  let currentTop = rect.top;
+  let changed = false;
+
+  // Ajusta se estiver saindo para a direita
+  if (currentLeft + rect.width > winW - margin) {
+    currentLeft = Math.max(margin, winW - rect.width - margin);
+    changed = true;
+  }
+  // Ajusta se estiver saindo para a esquerda
+  if (currentLeft < margin) {
+    currentLeft = margin;
+    changed = true;
+  }
+
+  // Ajusta se estiver saindo para baixo
+  if (currentTop + rect.height > winH - margin) {
+    currentTop = Math.max(margin, winH - rect.height - margin);
+    changed = true;
+  }
+  // Ajusta se estiver saindo para cima
+  if (currentTop < margin) {
+    currentTop = margin;
+    changed = true;
+  }
+
+  if (changed || targetElement.style.right || targetElement.style.bottom) {
+    const leftPx = `${Math.round(currentLeft)}px`;
+    const topPx = `${Math.round(currentTop)}px`;
+    targetElement.style.left = leftPx;
+    targetElement.style.top = topPx;
+    targetElement.style.right = 'auto';
+    targetElement.style.bottom = 'auto';
+
+    localStorage.setItem('estacio_pos_left', leftPx);
+    localStorage.setItem('estacio_pos_top', topPx);
+  }
+}
 
 export function setupUniversalDraggable(targetElement, handleElement = null, onClickCallback = null) {
   const dragHandle = handleElement || targetElement;
@@ -12,10 +59,21 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
     targetElement.style.top = savedTop;
     targetElement.style.right = 'auto';
     targetElement.style.bottom = 'auto';
+    requestAnimationFrame(() => {
+      clampElementToViewport(targetElement);
+    });
   }
 
   dragHandle.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+    if (
+      e.target.tagName === 'BUTTON' ||
+      e.target.tagName === 'SELECT' ||
+      e.target.tagName === 'INPUT' ||
+      e.target.closest('button') ||
+      e.target.closest('#box-header-cat')
+    ) {
+      return;
+    }
     e.preventDefault();
 
     startX = e.clientX;
@@ -36,8 +94,21 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
           isDragging = true;
           targetElement.classList.add('is-dragging');
         }
-        const newLeft = `${initialLeft + dx}px`;
-        const newTop = `${initialTop + dy}px`;
+
+        const winW = window.innerWidth || document.documentElement.clientWidth;
+        const winH = window.innerHeight || document.documentElement.clientHeight;
+        const elemW = targetElement.offsetWidth || 50;
+        const elemH = targetElement.offsetHeight || 50;
+
+        let targetL = initialLeft + dx;
+        let targetT = initialTop + dy;
+
+        // Limita dentro da viewport durante o arraste
+        targetL = Math.max(8, Math.min(winW - elemW - 8, targetL));
+        targetT = Math.max(8, Math.min(winH - elemH - 8, targetT));
+
+        const newLeft = `${Math.round(targetL)}px`;
+        const newTop = `${Math.round(targetT)}px`;
         targetElement.style.left = newLeft;
         targetElement.style.top = newTop;
         targetElement.style.right = 'auto';
@@ -53,7 +124,9 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
       document.removeEventListener('mouseup', onMouseUp);
       targetElement.classList.remove('is-dragging');
 
-      if (!isDragging && onClickCallback) {
+      if (isDragging) {
+        clampElementToViewport(targetElement);
+      } else if (onClickCallback) {
         onClickCallback(upEvent);
       }
     }

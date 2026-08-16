@@ -20,6 +20,7 @@ export function saveCachedModels(provider, modelsList) {
   try {
     if (Array.isArray(modelsList) && modelsList.length > 0) {
       setSaved(`models_${provider}`, modelsList);
+      setSaved(`models_ts_${provider}`, Date.now());
     }
   } catch (e) {}
 }
@@ -94,16 +95,15 @@ function formatDisplayName(provider, modelItem) {
     if (modelId.includes('gpt-oss-20b')) return 'GPT-OSS 20B (🔥 100% Grátis)';
     if (modelId.includes('compound')) return `Groq Compound (${modelId}) (🔥 100% Grátis)`;
   } else if (provider === 'gemini') {
-    if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
-    if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (⚡ Grátis • Ultra Rápido)';
-    if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido)';
+    if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)';
     if (modelId === 'gemini-3.6-flash') return 'Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)';
-    if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia)';
-    if (modelId === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite (⚡ Grátis)';
-    if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis)';
-    if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
+    if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
+    if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)';
     if (modelId === 'gemini-flash-latest') return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
-    if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (💎 Pago • Raciocínio Avançado)';
+    if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
+    if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)';
+    if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (Descontinuado)';
+    if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (Descontinuado)';
     if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
     if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (💎 Pago AI Studio)';
   } else if (provider === 'openrouter') {
@@ -157,11 +157,31 @@ function formatDisplayName(provider, modelItem) {
   return modelId;
 }
 
-export async function fetchLiveModels(provider, apiKey, showPaid = null) {
+const inFlightFetches = new Map();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora de cache dinâmico
+
+export async function fetchLiveModels(provider, apiKey, showPaid = null, force = false) {
   const allowPaid = showPaid !== null ? showPaid : getShowPaidModels();
   if (!apiKey && provider !== 'ollama') return getModelsForProvider(provider, allowPaid);
 
-  try {
+  if (!force) {
+    const cached = getCachedModels(provider);
+    const lastFetch = Number(getSaved(`models_ts_${provider}`, 0));
+    const isFresh = (Date.now() - lastFetch) < CACHE_TTL_MS;
+    if (cached && cached.length > 0 && isFresh) {
+      return allowPaid ? cached : cached.filter(m => m.isFree !== false);
+    }
+  }
+
+  if (inFlightFetches.has(provider)) {
+    try {
+      const list = await inFlightFetches.get(provider);
+      return allowPaid ? list : list.filter(m => m.isFree !== false);
+    } catch (e) {}
+  }
+
+  const fetchPromise = (async () => {
+    try {
     // 1. Groq (/openai/v1/models) - Todos 100% Free
     if (provider === 'groq') {
       const res = await universalFetch('https://api.groq.com/openai/v1/models', {
@@ -395,18 +415,17 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
 
         filtered.sort((a, b) => {
           const priority = (id) => {
-            if (id === 'gemini-2.5-flash') return 1;
-            if (id === 'gemini-2.5-flash-lite') return 2;
-            if (id === 'gemini-3.7-flash') return 3;
-            if (id === 'gemini-3.6-flash') return 4;
-            if (id === 'gemini-3.5-flash') return 5;
-            if (id === 'gemini-3.5-flash-lite') return 6;
-            if (id === 'gemini-3.1-flash-lite') return 7;
-            if (id === 'gemini-flash-latest') return 8;
-            if (id === 'gemini-3-flash-preview') return 9;
-            if (id === 'gemini-2.5-pro') return 10;
-            if (id === 'gemini-3.1-pro-preview') return 11;
-            if (id === 'gemini-pro-latest') return 12;
+            if (id === 'gemini-3.7-flash') return 1;
+            if (id === 'gemini-3.6-flash') return 2;
+            if (id === 'gemini-3.5-flash') return 3;
+            if (id === 'gemini-3.1-flash-lite') return 4;
+            if (id === 'gemini-flash-latest') return 5;
+            if (id === 'gemini-3-flash-preview') return 6;
+            if (id === 'gemini-3.1-pro-preview') return 7;
+            if (id === 'gemini-2.5-pro') return 8;
+            if (id === 'gemini-pro-latest') return 9;
+            if (id === 'gemini-2.5-flash') return 50;
+            if (id === 'gemini-2.5-flash-lite') return 51;
             return 20;
           };
           return priority(a.id) - priority(b.id);
@@ -484,9 +503,18 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
       saveCachedModels(provider, curatedDeepSeek);
       return curatedDeepSeek;
     }
+    return getModelsForProvider(provider, allowPaid);
   } catch (e) {
     console.warn(`[ModelFetcher] Erro ao buscar modelos ao vivo de ${provider}:`, e);
+    return getModelsForProvider(provider, allowPaid);
   }
+})();
 
-  return getModelsForProvider(provider, allowPaid);
+  inFlightFetches.set(provider, fetchPromise);
+  try {
+    const result = await fetchPromise;
+    return allowPaid ? result : result.filter(m => m.isFree !== false);
+  } finally {
+    inFlightFetches.delete(provider);
+  }
 }

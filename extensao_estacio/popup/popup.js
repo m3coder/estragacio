@@ -15,19 +15,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
     gemini: {
       name: "Google Gemini",
-      defaultModel: "gemini-2.5-flash",
+      defaultModel: "gemini-3.7-flash",
       endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       modelsEndpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       models: [
-        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
-        { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
-        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido)", isFree: true },
+        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)", isFree: true },
         { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite (⚡ Grátis)", isFree: true },
-        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true },
-        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Deep Reasoning)", isFree: false },
-        { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true }
+        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
+        { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
+        { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true },
+        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true }
       ]
     },
     openrouter: {
@@ -156,15 +153,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modelId.includes('gpt-oss-20b')) return 'GPT-OSS 20B (🔥 100% Grátis)';
       if (modelId.includes('compound')) return `Groq Compound (${modelId}) (🔥 100% Grátis)`;
     } else if (provider === 'gemini') {
-      if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
-      if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (⚡ Grátis • Ultra Rápido)';
-      if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido)';
+      if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)';
       if (modelId === 'gemini-3.6-flash') return 'Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)';
-      if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia)';
-      if (modelId === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite (⚡ Grátis)';
-      if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)';
-      if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
+      if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
+      if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)';
       if (modelId === 'gemini-flash-latest') return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
+      if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
+      if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)';
+      if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (Descontinuado)';
+      if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (Descontinuado)';
+      if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
+      if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (💎 Pago AI Studio)';
     } else if (provider === 'openrouter') {
       const isFree = modelId.includes(':free');
       const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
@@ -713,7 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           throw new Error(err.error?.message || `HTTP ${res.status}`);
         }
       } else if (currentP === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentM || 'gemini-2.5-flash'}:generateContent`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentM || 'gemini-3.7-flash'}:generateContent`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

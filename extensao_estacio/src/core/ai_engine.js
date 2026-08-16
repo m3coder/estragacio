@@ -179,9 +179,9 @@ export async function testProviderKey(provider, testKey, specificModel = null) {
       }
     }
 
-    // 2. Auto-recovery para Google Gemini (cooldown de RPM / rate limit temporário)
-    if (provider === 'gemini' && /quota|rate limit|429/i.test(err.message)) {
-      const geminiFallbacks = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+    // 2. Auto-recovery para Google Gemini (modelo descontinuado ou cooldown de RPM / rate limit temporário)
+    if (provider === 'gemini' && /quota|rate limit|429|no longer available|not_found|404/i.test(err.message)) {
+      const geminiFallbacks = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
       for (const fbModel of geminiFallbacks) {
         if (fbModel !== modelToTest) {
           try {
@@ -193,7 +193,7 @@ export async function testProviderKey(provider, testKey, specificModel = null) {
                 success: true,
                 result: fbResult,
                 model: fbModel,
-                warning: `O modelo ${modelToTest} estava em cooldown de 1 min na API do Google. Chave validada via ${fbModel}!`
+                warning: `O modelo ${modelToTest} estava indisponível na API do Google. Chave validada automaticamente via ${fbModel}!`
               };
             }
           } catch (fbErr) {}

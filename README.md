@@ -39,10 +39,13 @@
    - Por padrão, exibe apenas modelos 100% gratuitos e de cota livre (Groq, Gemini Flash, OpenRouter `:free`, Ollama local).
    - Com 1 clique no botão toggle, desbloqueia todos os modelos premium e avançados (Claude Opus, GPT-4o, Mistral Large, Hermes 405B).
 
-4. **💃 Mascote Gatinho com Passinho Fortnite**:
+4. **🎓 Conclusão em Lote de TODAS as Matérias (Multi-Disciplinas)**:
+   - Novo botão **`[🎓 Concluir TODAS as Matérias (Lote)]`**: varre automaticamente o catálogo de disciplinas inscritas no semestre (`/disciplinas`), entra em cada matéria pendente, conclui todos os seus temas e aulas via API e DOM, retorna e avança para a próxima matéria até 100% de progresso global.
+
+5. **💃 Mascote Gatinho com Passinho Fortnite**:
    - Animação estilizada e ritmada em 4 tempos no cabeçalho do widget e na bolha minimizada.
 
-5. **🤖 8 Provedores de IA Suportados**:
+6. **🤖 8 Provedores de IA Suportados**:
    - Groq, Google Gemini, OpenRouter (Nous Hermes), Ollama (Local Offline), Mistral AI, Anthropic Claude, OpenAI e DeepSeek.
 
 ---
@@ -109,7 +112,7 @@ sequenceDiagram
 | Provedor | Modelo Padrão Free | Modelos Disponíveis | Onde Obter Chave |
 | :--- | :--- | :--- | :--- |
 | **Groq** *(100% Free / Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
-| **Google Gemini** | `gemini-2.5-flash` | `Gemini 2.5 Flash`, `Gemini 3.7 Flash`, `Gemini 3.5 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| **Google Gemini** | `gemini-3.7-flash` | `Gemini 3.7 Flash`, `Gemini 3.6 Flash`, `Gemini 3.5 Flash`, `Gemini 3.1 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** *(Nous Hermes)* | `meta-llama/llama-3.3-70b-instruct:free` | `Hermes 3`, `DeepSeek R1 (free)`, `Gemini 2.0 Flash (free)` | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Ollama** *(100% Local Offline)* | `llama3.3` | `Llama 3.3`, `DeepSeek R1`, `Hermes 3`, `Qwen 2.5`, `Mistral` | [ollama.com](https://ollama.com) |
 | **Mistral AI** *(PhD)* | `codestral-latest` | `Codestral Latest`, `Mistral Small`, `Mistral Large` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
