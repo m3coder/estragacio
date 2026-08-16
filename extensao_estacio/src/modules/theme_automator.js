@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Duplo POST e Clique Ativo em Marcar como Concluído)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Validação de Total de Temas)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -283,19 +283,28 @@ export async function processAutomatorStateMachine(onLog) {
   if (!insideTheme) {
     isStateMachineRunning = true;
     try {
-      const gridCards = await waitForCards(12000);
+      // Aguarda o React estabilizar e carregar os cards da grade
+      await new Promise(r => setTimeout(r, 1200));
+      const gridCards = await waitForCards(15000);
       if (gridCards.length === 0) {
         return;
       }
 
       const completedSet = new Set(queue.completedThemes || []);
 
-      // Filtra temas pendentes considerando os já concluídos
+      // Filtra temas que ainda não foram concluídos
       const pendentes = gridCards.filter(c => !c.isConcluido && !completedSet.has(c.temaNum));
 
-      if (pendentes.length === 0) {
+      // Validação Estrita: Só encerra se todos os temas catalogados estiverem concluídos
+      const expectedTotal = queue.totalThemes || gridCards.length;
+      if (pendentes.length === 0 && gridCards.length >= expectedTotal) {
         localStorage.removeItem('estacio_catalog_queue');
-        if (onLog) onLog('🏆 Todos os temas desta matéria estão 100% CONCLUÍDOS! Parabéns!', 'success');
+        if (onLog) onLog(`🏆 Todos os ${gridCards.length} temas desta matéria estão 100% CONCLUÍDOS! Parabéns!`, 'success');
+        return;
+      }
+
+      if (pendentes.length === 0) {
+        // Se a grade ainda está carregando os outros cards, aguarda
         return;
       }
 
@@ -307,7 +316,7 @@ export async function processAutomatorStateMachine(onLog) {
       const nextTema = pendentes[0];
       if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
 
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 800));
 
       // Dispara clique no botão [ → ], no card e no link interno
       triggerNativeClick(nextTema.actionBtn);
@@ -356,6 +365,7 @@ export function startThemeCompletion(onLog) {
     const queue = {
       active: true,
       turmaId: turmaId,
+      totalThemes: 5,
       conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: [1],
       completedThemes: [],
@@ -369,7 +379,7 @@ export function startThemeCompletion(onLog) {
   // Se estiver na grade da matéria, lê os cards e inicia o primeiro
   waitForCards(8000).then((cards) => {
     const pendentes = cards.filter(t => !t.isConcluido);
-    if (onLog) onLog(`Catalogados ${pendentes.length} tema(s) pendente(s).`, 'info');
+    if (onLog) onLog(`Detectados ${cards.length} temas no total (${pendentes.length} pendentes).`, 'info');
 
     if (pendentes.length === 0) {
       if (onLog) onLog('Todos os temas desta matéria já estão 100% concluídos! 🏆', 'success');
@@ -381,6 +391,7 @@ export function startThemeCompletion(onLog) {
     const queue = {
       active: true,
       turmaId: turmaId,
+      totalThemes: cards.length,
       conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: pendingNumbers,
       completedThemes: [],

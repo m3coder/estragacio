@@ -914,15 +914,20 @@ Responda ESTRITAMENTE em formato JSON:
     if (!insideTheme) {
       isStateMachineRunning = true;
       try {
-        const gridCards = await waitForCards(12e3);
+        await new Promise((r) => setTimeout(r, 1200));
+        const gridCards = await waitForCards(15e3);
         if (gridCards.length === 0) {
           return;
         }
         const completedSet = new Set(queue.completedThemes || []);
         const pendentes = gridCards.filter((c) => !c.isConcluido && !completedSet.has(c.temaNum));
-        if (pendentes.length === 0) {
+        const expectedTotal = queue.totalThemes || gridCards.length;
+        if (pendentes.length === 0 && gridCards.length >= expectedTotal) {
           localStorage.removeItem("estacio_catalog_queue");
-          if (onLog) onLog("\u{1F3C6} Todos os temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!", "success");
+          if (onLog) onLog(`\u{1F3C6} Todos os ${gridCards.length} temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!`, "success");
+          return;
+        }
+        if (pendentes.length === 0) {
           return;
         }
         if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na mat\xE9ria.`, "info");
@@ -930,7 +935,7 @@ Responda ESTRITAMENTE em formato JSON:
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         const nextTema = pendentes[0];
         if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 800));
         triggerNativeClick(nextTema.actionBtn);
         if (nextTema.cardEl && nextTema.cardEl !== nextTema.actionBtn) {
           triggerNativeClick(nextTema.cardEl);
@@ -967,6 +972,7 @@ Responda ESTRITAMENTE em formato JSON:
       const queue = {
         active: true,
         turmaId,
+        totalThemes: 5,
         conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: [1],
         completedThemes: [],
@@ -978,7 +984,7 @@ Responda ESTRITAMENTE em formato JSON:
     }
     waitForCards(8e3).then((cards) => {
       const pendentes = cards.filter((t) => !t.isConcluido);
-      if (onLog) onLog(`Catalogados ${pendentes.length} tema(s) pendente(s).`, "info");
+      if (onLog) onLog(`Detectados ${cards.length} temas no total (${pendentes.length} pendentes).`, "info");
       if (pendentes.length === 0) {
         if (onLog) onLog("Todos os temas desta mat\xE9ria j\xE1 est\xE3o 100% conclu\xEDdos! \u{1F3C6}", "success");
         localStorage.removeItem("estacio_catalog_queue");
@@ -988,6 +994,7 @@ Responda ESTRITAMENTE em formato JSON:
       const queue = {
         active: true,
         turmaId,
+        totalThemes: cards.length,
         conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: pendingNumbers,
         completedThemes: [],
