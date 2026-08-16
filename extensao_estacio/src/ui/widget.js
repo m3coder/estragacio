@@ -1,6 +1,7 @@
 // Construtor e Controlador da Interface do Widget
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
+import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
 import { getSaved, setSaved, getApiKeyFor, setApiKeyFor } from '../config/storage.js';
 import { setupUniversalDraggable } from './draggable.js';
 import { renderSavedGabarito, copyGabarito, copyAllLogs } from '../modules/gabarito.js';
@@ -23,7 +24,7 @@ export function createSuiteWidget() {
     <div class="box-inner">
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
-          <span>⚡</span>
+          <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
           <span>Estácio Suite AI</span>
         </div>
         <div class="box-controls">
@@ -116,9 +117,16 @@ export function createSuiteWidget() {
     </div>
   `;
 
+  // Imagem do mascote na bolha minimizada
+  const minMascotImg = document.createElement('img');
+  minMascotImg.src = CAT_MASCOT_DATA_URI;
+  minMascotImg.className = 'cat-bubble-avatar';
+  minMascotImg.style.display = 'none';
+  box.appendChild(minMascotImg);
+
   const toggleBtn = document.createElement('div');
   toggleBtn.id = 'estacio-suite-toggle-btn';
-  toggleBtn.innerHTML = '⚡';
+  toggleBtn.innerHTML = `<img src="${CAT_MASCOT_DATA_URI}" class="cat-bubble-avatar" alt="Mascote">`;
   toggleBtn.title = 'Mostrar Estácio Suite AI';
 
   document.body.appendChild(box);
@@ -129,12 +137,14 @@ export function createSuiteWidget() {
   setupUniversalDraggable(box, box, () => {
     if (box.classList.contains('minimized')) {
       box.classList.remove('minimized');
+      minMascotImg.style.display = 'none';
     }
   });
 
   setupUniversalDraggable(toggleBtn, toggleBtn, () => {
     box.classList.remove('hidden-box');
     box.classList.remove('minimized');
+    minMascotImg.style.display = 'none';
     toggleBtn.style.display = 'none';
   });
 
@@ -253,7 +263,8 @@ export function createSuiteWidget() {
 
   document.getElementById('btn-min').addEventListener('click', (e) => {
     e.stopPropagation();
-    box.classList.toggle('minimized');
+    const isMin = box.classList.toggle('minimized');
+    minMascotImg.style.display = isMin ? 'block' : 'none';
   });
 
   document.getElementById('btn-hide').addEventListener('click', (e) => {
