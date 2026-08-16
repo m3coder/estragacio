@@ -36,7 +36,8 @@ export function createSuiteWidget() {
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
           <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
-          <span>Estácio Suite AI v2.5.5</span>
+          <span class="title-gradient-text">Estácio Suite AI</span>
+          <span class="version-badge">v2.5.5</span>
         </div>
         <div class="box-controls">
           <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">🧹</button>
@@ -47,29 +48,31 @@ export function createSuiteWidget() {
       </div>
 
       <div class="box-body">
-        <!-- Seletor Principal de IA Ativa -->
-        <div class="ai-selector-container">
-          <div class="ai-selector-row">
-            <span style="color:#94a3b8; font-weight:700;">🤖 IA Ativa:</span>
-            <select id="box-ai-select" class="ai-selector-select"></select>
+        <!-- Card 1: Seleção Inteligente de IA & Modelo -->
+        <div class="ui-card">
+          <div class="ui-form-row">
+            <span class="ui-form-label">🤖 IA Ativa:</span>
+            <select id="box-ai-select" class="ui-select"></select>
           </div>
-          <div class="ai-selector-row">
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-              <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <button id="btn-toggle-free-mode" title="Alternar entre apenas modelos 100% gratuitos ou todos os modelos" style="background:#065f46; color:#a7f3d0; border:1px solid #059669; border-radius:4px; font-size:10px; cursor:pointer; padding:1px 6px; font-weight:700;">🟢 Apenas Free</button>
-                <button id="btn-refresh-models" title="Buscar modelos ao vivo da API" style="background:none; border:none; color:#38bdf8; font-size:11px; cursor:pointer; padding:0 2px; font-weight:600;">🔄 Atualizar</button>
-              </div>
-            </div>
-            <select id="box-model-select" class="ai-selector-select"></select>
+          <div class="ui-form-row">
+            <span class="ui-form-label">🧠 Modelo:</span>
+            <select id="box-model-select" class="ui-select"></select>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:2px;">
+            <button id="btn-toggle-free-mode" class="pill-btn pill-btn-free" title="Alternar entre modelos 100% gratuitos ou todos os modelos">
+              🟢 Apenas Free
+            </button>
+            <button id="btn-refresh-models" class="btn-secondary-action" title="Buscar modelos ao vivo da API">
+              <span>🔄</span> Sincronizar
+            </button>
           </div>
         </div>
 
-        <!-- Painel de Cadastro e Teste Live de Chaves -->
-        <div class="key-config-container" style="background:#0f172a; border:1px solid #1e293b; border-radius:6px; padding:6px; margin:4px 0 8px 0; display:flex; flex-direction:column; gap:4px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:#38bdf8; font-size:10px; font-weight:700;">🔑 Adicionar/Testar Chave:</span>
-            <select id="config-target-select" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; font-size:10px; padding:2px 4px;">
+        <!-- Card 2: Painel de Cadastro e Teste Live de Chaves -->
+        <div class="ui-card">
+          <div class="ui-card-header">
+            <span style="color:#38bdf8; font-size:11px; font-weight:700;">🔑 Chave de API:</span>
+            <select id="config-target-select" class="ui-select" style="max-width:145px; padding:3px 6px; font-size:10.5px;">
               <option value="groq">Groq</option>
               <option value="gemini">Google Gemini</option>
               <option value="openrouter">OpenRouter (Hermes)</option>
@@ -80,18 +83,19 @@ export function createSuiteWidget() {
               <option value="deepseek">DeepSeek</option>
             </select>
           </div>
-          <div style="display:flex; gap:4px;">
-            <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui..." style="flex:1;">
-            <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700; white-space:nowrap;">
-              🧪 Testar & Salvar
+          <div class="ui-form-row">
+            <input type="password" id="box-key-input" class="ui-input" placeholder="Cole sua chave aqui...">
+            <button id="btn-save-key" class="btn-secondary-action" style="background:#2563eb; color:#fff; border-color:#3b82f6; font-weight:700; padding:5px 10px;">
+              🧪 Salvar
             </button>
           </div>
         </div>
 
+        <!-- Card 3: Ação Principal e Contexto da Página -->
         ${isExam ? `
-          <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
-            <span style="color:#a78bfa; font-weight:600;">Sala de Provas</span>
-            <span style="color:#60a5fa; font-weight:700;">Pronto</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:0 2px;">
+            <span style="color:#a78bfa; font-weight:700;">📍 Sala de Avaliações</span>
+            <span style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">🟢 Pronto</span>
           </div>
           <button id="btn-action-main" class="box-btn box-btn-primary">
             <span>🎯</span> Resolver e Marcar Prova
@@ -99,36 +103,41 @@ export function createSuiteWidget() {
 
           <!-- Barra de Segunda Opinião / Revisão Direta -->
           <div class="review-config-bar">
-            <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
-            <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;"></select>
+            <span style="color:#c084fc; font-weight:700; font-size:11px;">🔍 2ª Opinião com:</span>
+            <select id="review-ai-select" class="ui-select" style="font-size:11px; max-width:180px;"></select>
           </div>
         ` : `
-          <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
-            <span style="color:#10b981; font-weight:600;">Portal do Aluno</span>
-            <span style="color:#60a5fa; font-weight:700;">Conclusão de Matérias</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:0 2px;">
+            <span style="color:#38bdf8; font-weight:700;">📍 Portal do Aluno</span>
+            <span style="color:#34d399; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 7px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">⚡ Auto-Temas</span>
           </div>
           <button id="btn-action-main" class="box-btn box-btn-success">
-            <span>📚</span> Concluir Temas Desta Matéria
+            <span>📚</span> Concluir Todos os Temas Desta Matéria
           </button>
         `}
 
-        <!-- Painel Visual do Gabarito Persistente -->
+        <!-- Card 4: Painel Visual do Gabarito Persistente -->
         <div id="gabarito-panel" class="gabarito-container" style="display:none;">
           <div class="gabarito-header">
-            <span style="font-weight:700;">📝 Gabarito</span>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <button id="btn-apply-gabarito" style="background:#0284c7; border:none; color:#fff; border-radius:4px; font-size:10px; font-weight:700; padding:2px 6px; cursor:pointer;" title="Aplica todas as respostas salvas no gabarito diretamente na prova sem gastar IA">⚡ Aplicar na Prova</button>
-              <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">📋 Copiar</button>
+            <span>📝 Gabarito (10 Questões)</span>
+            <div class="gabarito-header-actions">
+              <button id="btn-apply-gabarito" class="btn-gabarito-apply" title="Aplica todas as respostas salvas no gabarito diretamente na prova sem gastar IA">
+                ⚡ Aplicar na Prova
+              </button>
+              <button id="btn-copy-gabarito" class="footer-btn" style="color:#38bdf8; font-weight:700;">
+                📋 Copiar
+              </button>
             </div>
           </div>
           <div id="gabarito-badges" class="gabarito-badges"></div>
         </div>
 
+        <!-- Card 5: Terminal de Logs -->
         <div class="box-log" id="box-log"></div>
       </div>
 
       <div class="box-footer">
-        <span id="box-footer-model" style="color:#38bdf8; font-weight:600;"></span>
+        <span id="box-footer-model" style="color:#38bdf8; font-weight:600; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px;"></span>
         <div style="display:flex; align-items:center; gap:6px;">
           <button id="btn-clear-footer" class="footer-btn" title="Limpar logs e dados acumulados">
             <span>🧹</span> Limpar
@@ -235,15 +244,11 @@ export function createSuiteWidget() {
     if (!btn) return;
     if (showPaidModels) {
       btn.textContent = '💎 Free + Pagos';
-      btn.style.background = '#701a75';
-      btn.style.color = '#f5d0fe';
-      btn.style.borderColor = '#a21caf';
+      btn.className = 'pill-btn pill-btn-paid';
       btn.title = 'Modo Completo Ativo (Mostrando modelos Free e Pagos). Clique para restringir a apenas 100% Free.';
     } else {
       btn.textContent = '🟢 Apenas Free';
-      btn.style.background = '#065f46';
-      btn.style.color = '#a7f3d0';
-      btn.style.borderColor = '#059669';
+      btn.className = 'pill-btn pill-btn-free';
       btn.title = 'Modo 100% Free Ativo (Modelos pagos ocultos). Clique para exibir modelos pagos.';
     }
   }
@@ -332,7 +337,7 @@ export function createSuiteWidget() {
     const footerEl = document.getElementById('box-footer-model');
     if (!footerEl) return;
     const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
-    footerEl.textContent = `${pName} (${currentModel})`;
+    footerEl.textContent = `🟢 ${pName} (${currentModel})`;
   }
 
   function refreshGabaritoUI() {
@@ -464,7 +469,7 @@ export function createSuiteWidget() {
       btnRefreshModels.textContent = '⏳ Buscando...';
       await refreshDynamicModelsFromAPI(currentProvider, true);
       btnRefreshModels.disabled = false;
-      btnRefreshModels.textContent = '🔄 Atualizar';
+      btnRefreshModels.innerHTML = '<span>🔄</span> Sincronizar';
     });
   }
 
@@ -512,7 +517,7 @@ export function createSuiteWidget() {
       log(`❌ Falha no teste do ${pName}: ${err.message}`, 'error');
     } finally {
       btnSaveKey.disabled = false;
-      btnSaveKey.textContent = '🧪 Testar & Salvar';
+      btnSaveKey.textContent = '🧪 Salvar';
     }
   });
 
