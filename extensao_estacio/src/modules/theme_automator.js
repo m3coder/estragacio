@@ -1,20 +1,36 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com SPA Hook e Retorno Automático)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Detecção Visual do DOM e Retorno via Botão Voltar)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
-import { waitForCards } from './dom_parser.js';
+import { waitForCards, getThemeCardsFromDom } from './dom_parser.js';
 
 let isStateMachineRunning = false;
-let lastHandledUrl = '';
+let autoLoopTimer = null;
 
 export function isInsideThemeUrl(url) {
   if (!url) return false;
   return /\/conteudos\/[a-f0-9-]{36}/i.test(url) || url.includes('tema=') || url.includes('/temas/');
 }
 
-export function isGridPageUrl(url) {
-  if (!url) return false;
-  return url.includes('/disciplinas/') && !isInsideThemeUrl(url);
+export function isCurrentlyInsideTheme() {
+  const url = window.location.href;
+  if (isInsideThemeUrl(url)) return true;
+
+  // Detecção visual infalível no DOM (botão Voltar + cabeçalho do tema)
+  const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
+  const hasVoltar = buttons.some(el => {
+    const t = (el.innerText || el.getAttribute('aria-label') || '').trim().toLowerCase();
+    return (t === 'voltar' || t === '← voltar' || t === '←' || t.startsWith('voltar')) && !el.closest('#estacio-suite-box');
+  });
+
+  const hasConcluirBtn = Array.from(document.querySelectorAll('button, [role="button"]')).some(el => {
+    const t = (el.innerText || '').toLowerCase();
+    return t.includes('marcar como conclu') && !el.closest('#estacio-suite-box');
+  });
+
+  const hasThemeHeader = /Tema\s*\d+\s*[-–|:]/i.test(document.body.innerText);
+
+  return (hasVoltar && (hasConcluirBtn || hasThemeHeader));
 }
 
 export function parseIdsFromUrl(url) {
@@ -28,6 +44,22 @@ export function parseIdsFromUrl(url) {
     conteudoUuid: uuidMatch ? uuidMatch[1] : null,
     temaId: temaMatch ? temaMatch[1] : null
   };
+}
+
+export function harvestInPageContentUuids() {
+  const uuids = new Set();
+  const allLinks = Array.from(document.querySelectorAll('a[href*="/conteudos/"], button[data-uuid], [data-conteudo-id], [data-id]'));
+
+  allLinks.forEach(el => {
+    const href = el.href || el.getAttribute('data-href') || '';
+    const match = href.match(/\/conteudos\/([a-f0-9-]{36})/i);
+    if (match) uuids.add(match[1]);
+
+    const directId = el.getAttribute('data-uuid') || el.getAttribute('data-conteudo-id') || el.getAttribute('data-id');
+    if (directId && directId.length > 20 && /^[a-f0-9-]{36}$/i.test(directId)) uuids.add(directId);
+  });
+
+  return Array.from(uuids);
 }
 
 export async function fetchAllThemeSubContents(turmaId, temaId, token) {
@@ -63,22 +95,6 @@ export async function fetchAllThemeSubContents(turmaId, temaId, token) {
   }
 
   return Array.from(discoveredUuids);
-}
-
-export function harvestInPageContentUuids() {
-  const uuids = new Set();
-  const allLinks = Array.from(document.querySelectorAll('a[href*="/conteudos/"], button[data-uuid], [data-conteudo-id]'));
-
-  allLinks.forEach(el => {
-    const href = el.href || el.getAttribute('data-href') || '';
-    const match = href.match(/\/conteudos\/([a-f0-9-]{36})/i);
-    if (match) uuids.add(match[1]);
-
-    const directId = el.getAttribute('data-uuid') || el.getAttribute('data-conteudo-id');
-    if (directId && directId.length > 20) uuids.add(directId);
-  });
-
-  return Array.from(uuids);
 }
 
 export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula) {
@@ -120,6 +136,21 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
   return success;
 }
 
+export function clickNativeVoltarButton() {
+  const candidates = Array.from(document.querySelectorAll('button, a, [role="button"], span, div'));
+  const voltarBtn = candidates.find(el => {
+    const t = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').trim().toLowerCase();
+    return (t === 'voltar' || t === '← voltar' || t === '←' || t.startsWith('voltar')) && !el.closest('#estacio-suite-box');
+  });
+
+  if (voltarBtn) {
+    const clickTarget = voltarBtn.closest('button, a') || voltarBtn;
+    triggerNativeClick(clickTarget);
+    return true;
+  }
+  return false;
+}
+
 export async function tryClickInPageConcludeButton() {
   const buttons = Array.from(document.querySelectorAll('button, a'));
   const concludeBtn = buttons.find(b => {
@@ -134,36 +165,6 @@ export async function tryClickInPageConcludeButton() {
   }
 }
 
-export function navigateBackToGrid(turmaId, onLog) {
-  const gridUrl = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
-  if (onLog) onLog('Voltando para a grade de temas...', 'info');
-
-  // 1. Tenta clicar no botão Voltar ou breadcrumb na tela
-  const candidates = Array.from(document.querySelectorAll('button, a, [role="button"]'));
-  const backBtn = candidates.find(el => {
-    const txt = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase();
-    return (txt.includes('voltar') || txt.includes('conteúdos') || txt.includes('disciplina')) && !el.closest('#estacio-suite-box');
-  });
-
-  if (backBtn) {
-    try {
-      triggerNativeClick(backBtn);
-    } catch (e) {}
-  }
-
-  // 2. Dispara retorno no histórico do navegador
-  try {
-    window.history.back();
-  } catch (e) {}
-
-  // 3. Fallback garantido por URL se o SPA não voltar em 1.5s
-  setTimeout(() => {
-    if (isInsideThemeUrl(window.location.href)) {
-      window.location.href = gridUrl;
-    }
-  }, 1800);
-}
-
 export async function processAutomatorStateMachine(onLog) {
   if (isStateMachineRunning) return;
 
@@ -174,58 +175,81 @@ export async function processAutomatorStateMachine(onLog) {
   try { queue = JSON.parse(queueRaw); } catch (e) { return; }
   if (!queue || !queue.active) return;
 
-  const currentUrl = window.location.href;
-  const isInside = isInsideThemeUrl(currentUrl);
-  const isGrid = isGridPageUrl(currentUrl);
-
   const token = getBearerToken();
   const matricula = getMatricula();
+  const insideTheme = isCurrentlyInsideTheme();
 
-  // CENÁRIO 1: O tema está aberto (dentro do conteúdo)
-  if (isInside) {
+  // =========================================================================
+  // CENÁRIO 1: O TEMA ESTÁ ABERTO NA TELA (Dentro do Visualizador de Conteúdo)
+  // =========================================================================
+  if (insideTheme) {
     isStateMachineRunning = true;
     try {
-      const ids = parseIdsFromUrl(currentUrl);
-      const targetTemaNum = queue.pendingThemes[queue.currentPos] || ids.temaId || 'Atual';
-      if (onLog) onLog(`[Tema ${targetTemaNum}] Aberto com sucesso! Identificando todos os sub-itens...`, 'info');
+      const url = window.location.href;
+      const ids = parseIdsFromUrl(url);
+      const turmaId = ids.turmaId || queue.turmaId;
+      
+      // Identifica número do tema a partir do DOM ou da URL
+      let temaId = ids.temaId;
+      const headerText = document.body.innerText;
+      const headerMatch = headerText.match(/Tema\s*(\d+)/i);
+      const temaNum = headerMatch ? parseInt(headerMatch[1]) : (queue.pendingThemes[queue.currentPos] || 1);
+      if (!temaId) temaId = `tema_${temaNum}`;
 
-      // 1. Coleta todos os UUIDs de sub-conteúdos (Ativo + API + Links na tela)
+      if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando identificadores de conteúdo...`, 'info');
+
+      // Coleta todos os UUIDs disponíveis
       const allUuids = new Set();
       if (ids.conteudoUuid) allUuids.add(ids.conteudoUuid);
-
-      // Busca sub-itens via DOM
       harvestInPageContentUuids().forEach(u => allUuids.add(u));
 
-      // Busca sub-itens via API
-      if (ids.turmaId && ids.temaId && token) {
-        const apiUuids = await fetchAllThemeSubContents(ids.turmaId || queue.turmaId, ids.temaId, token);
+      // Busca na API da Estácio
+      if (turmaId && token) {
+        const apiUuids = await fetchAllThemeSubContents(turmaId, temaId, token);
         apiUuids.forEach(u => allUuids.add(u));
       }
 
       const uuidList = Array.from(allUuids);
-      if (onLog) onLog(`[Tema ${targetTemaNum}] Encontrados ${uuidList.length} sub-item(ns). Enviando conclusões...`, 'info');
+      if (onLog) onLog(`[Tema ${temaNum}] Concluindo ${uuidList.length || 1} sub-item(ns)...`, 'info');
 
-      // 2. Envia conclusão para CADA sub-item do tema
-      for (let idx = 0; idx < uuidList.length; idx++) {
-        const uuid = uuidList[idx];
-        await postConcluir(ids.turmaId || queue.turmaId, ids.temaId || `tema_${targetTemaNum}`, uuid, token, matricula);
-        if (onLog) onLog(`  └─ [Item ${idx + 1}/${uuidList.length}] UUID: ${uuid.slice(0, 8)}... → Concluído ✅`, 'success');
-        await new Promise(r => setTimeout(r, 400));
+      // Envia conclusões para todos os UUIDs encontrados
+      if (uuidList.length > 0) {
+        for (let idx = 0; idx < uuidList.length; idx++) {
+          const uuid = uuidList[idx];
+          await postConcluir(turmaId, temaId, uuid, token, matricula);
+          if (onLog) onLog(`  └─ [Sub-Item ${idx + 1}/${uuidList.length}] Concluído com sucesso! ✅`, 'success');
+          await new Promise(r => setTimeout(r, 400));
+        }
+      } else if (ids.conteudoUuid) {
+        await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
       }
 
-      // 3. Tenta clicar no botão nativo "Marcar como concluído"
+      // Tenta clicar no botão nativo "Marcar como concluído"
       await tryClickInPageConcludeButton();
 
-      const delayMs = Math.floor(Math.random() * (4000 - 2500 + 1)) + 2500;
+      const delayMs = Math.floor(Math.random() * (3500 - 2000 + 1)) + 2000;
       const delaySec = (delayMs / 1000).toFixed(1);
-      if (onLog) onLog(`Aguardando ${delaySec}s e retornando à grade...`, 'info');
+      if (onLog) onLog(`Aguardando ${delaySec}s e clicando em [← Voltar]...`, 'info');
       await new Promise(r => setTimeout(r, delayMs));
 
       queue.currentPos += 1;
       sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
-      // Executa o retorno imediato para a grade
-      navigateBackToGrid(ids.turmaId || queue.turmaId, onLog);
+      // DISPARA O CLIQUE REAL NO BOTÃO "← VOLTAR" NA TELA
+      const clicked = clickNativeVoltarButton();
+      if (clicked) {
+        if (onLog) onLog('Botão [← Voltar] clicado com sucesso! ↩️', 'info');
+      } else {
+        if (onLog) onLog('Retornando pelo histórico do navegador...', 'info');
+        window.history.back();
+      }
+
+      // Fallback seguro se não sair da tela em 2.5s
+      setTimeout(() => {
+        if (isCurrentlyInsideTheme()) {
+          window.location.href = `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`;
+        }
+      }, 2500);
 
     } finally {
       isStateMachineRunning = false;
@@ -233,20 +257,14 @@ export async function processAutomatorStateMachine(onLog) {
     return;
   }
 
-  // CENÁRIO 2: Estamos na grade de conteúdos
-  if (isGrid) {
+  // =========================================================================
+  // CENÁRIO 2: ESTAMOS NA GRADE DE TEMAS / MATÉRIA
+  // =========================================================================
+  const gridCards = getThemeCardsFromDom();
+  if (gridCards.length > 0) {
     isStateMachineRunning = true;
     try {
-      if (onLog) onLog(`Verificando temas pendentes na grade...`, 'info');
-      const cards = await waitForCards(12000);
-
-      if (cards.length === 0) {
-        if (onLog) onLog(`A grade demorou a carregar. Aguardando...`, 'warning');
-        return;
-      }
-
-      // Reavalia temas que ainda estão pendentes
-      const pendentes = cards.filter(c => c.isPendente);
+      const pendentes = gridCards.filter(c => c.isPendente);
 
       if (pendentes.length === 0) {
         sessionStorage.removeItem('estacio_catalog_queue');
@@ -261,8 +279,8 @@ export async function processAutomatorStateMachine(onLog) {
       sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
       const nextTema = pendentes[0];
-      if (onLog) onLog(`Abrindo próximo: Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
-      
+      if (onLog) onLog(`Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
+
       await new Promise(r => setTimeout(r, 600));
       triggerNativeClick(nextTema.actionBtn);
 
@@ -288,8 +306,22 @@ export function startThemeCompletion(onLog) {
     return;
   }
 
-  if (onLog) onLog('Catalogando temas da matéria...', 'info');
+  if (onLog) onLog('Iniciando automação dos temas...', 'info');
 
+  // Se já estiver dentro de um tema, conclui o tema atual primeiro
+  if (isCurrentlyInsideTheme()) {
+    const queue = {
+      active: true,
+      turmaId: turmaId,
+      pendingThemes: [1],
+      currentPos: 0
+    };
+    sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
+    processAutomatorStateMachine(onLog);
+    return;
+  }
+
+  // Se estiver na grade, lê os cards e inicia o primeiro
   waitForCards(8000).then((cards) => {
     const pendentes = cards.filter(t => !t.isConcluido);
     if (onLog) onLog(`Catalogados ${pendentes.length} tema(s) pendente(s).`, 'info');
@@ -311,7 +343,7 @@ export function startThemeCompletion(onLog) {
     sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
     const firstTema = pendentes[0];
-    if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum} (${firstTema.totalItems} itens)...`, 'info');
+    if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, 'info');
     triggerNativeClick(firstTema.actionBtn);
   });
 }
