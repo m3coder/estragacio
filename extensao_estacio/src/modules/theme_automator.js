@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Abertura Confiável de Temas)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Duplo POST e Clique Ativo em Marcar como Concluído)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -153,23 +153,35 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
   return false;
 }
 
-export async function tryClickInPageConcludeButton() {
+export async function clickConcludeButtonActiveLoop(onLog = null) {
   try {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   } catch (e) {}
 
-  const buttons = Array.from(document.querySelectorAll('button, a'));
-  const concludeBtn = buttons.find(b => {
-    const txt = b.innerText.toLowerCase();
-    return (txt.includes('marcar como conclu') || txt.includes('concluir') || txt.includes('finalizar')) && !b.closest('#estacio-suite-box');
+  await new Promise(r => setTimeout(r, 600));
+
+  const candidates = Array.from(document.querySelectorAll('button, [role="button"], a, div, span'));
+  const concludeEl = candidates.find(el => {
+    const txt = (el.innerText || '').trim().toLowerCase();
+    return txt.includes('marcar como conclu') && !el.closest('#estacio-suite-box');
   });
 
-  if (concludeBtn) {
-    try {
-      concludeBtn.removeAttribute('disabled');
-      concludeBtn.setAttribute('aria-disabled', 'false');
-      triggerNativeClick(concludeBtn);
-    } catch (e) {}
+  if (concludeEl) {
+    const targetBtn = concludeEl.closest('button, [role="button"]') || concludeEl;
+    targetBtn.removeAttribute('disabled');
+    targetBtn.setAttribute('aria-disabled', 'false');
+
+    // 1º Clique nativo no botão liberado
+    triggerNativeClick(targetBtn);
+    if (onLog) onLog('Botão [Marcar como concluído] liberado e clicado na tela! 🎯', 'success');
+
+    await new Promise(r => setTimeout(r, 800));
+
+    // 2º Clique de confirmação se o botão ainda estiver ativo
+    const currentTxt = (targetBtn.innerText || '').toLowerCase();
+    if (currentTxt.includes('marcar como conclu') && !currentTxt.includes('já')) {
+      triggerNativeClick(targetBtn);
+    }
   }
 }
 
@@ -221,19 +233,26 @@ export async function processAutomatorStateMachine(onLog) {
       const uuidList = Array.from(allUuids);
       if (onLog) onLog(`[Tema ${temaNum}] Disparando requisição de conclusão para ${uuidList.length || 1} sub-item(ns)...`, 'info');
 
-      // Envia conclusões com log explícito de cada chamada
+      // 1ª ONDA DE POST (Libera o botão e registra no backend)
       if (uuidList.length > 0) {
         for (let idx = 0; idx < uuidList.length; idx++) {
           const uuid = uuidList[idx];
           await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
-          await new Promise(r => setTimeout(r, 350));
+          await new Promise(r => setTimeout(r, 300));
         }
       } else if (ids.conteudoUuid) {
         await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
       }
 
-      // Tenta clicar no botão nativo "Marcar como concluído"
-      await tryClickInPageConcludeButton();
+      // CLIQUE FÍSICO NO BOTÃO "Marcar como concluído" LIBERADO NA TELA
+      await clickConcludeButtonActiveLoop(onLog);
+
+      // 2ª ONDA DE POST (Confirmação rápida para garantir persistência)
+      if (uuidList.length > 0) {
+        for (const uuid of uuidList) {
+          await postConcluir(turmaId, temaId, uuid, token, matricula);
+        }
+      }
 
       const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
       const delaySec = (delayMs / 1000).toFixed(1);

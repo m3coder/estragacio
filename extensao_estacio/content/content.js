@@ -818,22 +818,27 @@ Responda ESTRITAMENTE em formato JSON:
     }
     return false;
   }
-  async function tryClickInPageConcludeButton() {
+  async function clickConcludeButtonActiveLoop(onLog = null) {
     try {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } catch (e) {
     }
-    const buttons = Array.from(document.querySelectorAll("button, a"));
-    const concludeBtn = buttons.find((b) => {
-      const txt = b.innerText.toLowerCase();
-      return (txt.includes("marcar como conclu") || txt.includes("concluir") || txt.includes("finalizar")) && !b.closest("#estacio-suite-box");
+    await new Promise((r) => setTimeout(r, 600));
+    const candidates = Array.from(document.querySelectorAll('button, [role="button"], a, div, span'));
+    const concludeEl = candidates.find((el) => {
+      const txt = (el.innerText || "").trim().toLowerCase();
+      return txt.includes("marcar como conclu") && !el.closest("#estacio-suite-box");
     });
-    if (concludeBtn) {
-      try {
-        concludeBtn.removeAttribute("disabled");
-        concludeBtn.setAttribute("aria-disabled", "false");
-        triggerNativeClick(concludeBtn);
-      } catch (e) {
+    if (concludeEl) {
+      const targetBtn = concludeEl.closest('button, [role="button"]') || concludeEl;
+      targetBtn.removeAttribute("disabled");
+      targetBtn.setAttribute("aria-disabled", "false");
+      triggerNativeClick(targetBtn);
+      if (onLog) onLog("Bot\xE3o [Marcar como conclu\xEDdo] liberado e clicado na tela! \u{1F3AF}", "success");
+      await new Promise((r) => setTimeout(r, 800));
+      const currentTxt = (targetBtn.innerText || "").toLowerCase();
+      if (currentTxt.includes("marcar como conclu") && !currentTxt.includes("j\xE1")) {
+        triggerNativeClick(targetBtn);
       }
     }
   }
@@ -877,12 +882,17 @@ Responda ESTRITAMENTE em formato JSON:
           for (let idx = 0; idx < uuidList.length; idx++) {
             const uuid = uuidList[idx];
             await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
-            await new Promise((r) => setTimeout(r, 350));
+            await new Promise((r) => setTimeout(r, 300));
           }
         } else if (ids.conteudoUuid) {
           await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
         }
-        await tryClickInPageConcludeButton();
+        await clickConcludeButtonActiveLoop(onLog);
+        if (uuidList.length > 0) {
+          for (const uuid of uuidList) {
+            await postConcluir(turmaId, temaId, uuid, token, matricula);
+          }
+        }
         const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
         const delaySec = (delayMs / 1e3).toFixed(1);
         if (onLog) onLog(`[Tema ${temaNum}] Conclu\xEDdo com sucesso! Aguardando ${delaySec}s e voltando para a grade...`, "success");
