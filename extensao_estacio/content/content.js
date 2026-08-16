@@ -697,6 +697,21 @@ Responda ESTRITAMENTE em formato JSON:
 
   // src/modules/theme_automator.js
   var isStateMachineRunning = false;
+  function dispatchFullMouseEvents(el) {
+    if (!el) return;
+    const events = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
+    events.forEach((type) => {
+      try {
+        const ev = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        el.dispatchEvent(ev);
+      } catch (e) {
+      }
+    });
+  }
   function isInsideThemeUrl(url) {
     if (!url) return false;
     return /\/conteudos\/[a-f0-9-]{36}/i.test(url) || url.includes("tema=") || url.includes("/temas/");
@@ -834,14 +849,49 @@ Responda ESTRITAMENTE em formato JSON:
       const targetBtn = concludeEl.closest('button, [role="button"]') || concludeEl;
       targetBtn.removeAttribute("disabled");
       targetBtn.setAttribute("aria-disabled", "false");
+      dispatchFullMouseEvents(targetBtn);
       triggerNativeClick(targetBtn);
       if (onLog) onLog("Bot\xE3o [Marcar como conclu\xEDdo] liberado e clicado na tela! \u{1F3AF}", "success");
       await new Promise((r) => setTimeout(r, 800));
       const currentTxt = (targetBtn.innerText || "").toLowerCase();
       if (currentTxt.includes("marcar como conclu") && !currentTxt.includes("j\xE1")) {
+        dispatchFullMouseEvents(targetBtn);
         triggerNativeClick(targetBtn);
       }
     }
+  }
+  function openThemeByIndex(temaNum) {
+    const cards = getThemeCardsFromDom();
+    const targetCard = cards.find((c) => c.temaNum === temaNum);
+    if (!targetCard) return false;
+    try {
+      targetCard.cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch (e) {
+    }
+    const innerButtons = Array.from(targetCard.cardEl.querySelectorAll('button, [role="button"], a'));
+    const actionBtn = innerButtons.find((b) => {
+      const label = (b.getAttribute("aria-label") || b.getAttribute("title") || b.innerText || "").toLowerCase();
+      return label.includes("acessar") || label.includes("tema");
+    }) || innerButtons[0] || targetCard.cardEl;
+    dispatchFullMouseEvents(actionBtn);
+    triggerNativeClick(actionBtn);
+    if (targetCard.cardEl !== actionBtn) {
+      dispatchFullMouseEvents(targetCard.cardEl);
+      triggerNativeClick(targetCard.cardEl);
+    }
+    const linkEl = targetCard.cardEl.querySelector('a[href*="/conteudos/"]');
+    if (linkEl) {
+      dispatchFullMouseEvents(linkEl);
+      triggerNativeClick(linkEl);
+    }
+    if (targetCard.href && targetCard.href.includes("/conteudos/")) {
+      setTimeout(() => {
+        if (!isCurrentlyInsideTheme()) {
+          window.location.href = targetCard.href;
+        }
+      }, 1500);
+    }
+    return true;
   }
   async function processAutomatorStateMachine(onLog) {
     if (isStateMachineRunning) return;
@@ -936,19 +986,7 @@ Responda ESTRITAMENTE em formato JSON:
         const nextTema = pendentes[0];
         if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
         await new Promise((r) => setTimeout(r, 800));
-        triggerNativeClick(nextTema.actionBtn);
-        if (nextTema.cardEl && nextTema.cardEl !== nextTema.actionBtn) {
-          triggerNativeClick(nextTema.cardEl);
-        }
-        const linkEl = nextTema.cardEl.querySelector('a[href*="/conteudos/"]');
-        if (linkEl) triggerNativeClick(linkEl);
-        if (nextTema.href && nextTema.href.includes("/conteudos/")) {
-          setTimeout(() => {
-            if (!isCurrentlyInsideTheme()) {
-              window.location.href = nextTema.href;
-            }
-          }, 1500);
-        }
+        openThemeByIndex(nextTema.temaNum);
       } finally {
         isStateMachineRunning = false;
       }
@@ -1003,12 +1041,7 @@ Responda ESTRITAMENTE em formato JSON:
       localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
       const firstTema = pendentes[0];
       if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, "info");
-      triggerNativeClick(firstTema.actionBtn);
-      if (firstTema.cardEl && firstTema.cardEl !== firstTema.actionBtn) {
-        triggerNativeClick(firstTema.cardEl);
-      }
-      const linkEl = firstTema.cardEl.querySelector('a[href*="/conteudos/"]');
-      if (linkEl) triggerNativeClick(linkEl);
+      openThemeByIndex(firstTema.temaNum);
     });
   }
 
@@ -1155,10 +1188,12 @@ Responda ESTRITAMENTE em formato JSON:
     const logBox = document.getElementById("box-log");
     if (initialLogs.length > 0) {
       initialLogs.forEach((entry) => {
-        const div = document.createElement("div");
-        div.className = `log-item ${entry.type || "info"}`;
-        div.textContent = entry.text;
-        logBox.appendChild(div);
+        if (entry && entry.text && entry.text !== "undefined") {
+          const div = document.createElement("div");
+          div.className = `log-item ${entry.type || "info"}`;
+          div.textContent = entry.text;
+          logBox.appendChild(div);
+        }
       });
       logBox.scrollTop = logBox.scrollHeight;
     } else {
@@ -1168,7 +1203,7 @@ Responda ESTRITAMENTE em formato JSON:
       logBox.appendChild(div);
     }
     function log(msg, type = "info") {
-      if (!logBox) return;
+      if (!logBox || !msg || msg === "undefined") return;
       const formatted = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] ${msg}`;
       const div = document.createElement("div");
       div.className = `log-item ${type}`;
@@ -1283,15 +1318,15 @@ Responda ESTRITAMENTE em formato JSON:
     });
     document.getElementById("btn-copy-header").addEventListener("click", (e) => {
       e.stopPropagation();
-      copyAllLogs(document.getElementById("box-log"), log);
+      copyAllLogs(document.getElementById("box-log"));
     });
     document.getElementById("btn-copy-footer").addEventListener("click", (e) => {
       e.stopPropagation();
-      copyAllLogs(document.getElementById("box-log"), log);
+      copyAllLogs(document.getElementById("box-log"));
     });
     document.getElementById("btn-copy-gabarito").addEventListener("click", (e) => {
       e.stopPropagation();
-      copyGabarito(log, log);
+      copyGabarito();
     });
     document.getElementById("btn-min").addEventListener("click", (e) => {
       e.stopPropagation();

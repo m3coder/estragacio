@@ -161,10 +161,12 @@ export function createSuiteWidget() {
   // Restaura logs persistentes
   if (initialLogs.length > 0) {
     initialLogs.forEach(entry => {
-      const div = document.createElement('div');
-      div.className = `log-item ${entry.type || 'info'}`;
-      div.textContent = entry.text;
-      logBox.appendChild(div);
+      if (entry && entry.text && entry.text !== 'undefined') {
+        const div = document.createElement('div');
+        div.className = `log-item ${entry.type || 'info'}`;
+        div.textContent = entry.text;
+        logBox.appendChild(div);
+      }
     });
     logBox.scrollTop = logBox.scrollHeight;
   } else {
@@ -175,7 +177,7 @@ export function createSuiteWidget() {
   }
 
   function log(msg, type = 'info') {
-    if (!logBox) return;
+    if (!logBox || !msg || msg === 'undefined') return;
     const formatted = `[${new Date().toLocaleTimeString()}] ${msg}`;
     const div = document.createElement('div');
     div.className = `log-item ${type}`;
@@ -307,18 +309,19 @@ export function createSuiteWidget() {
     clearAllStoredData();
   });
 
+  // Botões de Cópia Silenciosa (Sem disparar log undefined)
   document.getElementById('btn-copy-header').addEventListener('click', (e) => {
     e.stopPropagation();
-    copyAllLogs(document.getElementById('box-log'), log);
+    copyAllLogs(document.getElementById('box-log'));
   });
   document.getElementById('btn-copy-footer').addEventListener('click', (e) => {
     e.stopPropagation();
-    copyAllLogs(document.getElementById('box-log'), log);
+    copyAllLogs(document.getElementById('box-log'));
   });
 
   document.getElementById('btn-copy-gabarito').addEventListener('click', (e) => {
     e.stopPropagation();
-    copyGabarito(log, log);
+    copyGabarito();
   });
 
   document.getElementById('btn-min').addEventListener('click', (e) => {

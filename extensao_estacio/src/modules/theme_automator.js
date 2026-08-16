@@ -1,10 +1,25 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Validação de Total de Temas)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Disparo Completo de Eventos do Mouse)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
 import { waitForCards, getThemeCardsFromDom } from './dom_parser.js';
 
 let isStateMachineRunning = false;
+
+export function dispatchFullMouseEvents(el) {
+  if (!el) return;
+  const events = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'];
+  events.forEach(type => {
+    try {
+      const ev = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      });
+      el.dispatchEvent(ev);
+    } catch (e) {}
+  });
+}
 
 export function isInsideThemeUrl(url) {
   if (!url) return false;
@@ -171,18 +186,59 @@ export async function clickConcludeButtonActiveLoop(onLog = null) {
     targetBtn.removeAttribute('disabled');
     targetBtn.setAttribute('aria-disabled', 'false');
 
-    // 1º Clique nativo no botão liberado
+    dispatchFullMouseEvents(targetBtn);
     triggerNativeClick(targetBtn);
     if (onLog) onLog('Botão [Marcar como concluído] liberado e clicado na tela! 🎯', 'success');
 
     await new Promise(r => setTimeout(r, 800));
 
-    // 2º Clique de confirmação se o botão ainda estiver ativo
     const currentTxt = (targetBtn.innerText || '').toLowerCase();
     if (currentTxt.includes('marcar como conclu') && !currentTxt.includes('já')) {
+      dispatchFullMouseEvents(targetBtn);
       triggerNativeClick(targetBtn);
     }
   }
+}
+
+export function openThemeByIndex(temaNum) {
+  const cards = getThemeCardsFromDom();
+  const targetCard = cards.find(c => c.temaNum === temaNum);
+  if (!targetCard) return false;
+
+  try {
+    targetCard.cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {}
+
+  const innerButtons = Array.from(targetCard.cardEl.querySelectorAll('button, [role="button"], a'));
+  const actionBtn = innerButtons.find(b => {
+    const label = (b.getAttribute('aria-label') || b.getAttribute('title') || b.innerText || '').toLowerCase();
+    return label.includes('acessar') || label.includes('tema');
+  }) || innerButtons[0] || targetCard.cardEl;
+
+  dispatchFullMouseEvents(actionBtn);
+  triggerNativeClick(actionBtn);
+
+  if (targetCard.cardEl !== actionBtn) {
+    dispatchFullMouseEvents(targetCard.cardEl);
+    triggerNativeClick(targetCard.cardEl);
+  }
+
+  const linkEl = targetCard.cardEl.querySelector('a[href*="/conteudos/"]');
+  if (linkEl) {
+    dispatchFullMouseEvents(linkEl);
+    triggerNativeClick(linkEl);
+  }
+
+  // Fallback garantido por URL se não abrir em 1.5s
+  if (targetCard.href && targetCard.href.includes('/conteudos/')) {
+    setTimeout(() => {
+      if (!isCurrentlyInsideTheme()) {
+        window.location.href = targetCard.href;
+      }
+    }, 1500);
+  }
+
+  return true;
 }
 
 export async function processAutomatorStateMachine(onLog) {
@@ -304,7 +360,6 @@ export async function processAutomatorStateMachine(onLog) {
       }
 
       if (pendentes.length === 0) {
-        // Se a grade ainda está carregando os outros cards, aguarda
         return;
       }
 
@@ -317,24 +372,7 @@ export async function processAutomatorStateMachine(onLog) {
       if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
 
       await new Promise(r => setTimeout(r, 800));
-
-      // Dispara clique no botão [ → ], no card e no link interno
-      triggerNativeClick(nextTema.actionBtn);
-      if (nextTema.cardEl && nextTema.cardEl !== nextTema.actionBtn) {
-        triggerNativeClick(nextTema.cardEl);
-      }
-
-      const linkEl = nextTema.cardEl.querySelector('a[href*="/conteudos/"]');
-      if (linkEl) triggerNativeClick(linkEl);
-
-      // Fallback seguro se não abrir em 1.5s
-      if (nextTema.href && nextTema.href.includes('/conteudos/')) {
-        setTimeout(() => {
-          if (!isCurrentlyInsideTheme()) {
-            window.location.href = nextTema.href;
-          }
-        }, 1500);
-      }
+      openThemeByIndex(nextTema.temaNum);
 
     } finally {
       isStateMachineRunning = false;
@@ -403,11 +441,6 @@ export function startThemeCompletion(onLog) {
     const firstTema = pendentes[0];
     if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, 'info');
     
-    triggerNativeClick(firstTema.actionBtn);
-    if (firstTema.cardEl && firstTema.cardEl !== firstTema.actionBtn) {
-      triggerNativeClick(firstTema.cardEl);
-    }
-    const linkEl = firstTema.cardEl.querySelector('a[href*="/conteudos/"]');
-    if (linkEl) triggerNativeClick(linkEl);
+    openThemeByIndex(firstTema.temaNum);
   });
 }
