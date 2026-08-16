@@ -45,6 +45,20 @@ export function initGabaritoStructure(totalQuestions = 10, providerLabel = 'AI')
   return saveGabarito(existing?.provider || providerLabel, answers);
 }
 
+export function resetGabaritoAnswers(totalQuestions = 10, providerLabel = 'AI') {
+  const answers = [];
+  for (let q = 1; q <= totalQuestions; q++) {
+    answers.push({
+      q: q,
+      status: 'pending',
+      letter: null,
+      explanation: '',
+      error: null
+    });
+  }
+  return saveGabarito(providerLabel, answers);
+}
+
 export function updateGabaritoQuestion(qNum, { status, letter, explanation, error, provider }) {
   let data = getSavedGabarito() || { timestamp: new Date().toLocaleString(), provider: provider || 'AI', answers: [] };
   let item = data.answers.find(a => a.q === qNum);

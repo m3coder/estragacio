@@ -5,8 +5,7 @@ import { setupUniversalDraggable, clampElementToViewport } from './draggable.js'
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { getSaved, setSaved, getApiKeyFor, setApiKeyFor, getProviderStatus, setProviderStatus, onStorageChange, getShowPaidModels, setShowPaidModels } from '../config/storage.js';
 import { copyAllLogs, copyGabarito, renderSavedGabarito, initGabaritoStructure } from '../modules/gabarito.js';
-import { reviewSingleQuestion } from '../modules/reviewer.js';
-import { runExamQueue, solveSingleQuestion, applySavedGabaritoToDOM } from '../modules/exam_solver.js';
+import { runExamQueue, solveSingleQuestion, applySavedGabaritoToDOM, clearExamAnswers } from '../modules/exam_solver.js';
 import { startThemeCompletion, cancelAllAutomations, isAnyAutomationRunning, processAutomatorStateMachine } from '../modules/theme_automator.js';
 import { testProviderKey } from '../core/ai_engine.js';
 import { fetchLiveModels, getModelsForProvider } from '../modules/model_fetcher.js';
@@ -181,11 +180,29 @@ export function createSuiteWidget() {
   document.body.appendChild(box);
   document.body.appendChild(toggleBtn);
 
+  // Restaura estado de exibição salvo
+  const savedDisplayState = getSaved('widget_display_state', 'expanded');
+  if (savedDisplayState === 'minimized') {
+    box.classList.add('minimized');
+    minMascotImg.style.display = 'block';
+    toggleBtn.style.display = 'none';
+  } else if (savedDisplayState === 'hidden') {
+    box.classList.add('hidden-box');
+    toggleBtn.style.display = 'flex';
+    minMascotImg.style.display = 'none';
+  } else {
+    box.classList.remove('hidden-box');
+    box.classList.remove('minimized');
+    minMascotImg.style.display = 'none';
+    toggleBtn.style.display = 'none';
+  }
+
   function expandWidget() {
     box.classList.remove('hidden-box');
     box.classList.remove('minimized');
     minMascotImg.style.display = 'none';
     toggleBtn.style.display = 'none';
+    setSaved('widget_display_state', 'expanded');
     requestAnimationFrame(() => {
       clampElementToViewport(box);
     });
@@ -194,14 +211,11 @@ export function createSuiteWidget() {
   function toggleMinimize() {
     const isMin = box.classList.toggle('minimized');
     minMascotImg.style.display = isMin ? 'block' : 'none';
-    if (!isMin) {
-      requestAnimationFrame(() => {
-        clampElementToViewport(box);
-      });
-    }
+    setSaved('widget_display_state', isMin ? 'minimized' : 'expanded');
+    requestAnimationFrame(() => {
+      clampElementToViewport(box);
+    });
   }
-
-  setupUniversalDraggable(box, document.getElementById('box-drag-handle'));
 
   setupUniversalDraggable(box, box, () => {
     if (box.classList.contains('minimized')) {
@@ -256,7 +270,7 @@ export function createSuiteWidget() {
     } catch(e) {}
   }
 
-  function clearAllStoredData() {
+  async function clearAllStoredData() {
     localStorage.removeItem('estacio_suite_logs');
     localStorage.removeItem('estacio_last_gabarito');
     localStorage.removeItem('estacio_catalog_queue');
@@ -272,8 +286,7 @@ export function createSuiteWidget() {
     if (gabaritoBadges) gabaritoBadges.innerHTML = '';
 
     if (isExam) {
-      initGabaritoStructure(10, PROVIDERS_CONFIG[currentProvider]?.name);
-      refreshGabaritoUI();
+      await clearExamAnswers((msg, type) => log(msg, type), () => refreshGabaritoUI());
     }
 
     log('🧹 Todos os logs, gabaritos e filas foram limpos com sucesso!', 'success');
@@ -647,6 +660,7 @@ export function createSuiteWidget() {
     e.stopPropagation();
     box.classList.add('hidden-box');
     toggleBtn.style.display = 'flex';
+    setSaved('widget_display_state', 'hidden');
     requestAnimationFrame(() => {
       clampElementToViewport(toggleBtn);
     });

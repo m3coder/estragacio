@@ -69,11 +69,25 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
       e.target.tagName === 'BUTTON' ||
       e.target.tagName === 'SELECT' ||
       e.target.tagName === 'INPUT' ||
+      e.target.tagName === 'TEXTAREA' ||
       e.target.closest('button') ||
       e.target.closest('#box-header-cat')
     ) {
       return;
     }
+
+    // Se o elemento não está minimizado e o dragHandle é o container principal,
+    // só permite arrastar pela barra de título ou header
+    if (
+      dragHandle === targetElement &&
+      !targetElement.classList.contains('minimized') &&
+      targetElement.id === 'estacio-suite-box'
+    ) {
+      if (!e.target.closest('#box-drag-handle') && !e.target.closest('.box-header')) {
+        return;
+      }
+    }
+
     e.preventDefault();
 
     startX = e.clientX;

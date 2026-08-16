@@ -4,7 +4,7 @@ import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { callAIWithFallback, executeAICall } from '../core/ai_engine.js';
 import { clickOptionReact } from '../core/react_fiber.js';
 import { getQuestionCards, getTotalExamQuestionsCount, navigateToQuestionCard, extractStatement, extractAlternatives } from './dom_parser.js';
-import { getSavedGabarito, saveGabarito, initGabaritoStructure, updateGabaritoQuestion } from './gabarito.js';
+import { getSavedGabarito, saveGabarito, initGabaritoStructure, resetGabaritoAnswers, updateGabaritoQuestion } from './gabarito.js';
 import { playSuccessSound, playCelebrationFanfare, playAttentionSound } from './audio_alerts.js';
 
 export async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
@@ -233,5 +233,53 @@ export async function applySavedGabaritoToDOM(onLog, onGabaritoUpdated) {
   }
 
   if (onGabaritoUpdated) onGabaritoUpdated();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+export async function clearExamAnswers(onLog, onGabaritoUpdated) {
+  const total = getTotalExamQuestionsCount() || 10;
+  if (onLog) onLog('🧹 Desmarcando todas as alternativas na prova e resetando gabarito...', 'info');
+
+  let uncheckedCount = 0;
+
+  for (let qNum = 1; qNum <= total; qNum++) {
+    const qCard = await navigateToQuestionCard(qNum);
+    const cardEl = qCard?.element || document.querySelector(`[data-question="${qNum}"], #q${qNum}, #question-${qNum}`);
+    const container = cardEl || document;
+
+    const inputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+    inputs.forEach(inp => {
+      if (inp.checked) {
+        inp.checked = false;
+        inp.removeAttribute('checked');
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        uncheckedCount++;
+      }
+    });
+
+    const highlighted = (cardEl || document).querySelectorAll('.estacio-ai-marked, .selected, .active, .checked, .ant-radio-checked, .ant-radio-wrapper-checked, [aria-checked="true"], [data-checked="true"]');
+    highlighted.forEach(el => {
+      el.classList.remove('estacio-ai-marked', 'selected', 'active', 'checked', 'ant-radio-checked', 'ant-radio-wrapper-checked');
+      el.removeAttribute('aria-checked');
+      el.removeAttribute('data-checked');
+      el.style.outline = '';
+      el.style.borderColor = '';
+      el.style.backgroundColor = '';
+    });
+  }
+
+  document.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked').forEach(inp => {
+    inp.checked = false;
+    inp.removeAttribute('checked');
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  resetGabaritoAnswers(total);
+  if (onGabaritoUpdated) onGabaritoUpdated();
+
+  try { playAttentionSound(); } catch (e) {}
+  if (onLog) onLog(`🧹 Prova limpa: ${total} questões resetadas para o estado inicial!`, 'success');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

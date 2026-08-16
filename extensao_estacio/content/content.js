@@ -74,8 +74,13 @@
       });
     }
     dragHandle.addEventListener("mousedown", (e) => {
-      if (e.target.tagName === "BUTTON" || e.target.tagName === "SELECT" || e.target.tagName === "INPUT" || e.target.closest("button") || e.target.closest("#box-header-cat")) {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "SELECT" || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.closest("button") || e.target.closest("#box-header-cat")) {
         return;
+      }
+      if (dragHandle === targetElement && !targetElement.classList.contains("minimized") && targetElement.id === "estacio-suite-box") {
+        if (!e.target.closest("#box-drag-handle") && !e.target.closest(".box-header")) {
+          return;
+        }
       }
       e.preventDefault();
       startX = e.clientX;
@@ -422,6 +427,19 @@
     }
     answers.sort((a, b) => a.q - b.q);
     return saveGabarito(existing?.provider || providerLabel, answers);
+  }
+  function resetGabaritoAnswers(totalQuestions = 10, providerLabel = "AI") {
+    const answers = [];
+    for (let q = 1; q <= totalQuestions; q++) {
+      answers.push({
+        q,
+        status: "pending",
+        letter: null,
+        explanation: "",
+        error: null
+      });
+    }
+    return saveGabarito(providerLabel, answers);
   }
   function updateGabaritoQuestion(qNum, { status, letter, explanation, error, provider }) {
     let data = getSavedGabarito() || { timestamp: (/* @__PURE__ */ new Date()).toLocaleString(), provider: provider || "AI", answers: [] };
@@ -1115,56 +1133,6 @@ Responda ESTRITAMENTE em formato JSON:
     return [];
   }
 
-  // src/modules/reviewer.js
-  async function reviewSingleQuestion(qNum, targetProvider, onLog, onGabaritoUpdated) {
-    if (!qNum || isNaN(qNum)) return;
-    const pName = PROVIDERS_CONFIG[targetProvider]?.name || targetProvider;
-    updateGabaritoQuestion(qNum, { status: "processing" });
-    if (onGabaritoUpdated) onGabaritoUpdated();
-    if (onLog) onLog(`[Revis\xE3o Q${qNum}] \u{1F50D} Consultando 2\xAA Opini\xE3o com ${pName}...`, "info");
-    const qCard = await navigateToQuestionCard(qNum);
-    if (!qCard || !qCard.element) {
-      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Card da quest\xE3o n\xE3o encontrado na p\xE1gina.`, "error");
-      updateGabaritoQuestion(qNum, { status: "failed", error: "Card n\xE3o localizado" });
-      if (onGabaritoUpdated) onGabaritoUpdated();
-      return;
-    }
-    const statement = extractStatement(qCard.element, qNum);
-    const alternatives = extractAlternatives(qCard.element);
-    if (alternatives.length < 2) {
-      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Alternativas n\xE3o encontradas.`, "error");
-      updateGabaritoQuestion(qNum, { status: "failed", error: "Alternativas insuficientes" });
-      if (onGabaritoUpdated) onGabaritoUpdated();
-      return;
-    }
-    try {
-      const model = PROVIDERS_CONFIG[targetProvider]?.defaultModel;
-      const ans = await executeAICall(targetProvider, model, statement, alternatives);
-      const chosenLetter = ans.letra?.toUpperCase() || "A";
-      if (onLog) {
-        onLog(`[Revis\xE3o Q${qNum}] \u2705 ${pName} sugere alternativa: [ ${chosenLetter} ] (${ans.explicacao || ""})`, "success");
-      }
-      const target = alternatives.find((o) => o.letter === chosenLetter);
-      if (target && target.element) {
-        clickOptionReact(target.element);
-      }
-      updateGabaritoQuestion(qNum, {
-        status: "done",
-        letter: chosenLetter,
-        explanation: `[Revisado por ${pName}] ${ans.explicacao || ""}`,
-        error: null
-      });
-      if (onGabaritoUpdated) onGabaritoUpdated();
-    } catch (err) {
-      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Erro: ${err.message}`, "error");
-      updateGabaritoQuestion(qNum, {
-        status: "failed",
-        error: err.message
-      });
-      if (onGabaritoUpdated) onGabaritoUpdated();
-    }
-  }
-
   // src/modules/audio_alerts.js
   var audioCtx = null;
   function getAudioContext() {
@@ -1424,6 +1392,49 @@ Responda ESTRITAMENTE em formato JSON:
       }
     }
     if (onGabaritoUpdated) onGabaritoUpdated();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  async function clearExamAnswers(onLog, onGabaritoUpdated) {
+    const total = getTotalExamQuestionsCount() || 10;
+    if (onLog) onLog("\u{1F9F9} Desmarcando todas as alternativas na prova e resetando gabarito...", "info");
+    let uncheckedCount = 0;
+    for (let qNum = 1; qNum <= total; qNum++) {
+      const qCard = await navigateToQuestionCard(qNum);
+      const cardEl = qCard?.element || document.querySelector(`[data-question="${qNum}"], #q${qNum}, #question-${qNum}`);
+      const container = cardEl || document;
+      const inputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+      inputs.forEach((inp) => {
+        if (inp.checked) {
+          inp.checked = false;
+          inp.removeAttribute("checked");
+          inp.dispatchEvent(new Event("change", { bubbles: true }));
+          inp.dispatchEvent(new Event("input", { bubbles: true }));
+          uncheckedCount++;
+        }
+      });
+      const highlighted = (cardEl || document).querySelectorAll('.estacio-ai-marked, .selected, .active, .checked, .ant-radio-checked, .ant-radio-wrapper-checked, [aria-checked="true"], [data-checked="true"]');
+      highlighted.forEach((el) => {
+        el.classList.remove("estacio-ai-marked", "selected", "active", "checked", "ant-radio-checked", "ant-radio-wrapper-checked");
+        el.removeAttribute("aria-checked");
+        el.removeAttribute("data-checked");
+        el.style.outline = "";
+        el.style.borderColor = "";
+        el.style.backgroundColor = "";
+      });
+    }
+    document.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked').forEach((inp) => {
+      inp.checked = false;
+      inp.removeAttribute("checked");
+      inp.dispatchEvent(new Event("change", { bubbles: true }));
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    resetGabaritoAnswers(total);
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    try {
+      playAttentionSound();
+    } catch (e) {
+    }
+    if (onLog) onLog(`\u{1F9F9} Prova limpa: ${total} quest\xF5es resetadas para o estado inicial!`, "success");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -2474,11 +2485,27 @@ Responda ESTRITAMENTE em formato JSON:
     toggleBtn.title = "Mostrar Est\xE1cio Suite AI";
     document.body.appendChild(box);
     document.body.appendChild(toggleBtn);
+    const savedDisplayState = getSaved("widget_display_state", "expanded");
+    if (savedDisplayState === "minimized") {
+      box.classList.add("minimized");
+      minMascotImg.style.display = "block";
+      toggleBtn.style.display = "none";
+    } else if (savedDisplayState === "hidden") {
+      box.classList.add("hidden-box");
+      toggleBtn.style.display = "flex";
+      minMascotImg.style.display = "none";
+    } else {
+      box.classList.remove("hidden-box");
+      box.classList.remove("minimized");
+      minMascotImg.style.display = "none";
+      toggleBtn.style.display = "none";
+    }
     function expandWidget() {
       box.classList.remove("hidden-box");
       box.classList.remove("minimized");
       minMascotImg.style.display = "none";
       toggleBtn.style.display = "none";
+      setSaved("widget_display_state", "expanded");
       requestAnimationFrame(() => {
         clampElementToViewport(box);
       });
@@ -2486,13 +2513,11 @@ Responda ESTRITAMENTE em formato JSON:
     function toggleMinimize() {
       const isMin = box.classList.toggle("minimized");
       minMascotImg.style.display = isMin ? "block" : "none";
-      if (!isMin) {
-        requestAnimationFrame(() => {
-          clampElementToViewport(box);
-        });
-      }
+      setSaved("widget_display_state", isMin ? "minimized" : "expanded");
+      requestAnimationFrame(() => {
+        clampElementToViewport(box);
+      });
     }
-    setupUniversalDraggable(box, document.getElementById("box-drag-handle"));
     setupUniversalDraggable(box, box, () => {
       if (box.classList.contains("minimized")) {
         expandWidget();
@@ -2539,7 +2564,7 @@ Responda ESTRITAMENTE em formato JSON:
       } catch (e) {
       }
     }
-    function clearAllStoredData() {
+    async function clearAllStoredData() {
       localStorage.removeItem("estacio_suite_logs");
       localStorage.removeItem("estacio_last_gabarito");
       localStorage.removeItem("estacio_catalog_queue");
@@ -2552,8 +2577,7 @@ Responda ESTRITAMENTE em formato JSON:
       if (gabaritoPanel) gabaritoPanel.style.display = "none";
       if (gabaritoBadges) gabaritoBadges.innerHTML = "";
       if (isExam) {
-        initGabaritoStructure(10, PROVIDERS_CONFIG[currentProvider]?.name);
-        refreshGabaritoUI();
+        await clearExamAnswers((msg, type) => log(msg, type), () => refreshGabaritoUI());
       }
       log("\u{1F9F9} Todos os logs, gabaritos e filas foram limpos com sucesso!", "success");
     }
@@ -2866,6 +2890,7 @@ Responda ESTRITAMENTE em formato JSON:
       e.stopPropagation();
       box.classList.add("hidden-box");
       toggleBtn.style.display = "flex";
+      setSaved("widget_display_state", "hidden");
       requestAnimationFrame(() => {
         clampElementToViewport(toggleBtn);
       });
