@@ -1,4 +1,4 @@
-// Sistema de Gabarito Persistente e Cópia Formatada (Cópia Silenciosa sem Poluir Logs)
+// Sistema de Gabarito Persistente, Mapeamento Visual Completo (Verde=Concluído, Vermelho=Falha, Cinza=Pendente) e 1-Click Retry/Revisão
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 
@@ -22,6 +22,46 @@ export function saveGabarito(providerLabel, answersList) {
   return payload;
 }
 
+export function initGabaritoStructure(totalQuestions = 10, providerLabel = 'AI') {
+  let existing = getSavedGabarito();
+  const answers = existing?.answers ? [...existing.answers] : [];
+
+  for (let q = 1; q <= totalQuestions; q++) {
+    if (!answers.some(a => a.q === q)) {
+      answers.push({
+        q: q,
+        status: 'pending', // 'pending', 'processing', 'done', 'failed'
+        letter: null,
+        explanation: '',
+        error: null
+      });
+    }
+  }
+
+  answers.sort((a, b) => a.q - b.q);
+  return saveGabarito(existing?.provider || providerLabel, answers);
+}
+
+export function updateGabaritoQuestion(qNum, { status, letter, explanation, error, provider }) {
+  let data = getSavedGabarito() || { timestamp: new Date().toLocaleString(), provider: provider || 'AI', answers: [] };
+  let item = data.answers.find(a => a.q === qNum);
+
+  if (!item) {
+    item = { q: qNum, status: 'pending', letter: null, explanation: '', error: null };
+    data.answers.push(item);
+  }
+
+  if (status !== undefined) item.status = status;
+  if (letter !== undefined) item.letter = letter;
+  if (explanation !== undefined) item.explanation = explanation;
+  if (error !== undefined) item.error = error;
+  if (provider) data.provider = provider;
+
+  data.answers.sort((a, b) => a.q - b.q);
+  saveGabarito(data.provider, data.answers);
+  return data;
+}
+
 export function copyGabarito(onSuccess, onError) {
   const data = getSavedGabarito();
   if (!data || !data.answers || data.answers.length === 0) {
@@ -34,11 +74,18 @@ export function copyGabarito(onSuccess, onError) {
     text += `🤖 IA Utilizada: ${data.provider || 'AI'}\n\n`;
 
     data.answers.forEach(a => {
-      text += `Questão ${a.q}: [ ${a.letter} ]  ${a.explanation ? `(${a.explanation})` : ''}\n`;
+      if (a.letter) {
+        text += `Questão ${a.q}: [ ${a.letter} ]  ${a.explanation ? `(${a.explanation})` : ''}\n`;
+      } else {
+        text += `Questão ${a.q}: [ Pendente ]\n`;
+      }
     });
 
-    text += `\n🎯 Resumo Compacto:\n`;
-    text += data.answers.map(a => `${a.q}-${a.letter}`).join(' | ');
+    const answeredOnly = data.answers.filter(a => a.letter);
+    if (answeredOnly.length > 0) {
+      text += `\n🎯 Resumo Compacto:\n`;
+      text += answeredOnly.map(a => `${a.q}-${a.letter}`).join(' | ');
+    }
 
     copyTextToClipboard(text, () => {
       if (onSuccess) onSuccess();
@@ -85,6 +132,12 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
   const data = getSavedGabarito();
 
   if (!data || !data.answers || data.answers.length === 0) {
+    // Se não há dados, inicializa as 10 questões para mapear de imediato
+    initGabaritoStructure(10);
+  }
+
+  const currentData = getSavedGabarito();
+  if (!currentData || !currentData.answers || currentData.answers.length === 0) {
     containerEl.style.display = 'none';
     return;
   }
@@ -92,16 +145,35 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
   containerEl.style.display = 'flex';
   badgesEl.innerHTML = '';
 
-  data.answers.forEach(a => {
+  const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
+
+  currentData.answers.forEach(a => {
     const span = document.createElement('div');
-    span.className = 'gabarito-badge';
     span.id = `badge-q-${a.q}`;
-    const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
-    span.title = `Clique para REVISAR Q${a.q} com ${pName}! (Resposta atual: ${a.letter})`;
-    span.innerHTML = `Q${a.q}: <b>${a.letter}</b> <span class="gabarito-search-icon">🔍</span>`;
+
+    let status = a.status || (a.letter ? 'done' : 'pending');
+
+    if (status === 'done' || (a.letter && status !== 'failed')) {
+      span.className = 'gabarito-badge badge-done';
+      span.title = `Questão ${a.q}: [ ${a.letter} ] - ${a.explanation || 'Concluída'}\n👉 Clique para REVISAR (2ª Opinião com ${pName})!`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-letter">${a.letter}</b> <span class="badge-icon">✅ 🔍</span>`;
+    } else if (status === 'failed') {
+      span.className = 'gabarito-badge badge-failed';
+      span.title = `Questão ${a.q} falhou: ${a.error || 'Erro'}\n👉 Clique para RETRY / TENTAR NOVAMENTE!`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-fail">❌</b> <span class="badge-icon">Retry</span>`;
+    } else if (status === 'processing') {
+      span.className = 'gabarito-badge badge-processing';
+      span.title = `Questão ${a.q} sendo processada pela IA...`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-proc">🔄</b>`;
+    } else {
+      // Pending
+      span.className = 'gabarito-badge badge-pending';
+      span.title = `Questão ${a.q} pendente.\n👉 Clique para RESOLVER AGORA com a IA ativa!`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-pend">-</b> <span class="badge-icon">⏳</span>`;
+    }
 
     span.addEventListener('click', () => {
-      if (onBadgeClick) onBadgeClick(a.q);
+      if (onBadgeClick) onBadgeClick(a.q, status);
     });
 
     badgesEl.appendChild(span);

@@ -1,6 +1,6 @@
 {
   "name": "estacio-suite-ai",
-  "version": "2.0.1",
+  "version": "2.5.5",
   "description": "Suíte All-in-One da Estácio: Solver Multi-IA, Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias.",
   "type": "module",
   "scripts": {

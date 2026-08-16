@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Estácio Suite AI (Solver, Gabarito & Revisão Multi-IA)
 // @namespace    https://github.com/m3coder/estragacio
-// @version      2.0.1
+// @version      2.5.5
 // @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek) 2) Troca Rápida de Modelo e Provedor 3) Revisão com 1-Clique no Gabarito 4) Auto-Conclusão de Temas.
 // @author       m3coder
 // @match        https://estacio.saladeavaliacoes.com.br/*
@@ -24,162 +24,15 @@
 (() => {
   // src/ui/widget.css
   if (typeof GM_addStyle !== "undefined") {
-    GM_addStyle('/* Estilo do Widget Flutuante Est\xE1cio Suite AI */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 375px;\n  background: rgba(15, 23, 42, 0.97);\n  backdrop-filter: blur(16px);\n  -webkit-backdrop-filter: blur(16px);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 14px;\n  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);\n  color: #f8fafc;\n  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: box-shadow 0.2s ease, opacity 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 52px !important;\n  height: 52px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);\n  border: 2px solid rgba(255, 255, 255, 0.3);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations */\n.cat-dancing-avatar {\n  width: 22px;\n  height: 22px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.6s infinite alternate ease-in-out;\n  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);\n  flex-shrink: 0;\n}\n\n.cat-bubble-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite alternate ease-in-out;\n  box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);\n  pointer-events: none;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-5deg); }\n  50% { transform: translateY(-2px) scale(1.08) rotate(0deg); }\n  100% { transform: translateY(0) rotate(5deg); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  50% { transform: translateY(-3px) rotate(0deg) scale(1.1); }\n  100% { transform: translateY(0) rotate(8deg) scale(1); }\n}\n\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.85);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  background: linear-gradient(135deg, #60a5fa, #a78bfa);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 2px 4px;\n  line-height: 1;\n  border-radius: 4px;\n  transition: color 0.15s, background 0.15s;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.1);\n}\n\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 9px;\n}\n\n.ai-selector-container {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  padding: 8px 10px;\n  border-radius: 8px;\n  border: 1px solid rgba(255, 255, 255, 0.08);\n}\n\n.ai-selector-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n  font-size: 11px;\n}\n\n.ai-selector-select {\n  background: #1e293b;\n  color: #38bdf8;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 3px 6px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  max-width: 230px;\n}\n\n.key-config-row {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  padding: 5px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.key-config-input {\n  flex: 1;\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  color: #fff;\n  padding: 4px 6px;\n  font-size: 11px;\n  font-family: monospace;\n}\n\n.box-btn,\n.widget-btn {\n  padding: 10px 14px;\n  border-radius: 8px;\n  font-size: 13px;\n  font-weight: 600;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #10b981 0%, #059669 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.92;\n  transform: translateY(-1px);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Gabarito Inteligente com 1-Clique para Revis\xE3o */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.92);\n  border: 1px solid rgba(56, 189, 248, 0.35);\n  border-radius: 8px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-badges {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 5px;\n  max-height: 100px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 5px;\n  padding: 3px 7px;\n  font-size: 11px;\n  font-weight: 600;\n  color: #f1f5f9;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n}\n\n.gabarito-badge:hover {\n  border-color: #a855f7;\n  background: rgba(168, 85, 247, 0.2);\n  transform: translateY(-1px) scale(1.05);\n  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);\n}\n\n.gabarito-badge.reviewing {\n  border-color: #f59e0b !important;\n  background: rgba(245, 158, 11, 0.25) !important;\n  animation: pulse 1s infinite alternate;\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; }\n.gabarito-badge .badge-a { color: #34d399; font-weight: 700; }\n.gabarito-badge .badge-rev-icon { font-size: 10px; color: #c084fc; opacity: 0.7; }\n.gabarito-badge:hover .badge-rev-icon { opacity: 1; color: #e879f9; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.12);\n  border: 1px dashed rgba(168, 85, 247, 0.35);\n  padding: 6px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.box-log,\n.widget-log {\n  max-height: 100px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.5);\n  border-radius: 6px;\n  padding: 6px 8px;\n  font-family: ui-monospace, monospace;\n  font-size: 11px;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n.box-footer,\n.widget-footer {\n  padding: 6px 14px;\n  background: rgba(15, 23, 42, 0.7);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 2px 4px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n');
+    GM_addStyle('/* Estilo do Widget Flutuante Est\xE1cio Suite AI */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 375px;\n  background: rgba(15, 23, 42, 0.97);\n  backdrop-filter: blur(16px);\n  -webkit-backdrop-filter: blur(16px);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 14px;\n  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);\n  color: #f8fafc;\n  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: box-shadow 0.2s ease, opacity 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 52px !important;\n  height: 52px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);\n  border: 2px solid rgba(255, 255, 255, 0.3);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */\n.cat-dancing-avatar {\n  width: 24px;\n  height: 24px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.8s infinite ease-in-out;\n  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);\n  flex-shrink: 0;\n  display: inline-block;\n}\n\n.cat-bubble-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite ease-in-out;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }\n  50% { transform: translateY(0) rotate(8deg) scale(1.02); }\n  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }\n  100% { transform: translateY(0) rotate(-8deg) scale(1); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-14deg) scale(1); }\n  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }\n  50% { transform: translateY(0) rotate(14deg) scale(1.05); }\n  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }\n  100% { transform: translateY(0) rotate(-14deg) scale(1); }\n}\n\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.85);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  background: linear-gradient(135deg, #60a5fa, #a78bfa);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 2px 4px;\n  line-height: 1;\n  border-radius: 4px;\n  transition: color 0.15s, background 0.15s;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.1);\n}\n\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 9px;\n}\n\n.ai-selector-container {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  padding: 8px 10px;\n  border-radius: 8px;\n  border: 1px solid rgba(255, 255, 255, 0.08);\n}\n\n.ai-selector-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n  font-size: 11px;\n}\n\n.ai-selector-select {\n  background: #1e293b;\n  color: #38bdf8;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 3px 6px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  max-width: 230px;\n}\n\n.key-config-row {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  padding: 5px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.key-config-input {\n  flex: 1;\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  color: #fff;\n  padding: 4px 6px;\n  font-size: 11px;\n  font-family: monospace;\n}\n\n.box-btn,\n.widget-btn {\n  padding: 10px 14px;\n  border-radius: 8px;\n  font-size: 13px;\n  font-weight: 600;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #10b981 0%, #059669 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.92;\n  transform: translateY(-1px);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Gabarito Inteligente com 1-Clique para Revis\xE3o */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.92);\n  border: 1px solid rgba(56, 189, 248, 0.35);\n  border-radius: 8px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-badges {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 5px;\n  max-height: 100px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 5px;\n  padding: 3px 7px;\n  font-size: 11px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.05);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.18);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.32);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.22);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.4);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.28);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.2);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 10px; font-weight: 500; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-icon { font-size: 10px; opacity: 0.8; }\n.gabarito-badge:hover .badge-icon { opacity: 1; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.12);\n  border: 1px dashed rgba(168, 85, 247, 0.35);\n  padding: 6px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.box-log,\n.widget-log {\n  max-height: 100px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.5);\n  border-radius: 6px;\n  padding: 6px 8px;\n  font-family: ui-monospace, monospace;\n  font-size: 11px;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n.box-footer,\n.widget-footer {\n  padding: 6px 14px;\n  background: rgba(15, 23, 42, 0.7);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 2px 4px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n');
   } else if (typeof document !== "undefined") {
     const styleEl = document.createElement("style");
-    styleEl.textContent = '/* Estilo do Widget Flutuante Est\xE1cio Suite AI */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 375px;\n  background: rgba(15, 23, 42, 0.97);\n  backdrop-filter: blur(16px);\n  -webkit-backdrop-filter: blur(16px);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 14px;\n  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);\n  color: #f8fafc;\n  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: box-shadow 0.2s ease, opacity 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 52px !important;\n  height: 52px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);\n  border: 2px solid rgba(255, 255, 255, 0.3);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations */\n.cat-dancing-avatar {\n  width: 22px;\n  height: 22px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.6s infinite alternate ease-in-out;\n  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);\n  flex-shrink: 0;\n}\n\n.cat-bubble-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite alternate ease-in-out;\n  box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);\n  pointer-events: none;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-5deg); }\n  50% { transform: translateY(-2px) scale(1.08) rotate(0deg); }\n  100% { transform: translateY(0) rotate(5deg); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  50% { transform: translateY(-3px) rotate(0deg) scale(1.1); }\n  100% { transform: translateY(0) rotate(8deg) scale(1); }\n}\n\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.85);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  background: linear-gradient(135deg, #60a5fa, #a78bfa);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 2px 4px;\n  line-height: 1;\n  border-radius: 4px;\n  transition: color 0.15s, background 0.15s;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.1);\n}\n\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 9px;\n}\n\n.ai-selector-container {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  padding: 8px 10px;\n  border-radius: 8px;\n  border: 1px solid rgba(255, 255, 255, 0.08);\n}\n\n.ai-selector-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n  font-size: 11px;\n}\n\n.ai-selector-select {\n  background: #1e293b;\n  color: #38bdf8;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 3px 6px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  max-width: 230px;\n}\n\n.key-config-row {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  padding: 5px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.key-config-input {\n  flex: 1;\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  color: #fff;\n  padding: 4px 6px;\n  font-size: 11px;\n  font-family: monospace;\n}\n\n.box-btn,\n.widget-btn {\n  padding: 10px 14px;\n  border-radius: 8px;\n  font-size: 13px;\n  font-weight: 600;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #10b981 0%, #059669 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.92;\n  transform: translateY(-1px);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Gabarito Inteligente com 1-Clique para Revis\xE3o */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.92);\n  border: 1px solid rgba(56, 189, 248, 0.35);\n  border-radius: 8px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-badges {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 5px;\n  max-height: 100px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 5px;\n  padding: 3px 7px;\n  font-size: 11px;\n  font-weight: 600;\n  color: #f1f5f9;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n}\n\n.gabarito-badge:hover {\n  border-color: #a855f7;\n  background: rgba(168, 85, 247, 0.2);\n  transform: translateY(-1px) scale(1.05);\n  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);\n}\n\n.gabarito-badge.reviewing {\n  border-color: #f59e0b !important;\n  background: rgba(245, 158, 11, 0.25) !important;\n  animation: pulse 1s infinite alternate;\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; }\n.gabarito-badge .badge-a { color: #34d399; font-weight: 700; }\n.gabarito-badge .badge-rev-icon { font-size: 10px; color: #c084fc; opacity: 0.7; }\n.gabarito-badge:hover .badge-rev-icon { opacity: 1; color: #e879f9; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.12);\n  border: 1px dashed rgba(168, 85, 247, 0.35);\n  padding: 6px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.box-log,\n.widget-log {\n  max-height: 100px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.5);\n  border-radius: 6px;\n  padding: 6px 8px;\n  font-family: ui-monospace, monospace;\n  font-size: 11px;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n.box-footer,\n.widget-footer {\n  padding: 6px 14px;\n  background: rgba(15, 23, 42, 0.7);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 2px 4px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n';
+    styleEl.textContent = '/* Estilo do Widget Flutuante Est\xE1cio Suite AI */\n\n#estacio-suite-box,\n#estacio-solver-widget {\n  position: fixed;\n  bottom: 24px;\n  right: 24px;\n  width: 375px;\n  background: rgba(15, 23, 42, 0.97);\n  backdrop-filter: blur(16px);\n  -webkit-backdrop-filter: blur(16px);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  border-radius: 14px;\n  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);\n  color: #f8fafc;\n  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n  z-index: 99999999;\n  overflow: hidden;\n  transition: box-shadow 0.2s ease, opacity 0.2s ease;\n  user-select: none;\n}\n\n#estacio-suite-box.minimized,\n#estacio-solver-widget.minimized {\n  width: 52px !important;\n  height: 52px !important;\n  border-radius: 50% !important;\n  cursor: grab !important;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  padding: 0;\n  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);\n  border: 2px solid rgba(255, 255, 255, 0.3);\n}\n\n#estacio-suite-box.minimized:active,\n#estacio-solver-widget.minimized:active {\n  cursor: grabbing !important;\n}\n\n#estacio-suite-box.minimized .box-inner,\n#estacio-solver-widget.minimized .widget-header,\n#estacio-solver-widget.minimized .widget-body,\n#estacio-solver-widget.minimized .widget-footer {\n  display: none !important;\n}\n\n#estacio-suite-box.hidden-box,\n#estacio-solver-widget.hidden-box {\n  display: none !important;\n}\n\n#estacio-suite-toggle-btn {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  width: 50px;\n  height: 50px;\n  border-radius: 50%;\n  background: linear-gradient(135deg, #2563eb, #7c3aed);\n  color: #fff;\n  border: 2px solid rgba(255, 255, 255, 0.35);\n  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);\n  display: none;\n  align-items: center;\n  justify-content: center;\n  cursor: grab;\n  z-index: 99999999;\n  overflow: hidden;\n}\n\n#estacio-suite-toggle-btn:active {\n  cursor: grabbing;\n}\n\n/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */\n.cat-dancing-avatar {\n  width: 24px;\n  height: 24px;\n  border-radius: 50%;\n  object-fit: cover;\n  border: 1.5px solid #60a5fa;\n  animation: catBop 0.8s infinite ease-in-out;\n  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);\n  flex-shrink: 0;\n  display: inline-block;\n}\n\n.cat-bubble-avatar {\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  object-fit: cover;\n  animation: catDance 0.8s infinite ease-in-out;\n  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);\n  pointer-events: none;\n  display: inline-block;\n}\n\n@keyframes catBop {\n  0% { transform: translateY(0) rotate(-8deg) scale(1); }\n  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }\n  50% { transform: translateY(0) rotate(8deg) scale(1.02); }\n  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }\n  100% { transform: translateY(0) rotate(-8deg) scale(1); }\n}\n\n@keyframes catDance {\n  0% { transform: translateY(0) rotate(-14deg) scale(1); }\n  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }\n  50% { transform: translateY(0) rotate(14deg) scale(1.05); }\n  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }\n  100% { transform: translateY(0) rotate(-14deg) scale(1); }\n}\n\n.box-header,\n.widget-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 10px 14px;\n  background: rgba(30, 41, 59, 0.85);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  cursor: grab;\n}\n\n.box-header:active,\n.widget-header:active {\n  cursor: grabbing;\n}\n\n.box-title,\n.widget-title {\n  font-size: 13px;\n  font-weight: 700;\n  background: linear-gradient(135deg, #60a5fa, #a78bfa);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.box-controls,\n.widget-controls {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.box-ctrl-btn,\n.widget-btn-icon {\n  background: none;\n  border: none;\n  color: #94a3b8;\n  cursor: pointer;\n  font-size: 13px;\n  padding: 2px 4px;\n  line-height: 1;\n  border-radius: 4px;\n  transition: color 0.15s, background 0.15s;\n}\n\n.box-ctrl-btn:hover,\n.widget-btn-icon:hover {\n  color: #fff;\n  background: rgba(255, 255, 255, 0.1);\n}\n\n.box-body,\n.widget-body {\n  padding: 12px 14px;\n  display: flex;\n  flex-direction: column;\n  gap: 9px;\n}\n\n.ai-selector-container {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  padding: 8px 10px;\n  border-radius: 8px;\n  border: 1px solid rgba(255, 255, 255, 0.08);\n}\n\n.ai-selector-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n  font-size: 11px;\n}\n\n.ai-selector-select {\n  background: #1e293b;\n  color: #38bdf8;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 600;\n  padding: 3px 6px;\n  cursor: pointer;\n  outline: none;\n  flex: 1;\n  max-width: 230px;\n}\n\n.key-config-row {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  padding: 5px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.key-config-input {\n  flex: 1;\n  background: #1e293b;\n  border: 1px solid #475569;\n  border-radius: 4px;\n  color: #fff;\n  padding: 4px 6px;\n  font-size: 11px;\n  font-family: monospace;\n}\n\n.box-btn,\n.widget-btn {\n  padding: 10px 14px;\n  border-radius: 8px;\n  font-size: 13px;\n  font-weight: 600;\n  cursor: pointer;\n  border: none;\n  transition: all 0.2s ease;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n}\n\n.box-btn-primary,\n.widget-btn-primary {\n  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);\n}\n\n.box-btn-success,\n.widget-btn-success {\n  background: linear-gradient(135deg, #10b981 0%, #059669 100%);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);\n}\n\n.box-btn:hover:not(:disabled),\n.widget-btn:hover:not(:disabled) {\n  opacity: 0.92;\n  transform: translateY(-1px);\n}\n\n.box-btn:disabled,\n.widget-btn:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n/* Gabarito Inteligente com 1-Clique para Revis\xE3o */\n.gabarito-container {\n  background: rgba(15, 23, 42, 0.92);\n  border: 1px solid rgba(56, 189, 248, 0.35);\n  border-radius: 8px;\n  padding: 8px 10px;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n\n.gabarito-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  font-size: 11px;\n  font-weight: 700;\n  color: #38bdf8;\n}\n\n.gabarito-badges {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 5px;\n  max-height: 100px;\n  overflow-y: auto;\n  padding: 2px 0;\n}\n\n.gabarito-badge {\n  border-radius: 5px;\n  padding: 3px 7px;\n  font-size: 11px;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  cursor: pointer;\n  transition: all 0.15s ease;\n  position: relative;\n  user-select: none;\n}\n\n.gabarito-badge:hover {\n  transform: translateY(-1px) scale(1.05);\n}\n\n.gabarito-badge.badge-done {\n  background: rgba(16, 185, 129, 0.18);\n  border: 1px solid #10b981;\n  color: #34d399;\n}\n.gabarito-badge.badge-done:hover {\n  background: rgba(16, 185, 129, 0.32);\n  border-color: #34d399;\n  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);\n}\n\n.gabarito-badge.badge-failed {\n  background: rgba(239, 68, 68, 0.22);\n  border: 1px solid #ef4444;\n  color: #f87171;\n  animation: pulse-fail 1.5s infinite alternate;\n}\n.gabarito-badge.badge-failed:hover {\n  background: rgba(239, 68, 68, 0.4);\n  border-color: #f87171;\n  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);\n}\n\n.gabarito-badge.badge-processing {\n  background: rgba(59, 130, 246, 0.28);\n  border: 1px solid #60a5fa;\n  color: #93c5fd;\n  animation: pulse 1s infinite alternate;\n}\n\n.gabarito-badge.badge-pending {\n  background: #1e293b;\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  color: #94a3b8;\n}\n.gabarito-badge.badge-pending:hover {\n  background: rgba(56, 189, 248, 0.2);\n  border-color: #38bdf8;\n  color: #fff;\n  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);\n}\n\n@keyframes pulse {\n  0% { opacity: 0.7; transform: scale(1); }\n  100% { opacity: 1; transform: scale(1.03); }\n}\n\n@keyframes pulse-fail {\n  0% { opacity: 0.85; }\n  100% { opacity: 1; }\n}\n\n.gabarito-badge .badge-q { color: #94a3b8; font-size: 10px; font-weight: 500; }\n.gabarito-badge .badge-letter { color: #34d399; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-fail { color: #f87171; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-pend { color: #64748b; font-weight: 700; font-size: 12px; }\n.gabarito-badge .badge-icon { font-size: 10px; opacity: 0.8; }\n.gabarito-badge:hover .badge-icon { opacity: 1; }\n\n.review-config-bar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px;\n  background: rgba(168, 85, 247, 0.12);\n  border: 1px dashed rgba(168, 85, 247, 0.35);\n  padding: 6px 8px;\n  border-radius: 6px;\n  font-size: 11px;\n}\n\n.box-log,\n.widget-log {\n  max-height: 100px;\n  overflow-y: auto;\n  background: rgba(0, 0, 0, 0.5);\n  border-radius: 6px;\n  padding: 6px 8px;\n  font-family: ui-monospace, monospace;\n  font-size: 11px;\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  user-select: text;\n  cursor: text;\n}\n\n.log-item.success, .widget-log-item.success { color: #34d399; }\n.log-item.error, .widget-log-item.error { color: #f87171; }\n.log-item.info, .widget-log-item.info { color: #60a5fa; }\n.log-item.warning, .widget-log-item.warning { color: #fbbf24; }\n\n.box-footer,\n.widget-footer {\n  padding: 6px 14px;\n  background: rgba(15, 23, 42, 0.7);\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n  font-size: 11px;\n  color: #94a3b8;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n\n.footer-btn {\n  background: none;\n  border: none;\n  color: #60a5fa;\n  cursor: pointer;\n  font-size: 11px;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  padding: 2px 4px;\n  border-radius: 4px;\n  transition: background 0.15s, color 0.15s;\n}\n\n.footer-btn:hover {\n  color: #93c5fd;\n  background: rgba(255, 255, 255, 0.08);\n}\n\n.estacio-ai-marked {\n  outline: 3px solid #10b981 !important;\n  outline-offset: 2px;\n  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;\n}\n';
     document.head.appendChild(styleEl);
   }
 
-  // src/config/providers.js
-  var PROVIDERS_CONFIG = {
-    groq: {
-      name: "Groq",
-      defaultModel: "llama-3.3-70b-versatile",
-      endpoint: "https://api.groq.com/openai/v1/chat/completions",
-      models: [
-        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Recomendado)" },
-        { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B" },
-        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instant\xE2neo)" }
-      ]
-    },
-    claude: {
-      name: "Anthropic Claude",
-      defaultModel: "claude-3-7-sonnet-20250219",
-      endpoint: "https://api.anthropic.com/v1/messages",
-      models: [
-        { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (Racioc\xEDnio H\xEDbrido)" },
-        { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (Alta Precis\xE3o)" },
-        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (Ultra R\xE1pido)" }
-      ]
-    },
-    mistral: {
-      name: "Mistral AI",
-      defaultModel: "mistral-large-latest",
-      endpoint: "https://api.mistral.ai/v1/chat/completions",
-      models: [
-        { id: "mistral-large-latest", name: "Mistral Large (PhD / Mais Preciso)" },
-        { id: "codestral-latest", name: "Codestral (L\xF3gica & C\xF3digo)" },
-        { id: "mistral-small-latest", name: "Mistral Small" }
-      ]
-    },
-    gemini: {
-      name: "Google Gemini",
-      defaultModel: "gemini-flash-latest",
-      endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
-      models: [
-        { id: "gemini-flash-latest", name: "Gemini Flash Latest (Gr\xE1tis)" },
-        { id: "gemini-pro-latest", name: "Gemini Pro Latest (Alta Precis\xE3o)" },
-        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
-      ]
-    },
-    openai: {
-      name: "OpenAI",
-      defaultModel: "gpt-4o",
-      endpoint: "https://api.openai.com/v1/chat/completions",
-      models: [
-        { id: "gpt-4o", name: "GPT-4o (Precis\xE3o M\xE1xima)" },
-        { id: "gpt-4o-mini", name: "GPT-4o Mini (Econ\xF4mico)" },
-        { id: "o3-mini", name: "o3-mini (Racioc\xEDnio)" }
-      ]
-    },
-    deepseek: {
-      name: "DeepSeek",
-      defaultModel: "deepseek-chat",
-      endpoint: "https://api.deepseek.com/v1/chat/completions",
-      models: [
-        { id: "deepseek-chat", name: "DeepSeek V3" },
-        { id: "deepseek-reasoner", name: "DeepSeek R1 (Racioc\xEDnio Puro)" }
-      ]
-    }
-  };
-
   // src/config/mascot.js
   var CAT_MASCOT_DATA_URI = "data:image/png;base64,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";
-
-  // src/config/storage.js
-  function getSaved(key, defaultValue = "") {
-    if (typeof GM_getValue !== "undefined") {
-      return GM_getValue(key, defaultValue);
-    }
-    const val = localStorage.getItem("estacio_" + key);
-    return val !== null ? val : defaultValue;
-  }
-  function setSaved(key, value) {
-    if (typeof GM_setValue !== "undefined") {
-      GM_setValue(key, value);
-      return;
-    }
-    localStorage.setItem("estacio_" + key, value);
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ ["estacio_" + key]: value }).catch(() => {
-      });
-    }
-  }
-  function getApiKeyFor(provider) {
-    return getSaved(`key_${provider}`, "");
-  }
-  function setApiKeyFor(provider, key) {
-    setSaved(`key_${provider}`, key);
-  }
-  function getProviderStatus(provider) {
-    return getSaved(`status_${provider}`, "untested");
-  }
-  function setProviderStatus2(provider, status) {
-    setSaved(`status_${provider}`, status);
-  }
-  function getLiveProviders() {
-    const all = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
-    return all.filter((p) => {
-      const key = getApiKeyFor(p);
-      const status = getProviderStatus(p);
-      return Boolean(key && status === "live");
-    });
-  }
-  async function syncStorageFromChromeExtension() {
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      try {
-        const all = await chrome.storage.local.get(null);
-        if (all) {
-          Object.keys(all).forEach((k) => {
-            if (k.startsWith("estacio_")) {
-              localStorage.setItem(k, all[k]);
-            }
-          });
-        }
-      } catch (e) {
-      }
-    }
-  }
-  syncStorageFromChromeExtension();
-  function getBearerToken() {
-    if (typeof window !== "undefined" && window.__estacio_bearer) {
-      return window.__estacio_bearer;
-    }
-    let token = sessionStorage.getItem("estacio_bearer");
-    if (token) return token;
-    const candidateKeys = ["token", "accessToken", "access_token", "bearer", "auth_token"];
-    for (const k of candidateKeys) {
-      const val = localStorage.getItem(k) || sessionStorage.getItem(k);
-      if (val && val.length > 20) return val.replace(/^Bearer\s+/i, "").trim();
-    }
-    return null;
-  }
-  function getMatricula() {
-    let matricula = getSaved("matricula", "");
-    if (matricula) return matricula;
-    const token = getBearerToken();
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        if (payload.matricula) return payload.matricula;
-        if (payload.preferred_username && /^\d+$/.test(payload.preferred_username)) return payload.preferred_username;
-        if (payload.sub && /^\d+$/.test(payload.sub)) return payload.sub;
-      } catch (e) {
-      }
-    }
-    return "";
-  }
 
   // src/ui/draggable.js
   function setupUniversalDraggable(targetElement, handleElement = null, onClickCallback = null) {
@@ -230,6 +83,233 @@
     });
   }
 
+  // src/config/providers.js
+  var PROVIDERS_CONFIG = {
+    groq: {
+      name: "Groq",
+      defaultModel: "llama-3.3-70b-versatile",
+      endpoint: "https://api.groq.com/openai/v1/chat/completions",
+      models: [
+        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (\u{1F525} 100% Gr\xE1tis \u2022 14.4k req/dia \u2022 Recomendado)", isFree: true },
+        { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio)", isFree: true },
+        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (\u26A1 100% Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true }
+      ]
+    },
+    gemini: {
+      name: "Google Gemini",
+      defaultModel: "gemini-2.5-flash",
+      endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
+      models: [
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)", isFree: true },
+        { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
+        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido)", isFree: true },
+        { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)", isFree: true },
+        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)", isFree: true },
+        { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite (\u26A1 Gr\xE1tis)", isFree: true },
+        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)", isFree: true },
+        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)", isFree: false },
+        { id: "gemini-flash-latest", name: "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)", isFree: true }
+      ]
+    },
+    openrouter: {
+      name: "OpenRouter (Nous Hermes / Free Tier)",
+      defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
+      endpoint: "https://openrouter.ai/api/v1/chat/completions",
+      models: [
+        { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B Instruct (\u{1F525} 100% Gr\xE1tis \u2022 Recomendado)", isFree: true },
+        { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio Puro)", isFree: true },
+        { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash Exp (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "qwen/qwen-2.5-72b-instruct:free", name: "Qwen 2.5 72B (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "openrouter/auto:free", name: "OpenRouter Auto (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento Autom\xE1tico)", isFree: true },
+        { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (\u{1F48E} Pago / Nous Research)", isFree: false },
+        { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (\u{1F48E} Pago)", isFree: false }
+      ]
+    },
+    ollama: {
+      name: "Ollama (Local / Offline - 100% Gr\xE1tis)",
+      defaultModel: "llama3.3",
+      endpoint: "http://localhost:11434/v1/chat/completions",
+      models: [
+        { id: "llama3.3", name: "Llama 3.3 (Local \u2022 Offline \u2022 Ilimitado)", isFree: true },
+        { id: "deepseek-r1", name: "DeepSeek R1 (Local \u2022 Racioc\xEDnio)", isFree: true },
+        { id: "hermes3", name: "Hermes 3 (Local \u2022 Nous Research)", isFree: true },
+        { id: "qwen2.5", name: "Qwen 2.5 (Local)", isFree: true },
+        { id: "mistral", name: "Mistral (Local)", isFree: true }
+      ]
+    },
+    mistral: {
+      name: "Mistral AI",
+      defaultModel: "codestral-latest",
+      endpoint: "https://api.mistral.ai/v1/chat/completions",
+      models: [
+        { id: "codestral-latest", name: "Codestral Latest (\u{1F4A1} Gr\xE1tis Dev / L\xF3gica Exata)", isFree: true },
+        { id: "mistral-small-latest", name: "Mistral Small Latest (\u26A1 Econ\xF4mico & R\xE1pido)", isFree: true },
+        { id: "mistral-large-latest", name: "Mistral Large Latest (\u{1F48E} Pago \u2022 PhD / M\xE1xima Precis\xE3o)", isFree: false }
+      ]
+    },
+    claude: {
+      name: "Anthropic Claude",
+      defaultModel: "claude-3-7-sonnet-20250219",
+      endpoint: "https://api.anthropic.com/v1/messages",
+      models: [
+        { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (\u{1F48E} Pago \u2022 Racioc\xEDnio H\xEDbrido)", isFree: false },
+        { id: "claude-opus-4-6", name: "Claude Opus 4.6 (\u{1F48E} Pago \u2022 Frontier PhD)", isFree: false },
+        { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (\u{1F48E} Pago \u2022 Alta Precis\xE3o)", isFree: false },
+        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido)", isFree: false }
+      ]
+    },
+    openai: {
+      name: "OpenAI",
+      defaultModel: "gpt-4o-mini",
+      endpoint: "https://api.openai.com/v1/chat/completions",
+      models: [
+        { id: "gpt-4o-mini", name: "GPT-4o Mini (\u{1F48E} Pago \u2022 Econ\xF4mico)", isFree: false },
+        { id: "gpt-4o", name: "GPT-4o (\u{1F48E} Pago \u2022 Precis\xE3o M\xE1xima)", isFree: false },
+        { id: "o3-mini", name: "o3-mini (\u{1F48E} Pago \u2022 Racioc\xEDnio)", isFree: false }
+      ]
+    },
+    deepseek: {
+      name: "DeepSeek",
+      defaultModel: "deepseek-chat",
+      endpoint: "https://api.deepseek.com/v1/chat/completions",
+      models: [
+        { id: "deepseek-chat", name: "DeepSeek V3 (\u{1F48E} Pago \u2022 Econ\xF4mico)", isFree: false },
+        { id: "deepseek-reasoner", name: "DeepSeek R1 (\u{1F48E} Pago \u2022 Racioc\xEDnio Matem\xE1tico Puro)", isFree: false }
+      ]
+    }
+  };
+
+  // src/config/storage.js
+  var storageListeners = /* @__PURE__ */ new Set();
+  function onStorageChange(callback) {
+    storageListeners.add(callback);
+    return () => storageListeners.delete(callback);
+  }
+  function getSaved(key, defaultValue = "") {
+    let val = null;
+    if (typeof GM_getValue !== "undefined") {
+      val = GM_getValue(key, null);
+    }
+    if (val === null || val === void 0) {
+      val = localStorage.getItem("estacio_" + key);
+    }
+    if (val === null || val === void 0) {
+      return defaultValue;
+    }
+    try {
+      if (typeof val === "string" && (val.startsWith("{") || val.startsWith("["))) {
+        return JSON.parse(val);
+      }
+    } catch (e) {
+    }
+    return val;
+  }
+  function setSaved(key, value) {
+    const serialized = typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
+    if (typeof GM_setValue !== "undefined") {
+      GM_setValue(key, serialized);
+    }
+    try {
+      localStorage.setItem("estacio_" + key, serialized);
+    } catch (e) {
+    }
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ ["estacio_" + key]: serialized }).catch(() => {
+      });
+    }
+  }
+  function getApiKeyFor(provider) {
+    return getSaved(`key_${provider}`, "");
+  }
+  function setApiKeyFor(provider, key) {
+    setSaved(`key_${provider}`, key);
+  }
+  function getProviderStatus(provider) {
+    return getSaved(`status_${provider}`, "untested");
+  }
+  function setProviderStatus(provider, status) {
+    setSaved(`status_${provider}`, status);
+  }
+  function getShowPaidModels() {
+    return getSaved("show_paid_models", "false") === "true";
+  }
+  function setShowPaidModels(showPaid) {
+    setSaved("show_paid_models", showPaid ? "true" : "false");
+  }
+  function getLiveProviders() {
+    const all = ["groq", "gemini", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
+    return all.filter((p) => {
+      const key = getApiKeyFor(p);
+      const status = getProviderStatus(p);
+      return Boolean(key && (status === "live" || status === "untested"));
+    });
+  }
+  async function syncStorageFromChromeExtension() {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      try {
+        const all = await chrome.storage.local.get(null);
+        if (all) {
+          Object.keys(all).forEach((k) => {
+            if (k.startsWith("estacio_")) {
+              localStorage.setItem(k, typeof all[k] === "object" ? JSON.stringify(all[k]) : all[k]);
+            }
+          });
+        }
+      } catch (e) {
+      }
+    }
+  }
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "local") {
+        Object.keys(changes).forEach((k) => {
+          if (k.startsWith("estacio_")) {
+            const val = changes[k].newValue;
+            try {
+              localStorage.setItem(k, typeof val === "object" ? JSON.stringify(val) : String(val !== void 0 ? val : ""));
+            } catch (e) {
+            }
+          }
+        });
+        storageListeners.forEach((cb) => {
+          try {
+            cb(changes);
+          } catch (e) {
+          }
+        });
+      }
+    });
+  }
+  syncStorageFromChromeExtension();
+  function getBearerToken() {
+    if (typeof window !== "undefined" && window.__estacio_bearer) {
+      return window.__estacio_bearer;
+    }
+    let token = sessionStorage.getItem("estacio_bearer");
+    if (token) return token;
+    const candidateKeys = ["token", "accessToken", "access_token", "bearer", "auth_token"];
+    for (const k of candidateKeys) {
+      const val = localStorage.getItem(k) || sessionStorage.getItem(k);
+      if (val && val.length > 20) return val.replace(/^Bearer\s+/i, "").trim();
+    }
+    return null;
+  }
+  function getMatricula() {
+    let matricula = getSaved("matricula", "");
+    if (matricula) return matricula;
+    const token = getBearerToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload.matricula) return payload.matricula;
+        if (payload.preferred_username && /^\d+$/.test(payload.preferred_username)) return payload.preferred_username;
+        if (payload.sub && /^\d+$/.test(payload.sub)) return payload.sub;
+      } catch (e) {
+      }
+    }
+    return "";
+  }
+
   // src/modules/gabarito.js
   function getSavedGabarito() {
     const saved = localStorage.getItem("estacio_last_gabarito");
@@ -249,6 +329,40 @@
     localStorage.setItem("estacio_last_gabarito", JSON.stringify(payload));
     return payload;
   }
+  function initGabaritoStructure(totalQuestions = 10, providerLabel = "AI") {
+    let existing = getSavedGabarito();
+    const answers = existing?.answers ? [...existing.answers] : [];
+    for (let q = 1; q <= totalQuestions; q++) {
+      if (!answers.some((a) => a.q === q)) {
+        answers.push({
+          q,
+          status: "pending",
+          // 'pending', 'processing', 'done', 'failed'
+          letter: null,
+          explanation: "",
+          error: null
+        });
+      }
+    }
+    answers.sort((a, b) => a.q - b.q);
+    return saveGabarito(existing?.provider || providerLabel, answers);
+  }
+  function updateGabaritoQuestion(qNum, { status, letter, explanation, error, provider }) {
+    let data = getSavedGabarito() || { timestamp: (/* @__PURE__ */ new Date()).toLocaleString(), provider: provider || "AI", answers: [] };
+    let item = data.answers.find((a) => a.q === qNum);
+    if (!item) {
+      item = { q: qNum, status: "pending", letter: null, explanation: "", error: null };
+      data.answers.push(item);
+    }
+    if (status !== void 0) item.status = status;
+    if (letter !== void 0) item.letter = letter;
+    if (explanation !== void 0) item.explanation = explanation;
+    if (error !== void 0) item.error = error;
+    if (provider) data.provider = provider;
+    data.answers.sort((a, b) => a.q - b.q);
+    saveGabarito(data.provider, data.answers);
+    return data;
+  }
   function copyGabarito(onSuccess, onError) {
     const data = getSavedGabarito();
     if (!data || !data.answers || data.answers.length === 0) {
@@ -262,13 +376,21 @@
 
 `;
       data.answers.forEach((a) => {
-        text += `Quest\xE3o ${a.q}: [ ${a.letter} ]  ${a.explanation ? `(${a.explanation})` : ""}
+        if (a.letter) {
+          text += `Quest\xE3o ${a.q}: [ ${a.letter} ]  ${a.explanation ? `(${a.explanation})` : ""}
 `;
+        } else {
+          text += `Quest\xE3o ${a.q}: [ Pendente ]
+`;
+        }
       });
-      text += `
+      const answeredOnly = data.answers.filter((a) => a.letter);
+      if (answeredOnly.length > 0) {
+        text += `
 \u{1F3AF} Resumo Compacto:
 `;
-      text += data.answers.map((a) => `${a.q}-${a.letter}`).join(" | ");
+        text += answeredOnly.map((a) => `${a.q}-${a.letter}`).join(" | ");
+      }
       copyTextToClipboard(text, () => {
         if (onSuccess) onSuccess();
       }, () => {
@@ -309,20 +431,42 @@
     if (!containerEl || !badgesEl) return;
     const data = getSavedGabarito();
     if (!data || !data.answers || data.answers.length === 0) {
+      initGabaritoStructure(10);
+    }
+    const currentData = getSavedGabarito();
+    if (!currentData || !currentData.answers || currentData.answers.length === 0) {
       containerEl.style.display = "none";
       return;
     }
     containerEl.style.display = "flex";
     badgesEl.innerHTML = "";
-    data.answers.forEach((a) => {
+    const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
+    currentData.answers.forEach((a) => {
       const span = document.createElement("div");
-      span.className = "gabarito-badge";
       span.id = `badge-q-${a.q}`;
-      const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
-      span.title = `Clique para REVISAR Q${a.q} com ${pName}! (Resposta atual: ${a.letter})`;
-      span.innerHTML = `Q${a.q}: <b>${a.letter}</b> <span class="gabarito-search-icon">\u{1F50D}</span>`;
+      let status = a.status || (a.letter ? "done" : "pending");
+      if (status === "done" || a.letter && status !== "failed") {
+        span.className = "gabarito-badge badge-done";
+        span.title = `Quest\xE3o ${a.q}: [ ${a.letter} ] - ${a.explanation || "Conclu\xEDda"}
+\u{1F449} Clique para REVISAR (2\xAA Opini\xE3o com ${pName})!`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-letter">${a.letter}</b> <span class="badge-icon">\u2705 \u{1F50D}</span>`;
+      } else if (status === "failed") {
+        span.className = "gabarito-badge badge-failed";
+        span.title = `Quest\xE3o ${a.q} falhou: ${a.error || "Erro"}
+\u{1F449} Clique para RETRY / TENTAR NOVAMENTE!`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-fail">\u274C</b> <span class="badge-icon">Retry</span>`;
+      } else if (status === "processing") {
+        span.className = "gabarito-badge badge-processing";
+        span.title = `Quest\xE3o ${a.q} sendo processada pela IA...`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-proc">\u{1F504}</b>`;
+      } else {
+        span.className = "gabarito-badge badge-pending";
+        span.title = `Quest\xE3o ${a.q} pendente.
+\u{1F449} Clique para RESOLVER AGORA com a IA ativa!`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-pend">-</b> <span class="badge-icon">\u23F3</span>`;
+      }
       span.addEventListener("click", () => {
-        if (onBadgeClick) onBadgeClick(a.q);
+        if (onBadgeClick) onBadgeClick(a.q, status);
       });
       badgesEl.appendChild(span);
     });
@@ -351,11 +495,89 @@ Responda ESTRITAMENTE em formato JSON:
     return prompt;
   }
 
+  // src/core/network.js
+  async function universalFetch(url, options = {}) {
+    if (typeof GM_xmlhttpRequest !== "undefined") {
+      return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: options.method || "GET",
+          url,
+          headers: options.headers || {},
+          data: options.body || null,
+          timeout: options.timeout || 25e3,
+          onload: (res) => {
+            resolve({
+              ok: res.status >= 200 && res.status < 300,
+              status: res.status,
+              statusText: res.statusText || "OK",
+              headers: {
+                get: (headerName) => {
+                  const headerMap = {};
+                  (res.responseHeaders || "").split("\r\n").forEach((line) => {
+                    const parts = line.split(": ");
+                    if (parts[0]) headerMap[parts[0].toLowerCase()] = parts.slice(1).join(": ");
+                  });
+                  return headerMap[headerName.toLowerCase()] || null;
+                }
+              },
+              json: async () => {
+                try {
+                  return JSON.parse(res.responseText);
+                } catch (e) {
+                  throw new Error(`Resposta da API n\xE3o \xE9 JSON v\xE1lido: ${res.responseText.slice(0, 100)}`);
+                }
+              },
+              text: async () => res.responseText
+            });
+          },
+          onerror: (err) => reject(new Error(err.statusText || "Falha na requisi\xE7\xE3o de rede (GM_xmlhttpRequest)")),
+          ontimeout: () => reject(new Error("Tempo limite excedido na requisi\xE7\xE3o"))
+        });
+      });
+    }
+    try {
+      const res = await fetch(url, options);
+      return res;
+    } catch (directErr) {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+        return new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({
+            type: "PROXY_FETCH",
+            url,
+            options: {
+              method: options.method || "GET",
+              headers: options.headers || {},
+              body: options.body || null
+            }
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message || directErr.message));
+            } else if (!response || !response.success) {
+              reject(new Error(response?.error || directErr.message || "Falha no Proxy Fetch"));
+            } else {
+              resolve({
+                ok: response.status >= 200 && response.status < 300,
+                status: response.status,
+                statusText: response.statusText || "OK",
+                headers: {
+                  get: (headerName) => (response.headers || {})[headerName.toLowerCase()] || null
+                },
+                json: async () => typeof response.data === "string" ? JSON.parse(response.data) : response.data,
+                text: async () => typeof response.data === "string" ? response.data : JSON.stringify(response.data)
+              });
+            }
+          });
+        });
+      }
+      throw directErr;
+    }
+  }
+
   // src/core/ai_engine.js
   async function executeAICall(provider, model, statement, alternatives) {
     const apiKey = getApiKeyFor(provider);
     const pConfig = PROVIDERS_CONFIG[provider];
-    if (!apiKey) {
+    if (!apiKey && provider !== "ollama") {
       throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Testar & Salvar.`);
     }
     const prompt = buildPhDExamPrompt(statement, alternatives);
@@ -363,7 +585,7 @@ Responda ESTRITAMENTE em formato JSON:
       const selectedModel2 = model || pConfig.defaultModel;
       const claudeUrl = "https://api.anthropic.com/v1/messages";
       const systemPrompt2 = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON no formato: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
-      const res2 = await fetch(claudeUrl, {
+      const res2 = await universalFetch(claudeUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -396,7 +618,7 @@ Responda ESTRITAMENTE em formato JSON:
     if (provider === "gemini") {
       const selectedModel2 = model || pConfig.defaultModel;
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel2}:generateContent`;
-      const res2 = await fetch(geminiUrl, {
+      const res2 = await universalFetch(geminiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -423,12 +645,13 @@ Responda ESTRITAMENTE em formato JSON:
     const endpoint = pConfig?.endpoint || "https://api.groq.com/openai/v1/chat/completions";
     const selectedModel = model || pConfig?.defaultModel;
     const systemPrompt = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
-    const res = await fetch(endpoint, {
+    const headers = { "Content-Type": "application/json" };
+    if (apiKey) {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    }
+    const res = await universalFetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers,
       body: JSON.stringify({
         model: selectedModel,
         messages: [
@@ -450,25 +673,87 @@ Responda ESTRITAMENTE em formato JSON:
       explicacao: content.slice(0, 100)
     };
   }
-  async function testProviderKey(provider, testKey) {
+  async function testProviderKey(provider, testKey, specificModel = null) {
     const pConfig = PROVIDERS_CONFIG[provider];
-    if (!testKey) throw new Error("Chave de API n\xE3o informada.");
+    if (!testKey && provider !== "ollama") throw new Error("Chave de API n\xE3o informada.");
     const originalKey = getApiKeyFor(provider);
-    setApiKeyFor(provider, testKey);
+    if (testKey || provider === "ollama") {
+      setApiKeyFor(provider, testKey || "local");
+    }
+    let modelToTest = specificModel || getSaved("active_model") || pConfig.defaultModel;
     const testStatement = "Resolva esta quest\xE3o acad\xEAmica de teste: Quanto \xE9 2 + 2?";
     const testAlternatives = [
       { letter: "A", text: "4" },
       { letter: "B", text: "5" }
     ];
     try {
-      const result = await executeAICall(provider, pConfig.defaultModel, testStatement, testAlternatives);
+      const result = await executeAICall(provider, modelToTest, testStatement, testAlternatives);
       if (result && result.letra) {
-        setProviderStatus2(provider, "live");
-        return { success: true, result };
+        setProviderStatus(provider, "live");
+        return { success: true, result, model: modelToTest };
       }
       throw new Error("Resposta sem formato esperado.");
     } catch (err) {
-      setProviderStatus2(provider, "error");
+      if (provider === "openrouter") {
+        const openRouterFallbacks = [
+          "meta-llama/llama-3.3-70b-instruct:free",
+          "deepseek/deepseek-r1:free",
+          "google/gemini-2.0-flash-exp:free",
+          "openrouter/auto:free",
+          "nousresearch/hermes-3-llama-3.1-405b"
+        ];
+        for (const fallbackModel of openRouterFallbacks) {
+          if (fallbackModel !== modelToTest) {
+            try {
+              const fbResult = await executeAICall(provider, fallbackModel, testStatement, testAlternatives);
+              if (fbResult && fbResult.letra) {
+                setProviderStatus(provider, "live");
+                setSaved("active_model", fallbackModel);
+                return {
+                  success: true,
+                  result: fbResult,
+                  model: fallbackModel,
+                  warning: `O modelo ${modelToTest} n\xE3o aceitou requisi\xE7\xE3o gratuita no OpenRouter. Chave validada via ${fallbackModel}!`
+                };
+              }
+            } catch (fbErr) {
+            }
+          }
+        }
+      }
+      if (provider === "gemini" && /quota|rate limit|429/i.test(err.message)) {
+        const geminiFallbacks = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-flash-latest"];
+        for (const fbModel of geminiFallbacks) {
+          if (fbModel !== modelToTest) {
+            try {
+              const fbResult = await executeAICall(provider, fbModel, testStatement, testAlternatives);
+              if (fbResult && fbResult.letra) {
+                setProviderStatus(provider, "live");
+                setSaved("active_model", fbModel);
+                return {
+                  success: true,
+                  result: fbResult,
+                  model: fbModel,
+                  warning: `O modelo ${modelToTest} estava em cooldown de 1 min na API do Google. Chave validada via ${fbModel}!`
+                };
+              }
+            } catch (fbErr) {
+            }
+          }
+        }
+      }
+      if (provider === "groq" && /quota|rate limit|429/i.test(err.message)) {
+        try {
+          const fbResult = await executeAICall(provider, "llama-3.1-8b-instant", testStatement, testAlternatives);
+          if (fbResult && fbResult.letra) {
+            setProviderStatus(provider, "live");
+            setSaved("active_model", "llama-3.1-8b-instant");
+            return { success: true, result: fbResult, model: "llama-3.1-8b-instant", warning: `Chave validada via Llama 3.1 8B!` };
+          }
+        } catch (fbErr) {
+        }
+      }
+      setProviderStatus(provider, "error");
       setApiKeyFor(provider, originalKey);
       throw err;
     }
@@ -590,6 +875,42 @@ Responda ESTRITAMENTE em formato JSON:
       element: el
     }));
   }
+  function getTotalExamQuestionsCount() {
+    const cards = getQuestionCards();
+    if (cards.length > 0) {
+      return Math.max(...cards.map((c) => c.index), cards.length);
+    }
+    const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+    const numButtons = buttons.map((b) => parseInt(b.innerText?.trim() || "0")).filter((n) => !isNaN(n) && n >= 1 && n <= 30);
+    if (numButtons.length > 0) {
+      return Math.max(...numButtons);
+    }
+    return 10;
+  }
+  async function navigateToQuestionCard(qNum) {
+    let cards = getQuestionCards();
+    let found = cards.find((c) => c.index === qNum);
+    if (found && found.element) {
+      found.element.scrollIntoView({ behavior: "smooth", block: "center" });
+      return found;
+    }
+    const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+    const targetBtn = buttons.find((b) => {
+      const txt = b.innerText?.trim();
+      return txt === String(qNum) || b.getAttribute("data-testid") === `question-nav-${qNum}` || b.getAttribute("aria-label")?.includes(`Quest\xE3o ${qNum}`);
+    });
+    if (targetBtn) {
+      targetBtn.click();
+      await new Promise((r) => setTimeout(r, 350));
+      cards = getQuestionCards();
+      found = cards.find((c) => c.index === qNum) || cards[0];
+      if (found && found.element) {
+        found.element.scrollIntoView({ behavior: "smooth", block: "center" });
+        return found;
+      }
+    }
+    return null;
+  }
   function extractStatement(cardEl, qNum) {
     const typo = cardEl.querySelector('[data-testid="question-typography"]');
     if (typo) return typo.innerText.replace(/\s+/g, " ").trim();
@@ -676,23 +997,25 @@ Responda ESTRITAMENTE em formato JSON:
   }
 
   // src/modules/reviewer.js
-  async function reviewSingleQuestion(qNum, targetProvider, onLog, onBadgeStateChange, onGabaritoUpdated) {
+  async function reviewSingleQuestion(qNum, targetProvider, onLog, onGabaritoUpdated) {
     if (!qNum || isNaN(qNum)) return;
-    const cards = getQuestionCards();
-    const q = cards.find((c) => c.index === qNum);
     const pName = PROVIDERS_CONFIG[targetProvider]?.name || targetProvider;
-    if (!q || !q.element) {
-      if (onLog) onLog(`Quest\xE3o ${qNum} n\xE3o encontrada na p\xE1gina.`, "error");
+    updateGabaritoQuestion(qNum, { status: "processing" });
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    if (onLog) onLog(`[Revis\xE3o Q${qNum}] \u{1F50D} Consultando 2\xAA Opini\xE3o com ${pName}...`, "info");
+    const qCard = await navigateToQuestionCard(qNum);
+    if (!qCard || !qCard.element) {
+      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Card da quest\xE3o n\xE3o encontrado na p\xE1gina.`, "error");
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Card n\xE3o localizado" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
       return;
     }
-    if (onBadgeStateChange) onBadgeStateChange(qNum, true);
-    if (onLog) onLog(`[Revis\xE3o Q${qNum}] \u{1F50D} Consultando ${pName}...`, "info");
-    q.element.scrollIntoView({ behavior: "smooth", block: "center" });
-    const statement = extractStatement(q.element, qNum);
-    const alternatives = extractAlternatives(q.element);
+    const statement = extractStatement(qCard.element, qNum);
+    const alternatives = extractAlternatives(qCard.element);
     if (alternatives.length < 2) {
       if (onLog) onLog(`[Revis\xE3o Q${qNum}] Alternativas n\xE3o encontradas.`, "error");
-      if (onBadgeStateChange) onBadgeStateChange(qNum, false);
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Alternativas insuficientes" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
       return;
     }
     try {
@@ -706,99 +1029,195 @@ Responda ESTRITAMENTE em formato JSON:
       if (target && target.element) {
         clickOptionReact(target.element);
       }
-      let gabData = getSavedGabarito() || { timestamp: (/* @__PURE__ */ new Date()).toLocaleString(), provider: targetProvider, answers: [] };
-      const existingIdx = gabData.answers.findIndex((a) => a.q === qNum);
-      if (existingIdx >= 0) {
-        gabData.answers[existingIdx].letter = chosenLetter;
-        gabData.answers[existingIdx].explanation = `[Revisado por ${pName}] ${ans.explicacao || ""}`;
-      } else {
-        gabData.answers.push({ q: qNum, letter: chosenLetter, explanation: ans.explicacao || "" });
-        gabData.answers.sort((a, b) => a.q - b.q);
-      }
-      saveGabarito(gabData.provider, gabData.answers);
+      updateGabaritoQuestion(qNum, {
+        status: "done",
+        letter: chosenLetter,
+        explanation: `[Revisado por ${pName}] ${ans.explicacao || ""}`,
+        error: null
+      });
       if (onGabaritoUpdated) onGabaritoUpdated();
     } catch (err) {
       if (onLog) onLog(`[Revis\xE3o Q${qNum}] Erro: ${err.message}`, "error");
-    } finally {
-      if (onBadgeStateChange) onBadgeStateChange(qNum, false);
+      updateGabaritoQuestion(qNum, {
+        status: "failed",
+        error: err.message
+      });
+      if (onGabaritoUpdated) onGabaritoUpdated();
     }
   }
 
   // src/modules/exam_solver.js
   async function runExamQueue(provider, model, onLog, onGabaritoUpdated) {
-    const cards = getQuestionCards();
-    const total = cards.length;
+    const total = getTotalExamQuestionsCount();
     const pName = PROVIDERS_CONFIG[provider]?.name || provider;
     if (total === 0) {
       if (onLog) onLog("Nenhuma quest\xE3o encontrada na p\xE1gina.", "error");
       return;
     }
-    const existingGabarito = getSavedGabarito()?.answers || [];
-    const gabaritoMap = /* @__PURE__ */ new Map();
-    existingGabarito.forEach((a) => {
-      if (a.q && a.letter && !a.explanation?.toLowerCase().includes("dados insuficientes") && !a.explanation?.toLowerCase().includes("erro")) {
-        gabaritoMap.set(a.q, a);
-      }
-    });
-    const alreadyCount = gabaritoMap.size;
+    initGabaritoStructure(total, `${pName} (${model})`);
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    const existingData = getSavedGabarito() || { answers: [] };
+    const doneQuestions = new Set(
+      existingData.answers.filter((a) => a.status === "done" || a.letter && a.status !== "failed").map((a) => a.q)
+    );
+    const alreadyCount = doneQuestions.size;
     if (alreadyCount > 0 && onLog) {
-      onLog(`Retomando prova: ${alreadyCount} quest\xE3o(\xF5es) j\xE1 respondidas anteriormente ser\xE3o aproveitadas! \u23E9`, "info");
+      onLog(`Retomando prova: ${alreadyCount}/${total} quest\xE3o(\xF5es) j\xE1 conclu\xEDdas anteriormente! \u23E9`, "info");
     } else if (onLog) {
-      onLog(`Iniciando resolu\xE7\xE3o com ${pName} (${model}) [${total} quest\xF5es]...`, "info");
+      onLog(`Iniciando resolu\xE7\xE3o com ${pName} (${model}) [${total} quest\xF5es mapeadas]...`, "info");
     }
-    for (let i = 0; i < total; i++) {
-      const q = cards[i];
-      if (q.element) {
-        q.element.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        await new Promise((r) => setTimeout(r, 250));
-      }
-      const statement = extractStatement(q.element, q.index);
-      const alternatives = extractAlternatives(q.element);
-      if (alternatives.length < 2) {
-        if (onLog) onLog(`[${i + 1}/${total}] Alternativas n\xE3o encontradas.`, "error");
-        continue;
-      }
-      if (gabaritoMap.has(q.index)) {
-        const saved = gabaritoMap.get(q.index);
-        const chosenLetter = saved.letter;
-        if (onLog) onLog(`[${i + 1}/${total}] Quest\xE3o ${q.index} j\xE1 respondida: [ ${chosenLetter} ] -> Marcando na tela \u2705`, "success");
-        const target = alternatives.find((o) => o.letter === chosenLetter);
-        if (target && target.element) {
-          clickOptionReact(target.element);
+    for (let qNum = 1; qNum <= total; qNum++) {
+      if (doneQuestions.has(qNum)) {
+        const saved = existingData.answers.find((a) => a.q === qNum);
+        if (onLog) onLog(`[${qNum}/${total}] Quest\xE3o ${qNum} j\xE1 respondida: [ ${saved?.letter} ] \u2705`, "info");
+        const qCard2 = await navigateToQuestionCard(qNum);
+        if (qCard2 && qCard2.element) {
+          const alternatives2 = extractAlternatives(qCard2.element);
+          const target = alternatives2.find((o) => o.letter === saved?.letter);
+          if (target && target.element) clickOptionReact(target.element);
         }
-        await new Promise((r) => setTimeout(r, 350));
         continue;
       }
-      if (onLog) onLog(`[${i + 1}/${total}] Processando Quest\xE3o ${q.index}...`, "info");
+      updateGabaritoQuestion(qNum, { status: "processing", provider: `${pName} (${model})` });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+      if (onLog) onLog(`[${qNum}/${total}] Processando Quest\xE3o ${qNum}...`, "info");
+      const qCard = await navigateToQuestionCard(qNum);
+      if (!qCard || !qCard.element) {
+        if (onLog) onLog(`[${qNum}/${total}] N\xE3o foi poss\xEDvel localizar o card da Quest\xE3o ${qNum}.`, "error");
+        updateGabaritoQuestion(qNum, { status: "failed", error: "Card n\xE3o localizado no DOM" });
+        if (onGabaritoUpdated) onGabaritoUpdated();
+        continue;
+      }
+      const statement = extractStatement(qCard.element, qNum);
+      const alternatives = extractAlternatives(qCard.element);
+      if (alternatives.length < 2) {
+        if (onLog) onLog(`[${qNum}/${total}] Alternativas n\xE3o encontradas na Quest\xE3o ${qNum}.`, "error");
+        updateGabaritoQuestion(qNum, { status: "failed", error: "Alternativas insuficientes" });
+        if (onGabaritoUpdated) onGabaritoUpdated();
+        continue;
+      }
       try {
-        if (onLog) onLog(`[${i + 1}/${total}] Consultando IA (${pName})...`, "info");
+        if (onLog) onLog(`[${qNum}/${total}] Consultando IA (${pName})...`, "info");
         const ans = await callAIWithFallback(provider, model, statement, alternatives, onLog);
         const chosenLetter = ans.letra?.toUpperCase() || "A";
-        if (onLog) onLog(`[${i + 1}/${total}] -> Resposta: ${chosenLetter} (${ans.explicacao || ""})`, "success");
-        gabaritoMap.set(q.index, {
-          q: q.index,
-          letter: chosenLetter,
-          explanation: ans.explicacao || ""
-        });
-        const currentList = Array.from(gabaritoMap.values()).sort((a, b) => a.q - b.q);
-        saveGabarito(`${pName} (${model})`, currentList);
-        if (onGabaritoUpdated) onGabaritoUpdated();
+        if (onLog) onLog(`[${qNum}/${total}] -> Resposta: ${chosenLetter} (${ans.explicacao || ""})`, "success");
         const target = alternatives.find((o) => o.letter === chosenLetter);
         if (target && target.element) {
           clickOptionReact(target.element);
         }
-        const pauseMs = Math.floor(Math.random() * (2500 - 1800 + 1)) + 1800;
+        updateGabaritoQuestion(qNum, {
+          status: "done",
+          letter: chosenLetter,
+          explanation: ans.explicacao || "",
+          error: null
+        });
+        doneQuestions.add(qNum);
+        if (onGabaritoUpdated) onGabaritoUpdated();
+        const pauseMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
         await new Promise((r) => setTimeout(r, pauseMs));
       } catch (err) {
-        if (onLog) onLog(`[${i + 1}/${total}] Quest\xE3o ${q.index} falhou: ${err.message.slice(0, 90)}`, "error");
-        await new Promise((r) => setTimeout(r, 3e3));
+        if (onLog) onLog(`[${qNum}/${total}] Quest\xE3o ${qNum} falhou: ${err.message.slice(0, 85)}`, "error");
+        updateGabaritoQuestion(qNum, {
+          status: "failed",
+          error: err.message.slice(0, 90)
+        });
+        if (onGabaritoUpdated) onGabaritoUpdated();
+        await new Promise((r) => setTimeout(r, 2e3));
       }
     }
-    const finalCount = gabaritoMap.size;
-    if (finalCount >= total) {
-      if (onLog) onLog("\u{1F389} Todas as 10 quest\xF5es foram respondidas e salvas no Gabarito! \u{1F4DD}\u{1F3C6}", "success");
+    const finalData = getSavedGabarito();
+    const finalDone = finalData?.answers?.filter((a) => a.status === "done" || a.letter).length || 0;
+    if (finalDone >= total) {
+      if (onLog) onLog("\u{1F389} Todas as 10 quest\xF5es foram respondidas e salvas com sucesso! \u{1F4DD}\u{1F3C6}", "success");
     } else {
-      if (onLog) onLog(`\u26A0\uFE0F Prova pausada: ${finalCount}/${total} respondidas. Clique novamente em Resolver para continuar as restantes!`, "warning");
+      if (onLog) onLog(`\u26A0\uFE0F Prova em andamento: ${finalDone}/${total} conclu\xEDdas. Clique nos badges vermelhos para tentar novamente!`, "warning");
+    }
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  async function solveSingleQuestion(qNum, provider, model, onLog, onGabaritoUpdated) {
+    if (!qNum || isNaN(qNum)) return;
+    const pName = PROVIDERS_CONFIG[provider]?.name || provider;
+    updateGabaritoQuestion(qNum, { status: "processing" });
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    if (onLog) onLog(`[Retry/Resolver Q${qNum}] \u{1F3AF} Focando na Quest\xE3o ${qNum}...`, "info");
+    const qCard = await navigateToQuestionCard(qNum);
+    if (!qCard || !qCard.element) {
+      if (onLog) onLog(`[Q${qNum}] Quest\xE3o ${qNum} n\xE3o encontrada na p\xE1gina.`, "error");
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Card n\xE3o encontrado" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+      return;
+    }
+    const statement = extractStatement(qCard.element, qNum);
+    const alternatives = extractAlternatives(qCard.element);
+    if (alternatives.length < 2) {
+      if (onLog) onLog(`[Q${qNum}] Alternativas n\xE3o encontradas.`, "error");
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Alternativas n\xE3o encontradas" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+      return;
+    }
+    try {
+      if (onLog) onLog(`[Q${qNum}] Consultando ${pName} (${model})...`, "info");
+      const ans = await callAIWithFallback(provider, model, statement, alternatives, onLog);
+      const chosenLetter = ans.letra?.toUpperCase() || "A";
+      if (onLog) {
+        onLog(`[Q${qNum}] \u2705 Resolvida com sucesso: [ ${chosenLetter} ] (${ans.explicacao || ""})`, "success");
+      }
+      const target = alternatives.find((o) => o.letter === chosenLetter);
+      if (target && target.element) {
+        clickOptionReact(target.element);
+      }
+      updateGabaritoQuestion(qNum, {
+        status: "done",
+        letter: chosenLetter,
+        explanation: ans.explicacao || "",
+        error: null
+      });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+    } catch (err) {
+      if (onLog) onLog(`[Q${qNum}] \u274C Falha no retry: ${err.message}`, "error");
+      updateGabaritoQuestion(qNum, {
+        status: "failed",
+        error: err.message
+      });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+    }
+  }
+  async function applySavedGabaritoToDOM(onLog, onGabaritoUpdated) {
+    const gabData = getSavedGabarito();
+    const answers = gabData?.answers?.filter((a) => a.letter) || [];
+    if (answers.length === 0) {
+      if (onLog) onLog("\u26A0\uFE0F Nenhum gabarito com respostas salvo para aplicar. Resolva as quest\xF5es primeiro!", "warning");
+      return;
+    }
+    if (onLog) onLog(`\u26A1 Aplicando ${answers.length} respostas salvas diretamente na prova (0 IA)...`, "info");
+    let markedCount = 0;
+    for (let i = 0; i < answers.length; i++) {
+      const a = answers[i];
+      const qNum = a.q;
+      const chosenLetter = a.letter;
+      const qCard = await navigateToQuestionCard(qNum);
+      if (qCard && qCard.element) {
+        const alternatives = extractAlternatives(qCard.element);
+        const target = alternatives.find((o) => o.letter === chosenLetter);
+        if (target && target.element) {
+          clickOptionReact(target.element);
+          markedCount++;
+          if (onLog) onLog(`[${i + 1}/${answers.length}] Q${qNum} marcada com [ ${chosenLetter} ] \u2705`, "success");
+        } else {
+          if (onLog) onLog(`[${i + 1}/${answers.length}] Q${qNum}: Alternativa ${chosenLetter} n\xE3o encontrada na tela.`, "warning");
+        }
+      } else {
+        if (onLog) onLog(`[${i + 1}/${answers.length}] Q${qNum}: Card n\xE3o localizado no DOM.`, "error");
+      }
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    if (onLog) {
+      if (markedCount > 0) {
+        onLog(`\u{1F389} Gabarito aplicado com sucesso! ${markedCount}/${answers.length} quest\xF5es marcadas na prova.`, "success");
+      } else {
+        onLog(`\u26A0\uFE0F Nenhuma quest\xE3o p\xF4de ser marcada na tela.`, "error");
+      }
     }
     if (onGabaritoUpdated) onGabaritoUpdated();
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1157,9 +1576,10 @@ Responda ESTRITAMENTE em formato JSON:
   // src/modules/model_fetcher.js
   function getCachedModels(provider) {
     try {
-      const raw = localStorage.getItem(`estacio_models_${provider}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const cached = getSaved(`models_${provider}`, null);
+      if (Array.isArray(cached) && cached.length > 0) return cached;
+      if (typeof cached === "string") {
+        const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {
@@ -1169,46 +1589,378 @@ Responda ESTRITAMENTE em formato JSON:
   function saveCachedModels(provider, modelsList) {
     try {
       if (Array.isArray(modelsList) && modelsList.length > 0) {
-        localStorage.setItem(`estacio_models_${provider}`, JSON.stringify(modelsList));
+        setSaved(`models_${provider}`, modelsList);
       }
     } catch (e) {
     }
   }
-  function getModelsForProvider(provider) {
-    const cached = getCachedModels(provider);
-    if (cached) return cached;
-    return PROVIDERS_CONFIG[provider]?.models || [];
+  function isModelFree(provider, modelId) {
+    if (provider === "groq" || provider === "ollama") return true;
+    if (provider === "openrouter") return modelId.includes(":free");
+    if (provider === "gemini") {
+      return !/gemini-2.5-pro|gemini-pro-latest/i.test(modelId);
+    }
+    if (provider === "mistral") {
+      return /codestral|small/i.test(modelId);
+    }
+    return false;
   }
-  async function fetchLiveModels(provider, apiKey) {
-    if (!apiKey) return getModelsForProvider(provider);
+  function getModelsForProvider(provider, showPaid = null) {
+    const allowPaid = showPaid !== null ? showPaid : getShowPaidModels();
+    const cached = getCachedModels(provider);
+    const rawList = cached && cached.length > 0 ? cached : PROVIDERS_CONFIG[provider]?.models || [];
+    if (allowPaid) {
+      return rawList;
+    }
+    const freeList = rawList.filter((m) => {
+      if (typeof m.isFree === "boolean") return m.isFree;
+      return isModelFree(provider, m.id);
+    });
+    if (freeList.length > 0) return freeList;
+    return rawList;
+  }
+  function formatDisplayName(provider, modelItem) {
+    const modelId = typeof modelItem === "string" ? modelItem : modelItem.id || "";
+    const rawName = typeof modelItem === "object" ? modelItem.display_name || modelItem.name || modelItem.displayName || "" : "";
+    if (provider === "groq") {
+      if (modelId.includes("llama-3.3-70b")) return "Llama 3.3 70B (\u{1F525} 100% Gr\xE1tis \u2022 14.4k req/dia \u2022 Recomendado)";
+      if (modelId.includes("deepseek-r1-distill-llama-70b")) return "DeepSeek R1 Distill 70B (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio)";
+      if (modelId.includes("llama-3.1-8b")) return "Llama 3.1 8B (\u26A1 100% Gr\xE1tis \u2022 Ultra R\xE1pido)";
+      if (modelId.includes("qwen")) return `Qwen (${modelId}) (\u{1F525} 100% Gr\xE1tis)`;
+      if (modelId.includes("gpt-oss-120b")) return "GPT-OSS 120B (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("gpt-oss-20b")) return "GPT-OSS 20B (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("compound")) return `Groq Compound (${modelId}) (\u{1F525} 100% Gr\xE1tis)`;
+    } else if (provider === "gemini") {
+      if (modelId === "gemini-2.5-flash") return "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)";
+      if (modelId === "gemini-2.5-flash-lite") return "Gemini 2.5 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)";
+      if (modelId === "gemini-3.7-flash") return "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido)";
+      if (modelId === "gemini-3.6-flash") return "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
+      if (modelId === "gemini-3.5-flash") return "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
+      if (modelId === "gemini-3.5-flash-lite") return "Gemini 3.5 Flash-Lite (\u26A1 Gr\xE1tis)";
+      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio Avan\xE7ado)";
+      if (modelId === "gemini-3.1-flash-lite") return "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis)";
+      if (modelId === "gemini-3-flash-preview") return "Gemini 3 Flash Preview (\u{1F381} Gr\xE1tis)";
+      if (modelId === "gemini-2.5-pro") return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)";
+      if (modelId === "gemini-flash-latest") return "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)";
+      if (modelId === "gemini-pro-latest") return "Gemini Pro Latest (\u{1F381} Gr\xE1tis AI Studio)";
+    } else if (provider === "openrouter") {
+      const isFree = modelId.includes(":free");
+      const freeBadge = isFree ? " (\u{1F525} 100% Gr\xE1tis)" : " (\u{1F48E} Pago)";
+      if (modelId.includes("llama-3.3-70b-instruct:free")) return `Llama 3.3 70B Instruct (\u{1F525} 100% Gr\xE1tis \u2022 Recomendado)`;
+      if (modelId.includes("deepseek-r1:free")) return `DeepSeek R1 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio Puro)`;
+      if (modelId.includes("gemini-2.0-flash-exp:free")) return `Gemini 2.0 Flash Exp (\u{1F525} 100% Gr\xE1tis)`;
+      if (modelId.includes("qwen-2.5-72b-instruct:free")) return `Qwen 2.5 72B (\u{1F525} 100% Gr\xE1tis)`;
+      if (modelId.includes("openrouter/auto:free")) return `OpenRouter Auto (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento)`;
+      if (modelId.includes("hermes-3-llama-3.1-405b")) return `Nous Hermes 3 405B${freeBadge} (\u{1F393} PhD)`;
+      if (modelId.includes("hermes-3-llama-3.1-70b")) return `Nous Hermes 3 70B${freeBadge}`;
+      if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
+      return `${modelId}${freeBadge}`;
+    } else if (provider === "ollama") {
+      if (modelId.includes("hermes")) return `Hermes (${modelId}) (Local \u2022 Nous Research)`;
+      if (modelId.includes("llama3.3") || modelId.includes("llama-3.3")) return `Llama 3.3 (${modelId}) (Local \u2022 Ilimitado)`;
+      if (modelId.includes("deepseek-r1")) return `DeepSeek R1 (${modelId}) (Local \u2022 Racioc\xEDnio)`;
+      if (modelId.includes("qwen")) return `Qwen (${modelId}) (Local)`;
+      if (rawName && rawName !== modelId) return `${rawName} (${modelId}) (Local \u2022 Offline)`;
+      return `${modelId} (Local \u2022 Offline)`;
+    } else if (provider === "mistral") {
+      let suffix = "";
+      if (modelItem?.capabilities?.reasoning) suffix = " (\u{1F9E0} Racioc\xEDnio)";
+      else if (modelItem?.capabilities?.vision) suffix = " (\u{1F441}\uFE0F Vis\xE3o)";
+      if (modelId === "codestral-latest") return `Codestral Latest (\u{1F4A1} Gr\xE1tis Dev / L\xF3gica Exata)${suffix}`;
+      if (modelId === "mistral-small-latest") return `Mistral Small Latest (\u26A1 Econ\xF4mico & R\xE1pido)${suffix}`;
+      if (modelId === "mistral-large-latest") return `Mistral Large Latest (\u{1F48E} Pago \u2022 PhD / M\xE1xima Precis\xE3o)${suffix}`;
+      if (modelId === "pixtral-large-latest") return `Pixtral Large Latest (Vis\xE3o & PhD)${suffix}`;
+      if (modelId === "ministral-8b-latest") return `Ministral 8B Latest${suffix}`;
+      if (modelId.startsWith("mistral-medium")) return `Mistral Medium (${modelId})${suffix}`;
+    } else if (provider === "claude") {
+      let suffix = "";
+      if (modelItem?.capabilities?.thinking?.supported) suffix = " (\u{1F9E0} Thinking)";
+      if (modelId === "claude-opus-4-6") return `Claude Opus 4.6 (\u{1F48E} Pago \u2022 Frontier PhD)${suffix}`;
+      if (modelId.includes("claude-3-7-sonnet")) return `Claude 3.7 Sonnet (\u{1F48E} Pago \u2022 Racioc\xEDnio H\xEDbrido)${suffix}`;
+      if (modelId.includes("claude-3-5-sonnet")) return `Claude 3.5 Sonnet (\u{1F48E} Pago \u2022 Alta Precis\xE3o)${suffix}`;
+      if (modelId.includes("claude-3-5-haiku")) return `Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido)${suffix}`;
+    } else if (provider === "openai") {
+      if (modelId === "gpt-4o-mini") return "GPT-4o Mini (\u{1F48E} Pago \u2022 Econ\xF4mico)";
+      if (modelId === "gpt-4o") return "GPT-4o (\u{1F48E} Pago \u2022 Precis\xE3o M\xE1xima)";
+      if (modelId === "o3-mini") return "o3-mini (\u{1F48E} Pago \u2022 Racioc\xEDnio)";
+      if (modelId === "o1") return "o1 (\u{1F48E} Pago \u2022 Racioc\xEDnio PhD)";
+    } else if (provider === "deepseek") {
+      if (modelId === "deepseek-chat") return "DeepSeek V3 (\u{1F48E} Pago \u2022 Econ\xF4mico)";
+      if (modelId === "deepseek-reasoner") return "DeepSeek R1 (\u{1F48E} Pago \u2022 Racioc\xEDnio Puro)";
+    }
+    if (rawName && rawName !== modelId) return `${rawName} (${modelId})`;
+    return modelId;
+  }
+  async function fetchLiveModels(provider, apiKey, showPaid = null) {
+    const allowPaid = showPaid !== null ? showPaid : getShowPaidModels();
+    if (!apiKey && provider !== "ollama") return getModelsForProvider(provider, allowPaid);
     try {
       if (provider === "groq") {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
+        const res = await universalFetch("https://api.groq.com/openai/v1/models", {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
         });
         if (res.ok) {
           const json = await res.json();
-          const models = (json.data || []).filter((m) => !/whisper|tts|guard|embeddings/i.test(m.id)).map((m) => ({ id: m.id, name: m.id }));
-          if (models.length > 0) {
-            saveCachedModels(provider, models);
-            return models;
+          const rawList = Array.isArray(json) ? json : json.data || [];
+          const filtered = rawList.filter((m) => !/whisper|tts|guard|embeddings|orpheus|safeguard|distilbert/i.test(m.id)).map((m) => ({
+            id: m.id,
+            name: formatDisplayName("groq", m),
+            isFree: true
+          }));
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id.includes("llama-3.3-70b")) return 1;
+              if (id.includes("deepseek-r1-distill-llama-70b")) return 2;
+              if (id.includes("qwen")) return 3;
+              if (id.includes("llama-3.1-8b")) return 4;
+              if (id.includes("gpt-oss")) return 5;
+              return 10;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+          if (filtered.length > 0) {
+            saveCachedModels(provider, filtered);
+            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
           }
         }
       }
+      if (provider === "openrouter") {
+        const res = await universalFetch("https://openrouter.ai/api/v1/models", {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = Array.isArray(json) ? json : json.data || [];
+          const filtered = rawList.filter((m) => !/audio|whisper|moderation|embedding/i.test(m.id)).map((m) => {
+            const isFree = m.id.includes(":free");
+            return {
+              id: m.id,
+              name: formatDisplayName("openrouter", m),
+              isFree
+            };
+          });
+          filtered.sort((a, b) => {
+            if (a.isFree && !b.isFree) return -1;
+            if (!a.isFree && b.isFree) return 1;
+            if (a.id.includes("llama-3.3-70b") && !b.id.includes("llama-3.3-70b")) return -1;
+            if (a.id.includes("deepseek-r1") && !b.id.includes("deepseek-r1")) return -1;
+            return a.id.localeCompare(b.id);
+          });
+          if (filtered.length > 0) {
+            saveCachedModels(provider, filtered);
+            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+          }
+        }
+      }
+      if (provider === "ollama") {
+        try {
+          const res = await universalFetch("http://localhost:11434/v1/models");
+          if (res.ok) {
+            const json = await res.json();
+            const rawList = Array.isArray(json) ? json : json.data || [];
+            const models = rawList.map((m) => ({
+              id: m.id,
+              name: formatDisplayName("ollama", m),
+              isFree: true
+            }));
+            if (models.length > 0) {
+              saveCachedModels(provider, models);
+              return models;
+            }
+          }
+        } catch (e) {
+          try {
+            const resTags = await universalFetch("http://localhost:11434/api/tags");
+            if (resTags.ok) {
+              const jsonTags = await resTags.json();
+              const rawModels = jsonTags.models || [];
+              const models = rawModels.map((m) => ({
+                id: m.name,
+                name: formatDisplayName("ollama", { id: m.name }),
+                isFree: true
+              }));
+              if (models.length > 0) {
+                saveCachedModels(provider, models);
+                return models;
+              }
+            }
+          } catch (e2) {
+          }
+        }
+        const curatedOllama = PROVIDERS_CONFIG.ollama.models;
+        saveCachedModels(provider, curatedOllama);
+        return curatedOllama;
+      }
       if (provider === "claude") {
         try {
-          const res = await fetch("https://api.anthropic.com/v1/models", {
+          const res = await universalFetch("https://api.anthropic.com/v1/models", {
             headers: {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
-              "anthropic-dangerous-direct-browser-access": "true"
+              "anthropic-dangerous-direct-browser-access": "true",
+              "Content-Type": "application/json"
             }
           });
           if (res.ok) {
             const json = await res.json();
-            const models = (json.data || []).map((m) => ({
+            const rawList = Array.isArray(json) ? json : json.data || [];
+            const filtered = rawList.map((m) => ({
               id: m.id,
-              name: m.display_name || m.id
+              name: formatDisplayName("claude", m),
+              created_at: m.created_at,
+              isFree: false
+            }));
+            filtered.sort((a, b) => {
+              if (a.created_at && b.created_at) {
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              }
+              const priority = (id) => {
+                if (id.includes("opus-4")) return 1;
+                if (id.includes("3-7-sonnet")) return 2;
+                if (id.includes("3-5-sonnet")) return 3;
+                if (id.includes("3-5-haiku")) return 4;
+                if (id.includes("3-opus")) return 5;
+                return 10;
+              };
+              return priority(a.id) - priority(b.id);
+            });
+            if (filtered.length > 0) {
+              saveCachedModels(provider, filtered);
+              return filtered;
+            }
+          }
+        } catch (e) {
+        }
+        const curatedClaude = PROVIDERS_CONFIG.claude.models;
+        saveCachedModels(provider, curatedClaude);
+        return curatedClaude;
+      }
+      if (provider === "mistral") {
+        const res = await universalFetch("https://api.mistral.ai/v1/models", {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = Array.isArray(json) ? json : json.data || [];
+          const filtered = rawList.filter((m) => !m.archived && m.capabilities?.completion_chat !== false && !/embed|moderation|ocr|audio/i.test(m.id)).map((m) => ({
+            id: m.id,
+            name: formatDisplayName("mistral", m),
+            isFree: /codestral|small/i.test(m.id)
+          }));
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id === "codestral-latest") return 1;
+              if (id === "mistral-small-latest") return 2;
+              if (id === "mistral-large-latest") return 3;
+              return 10;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+          if (filtered.length > 0) {
+            saveCachedModels(provider, filtered);
+            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+          }
+        }
+      }
+      if (provider === "gemini") {
+        const res = await universalFetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+          headers: { "Content-Type": "application/json" }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = json.models || (Array.isArray(json) ? json : []);
+          const filtered = rawList.filter((m) => {
+            const clean = (m.name || "").replace(/^models\//, "");
+            const methods = m.supportedGenerationMethods || [];
+            const isGen = methods.length === 0 || methods.includes("generateContent");
+            return isGen && !/embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research/i.test(clean);
+          }).map((m) => {
+            const cleanId = m.name.replace(/^models\//, "");
+            const isFree = !/gemini-2.5-pro|gemini-pro-latest/i.test(cleanId);
+            return {
+              id: cleanId,
+              name: formatDisplayName("gemini", { id: cleanId, displayName: m.displayName }),
+              isFree
+            };
+          });
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id === "gemini-2.5-flash") return 1;
+              if (id === "gemini-2.5-flash-lite") return 2;
+              if (id === "gemini-3.7-flash") return 3;
+              if (id === "gemini-3.6-flash") return 4;
+              if (id === "gemini-3.5-flash") return 5;
+              if (id === "gemini-3.5-flash-lite") return 6;
+              if (id === "gemini-3.1-pro-preview") return 7;
+              if (id === "gemini-3.1-flash-lite") return 8;
+              if (id === "gemini-3-flash-preview") return 9;
+              if (id === "gemini-2.5-pro") return 10;
+              if (id === "gemini-flash-latest") return 11;
+              return 20;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+          if (filtered.length > 0) {
+            saveCachedModels(provider, filtered);
+            return allowPaid ? filtered : filtered.filter((m) => m.isFree);
+          }
+        }
+      }
+      if (provider === "openai") {
+        const res = await universalFetch("https://api.openai.com/v1/models", {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = Array.isArray(json) ? json : json.data || [];
+          const filtered = rawList.filter((m) => /^(gpt-|o1|o3|chatgpt)/i.test(m.id) && !/realtime|audio|transcription|tts|embedding|moderation|preview-2024|instruct/i.test(m.id)).map((m) => ({
+            id: m.id,
+            name: formatDisplayName("openai", m),
+            isFree: false
+          }));
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id === "gpt-4o-mini") return 1;
+              if (id === "gpt-4o") return 2;
+              if (id.startsWith("o3-mini")) return 3;
+              if (id.startsWith("o1")) return 4;
+              return 10;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+          if (filtered.length > 0) {
+            saveCachedModels(provider, filtered);
+            return filtered;
+          }
+        }
+      }
+      if (provider === "deepseek") {
+        try {
+          const res = await universalFetch("https://api.deepseek.com/models", {
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const rawList = Array.isArray(json) ? json : json.data || [];
+            const models = rawList.map((m) => ({
+              id: m.id,
+              name: formatDisplayName("deepseek", m),
+              isFree: false
             }));
             if (models.length > 0) {
               saveCachedModels(provider, models);
@@ -1217,76 +1969,26 @@ Responda ESTRITAMENTE em formato JSON:
           }
         } catch (e) {
         }
-      }
-      if (provider === "mistral") {
-        const res = await fetch("https://api.mistral.ai/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const models = (json.data || []).filter((m) => !/embed/i.test(m.id)).map((m) => ({ id: m.id, name: m.id }));
-          if (models.length > 0) {
-            saveCachedModels(provider, models);
-            return models;
-          }
-        }
-      }
-      if (provider === "gemini") {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (res.ok) {
-          const json = await res.json();
-          const models = (json.models || []).filter((m) => {
-            const methods = m.supportedGenerationMethods || [];
-            return methods.includes("generateContent") && !/embedding|aqa|imagen/i.test(m.name);
-          }).map((m) => {
-            const cleanId = m.name.replace(/^models\//, "");
-            return { id: cleanId, name: m.displayName ? `${m.displayName} (${cleanId})` : cleanId };
-          });
-          if (models.length > 0) {
-            saveCachedModels(provider, models);
-            return models;
-          }
-        }
-      }
-      if (provider === "openai") {
-        const res = await fetch("https://api.openai.com/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const models = (json.data || []).filter((m) => /^(gpt-|o1|o3|chatgpt)/i.test(m.id) && !/realtime|audio|transcription|tts|embedding/i.test(m.id)).sort((a, b) => a.id.localeCompare(b.id)).map((m) => ({ id: m.id, name: m.id }));
-          if (models.length > 0) {
-            saveCachedModels(provider, models);
-            return models;
-          }
-        }
-      }
-      if (provider === "deepseek") {
-        const res = await fetch("https://api.deepseek.com/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const models = (json.data || []).map((m) => ({ id: m.id, name: m.id }));
-          if (models.length > 0) {
-            saveCachedModels(provider, models);
-            return models;
-          }
-        }
+        const curatedDeepSeek = PROVIDERS_CONFIG.deepseek.models;
+        saveCachedModels(provider, curatedDeepSeek);
+        return curatedDeepSeek;
       }
     } catch (e) {
+      console.warn(`[ModelFetcher] Erro ao buscar modelos ao vivo de ${provider}:`, e);
     }
-    return getModelsForProvider(provider);
+    return getModelsForProvider(provider, allowPaid);
   }
 
   // src/ui/widget.js
   function createSuiteWidget() {
     if (document.getElementById("estacio-suite-box")) return;
+    const ALL_PROVIDERS = ["groq", "gemini", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
     const isExam = window.location.hostname.includes("saladeavaliacoes.com.br");
-    let configTargetProvider = getSaved("config_target_provider", "groq");
     let currentProvider = getSaved("active_provider", "groq");
     let currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel || "llama-3.3-70b-versatile");
     let reviewProvider = getSaved("review_provider", "claude");
+    let configTargetProvider = currentProvider;
+    let showPaidModels = getShowPaidModels();
     let isBusy = false;
     const savedLogsRaw = localStorage.getItem("estacio_suite_logs");
     let initialLogs = [];
@@ -1301,7 +2003,7 @@ Responda ESTRITAMENTE em formato JSON:
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
           <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
-          <span>Est\xE1cio Suite AI</span>
+          <span>Est\xE1cio Suite AI v2.5.5</span>
         </div>
         <div class="box-controls">
           <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">\u{1F9F9}</button>
@@ -1312,14 +2014,20 @@ Responda ESTRITAMENTE em formato JSON:
       </div>
 
       <div class="box-body">
-        <!-- Seletor Principal de IA Ativa (Apenas IAs com teste Live Aprovado) -->
+        <!-- Seletor Principal de IA Ativa -->
         <div class="ai-selector-container">
           <div class="ai-selector-row">
             <span style="color:#94a3b8; font-weight:700;">\u{1F916} IA Ativa:</span>
             <select id="box-ai-select" class="ai-selector-select"></select>
           </div>
           <div class="ai-selector-row">
-            <span style="color:#94a3b8; font-weight:700;">\u{1F9E0} Modelo:</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <span style="color:#94a3b8; font-weight:700;">\u{1F9E0} Modelo:</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <button id="btn-toggle-free-mode" title="Alternar entre apenas modelos 100% gratuitos ou todos os modelos" style="background:#065f46; color:#a7f3d0; border:1px solid #059669; border-radius:4px; font-size:10px; cursor:pointer; padding:1px 6px; font-weight:700;">\u{1F7E2} Apenas Free</button>
+                <button id="btn-refresh-models" title="Buscar modelos ao vivo da API" style="background:none; border:none; color:#38bdf8; font-size:11px; cursor:pointer; padding:0 2px; font-weight:600;">\u{1F504} Atualizar</button>
+              </div>
+            </div>
             <select id="box-model-select" class="ai-selector-select"></select>
           </div>
         </div>
@@ -1330,9 +2038,11 @@ Responda ESTRITAMENTE em formato JSON:
             <span style="color:#38bdf8; font-size:10px; font-weight:700;">\u{1F511} Adicionar/Testar Chave:</span>
             <select id="config-target-select" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; font-size:10px; padding:2px 4px;">
               <option value="groq">Groq</option>
-              <option value="claude">Anthropic Claude</option>
-              <option value="mistral">Mistral AI</option>
               <option value="gemini">Google Gemini</option>
+              <option value="openrouter">OpenRouter (Hermes)</option>
+              <option value="ollama">Ollama (Local)</option>
+              <option value="mistral">Mistral AI</option>
+              <option value="claude">Anthropic Claude</option>
               <option value="openai">ChatGPT (OpenAI)</option>
               <option value="deepseek">DeepSeek</option>
             </select>
@@ -1354,7 +2064,7 @@ Responda ESTRITAMENTE em formato JSON:
             <span>\u{1F3AF}</span> Resolver e Marcar Prova
           </button>
 
-          <!-- Barra de Segunda Opini\xE3o / Revis\xE3o Direta (Apenas IAs Live) -->
+          <!-- Barra de Segunda Opini\xE3o / Revis\xE3o Direta -->
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">\u{1F50D} 2\xAA Opini\xE3o com:</span>
             <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;"></select>
@@ -1372,10 +2082,11 @@ Responda ESTRITAMENTE em formato JSON:
         <!-- Painel Visual do Gabarito Persistente -->
         <div id="gabarito-panel" class="gabarito-container" style="display:none;">
           <div class="gabarito-header">
-            <span>\u{1F4DD} Gabarito (Clique na quest\xE3o p/ revisar)</span>
-            <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">
-              \u{1F4CB} Copiar
-            </button>
+            <span style="font-weight:700;">\u{1F4DD} Gabarito</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button id="btn-apply-gabarito" style="background:#0284c7; border:none; color:#fff; border-radius:4px; font-size:10px; font-weight:700; padding:2px 6px; cursor:pointer;" title="Aplica todas as respostas salvas no gabarito diretamente na prova sem gastar IA">\u26A1 Aplicar na Prova</button>
+              <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">\u{1F4CB} Copiar</button>
+            </div>
           </div>
           <div id="gabarito-badges" class="gabarito-badges"></div>
         </div>
@@ -1434,7 +2145,7 @@ Responda ESTRITAMENTE em formato JSON:
     } else {
       const div = document.createElement("div");
       div.className = "log-item info";
-      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Pronto. Su\xEDte Est\xE1cio AI pronta para uso.`;
+      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Pronto. Su\xEDte Est\xE1cio AI v2.5.5 pronta para uso.`;
       logBox.appendChild(div);
     }
     function log(msg, type = "info") {
@@ -1463,51 +2174,59 @@ Responda ESTRITAMENTE em formato JSON:
       const gabaritoBadges = document.getElementById("gabarito-badges");
       if (gabaritoPanel) gabaritoPanel.style.display = "none";
       if (gabaritoBadges) gabaritoBadges.innerHTML = "";
+      if (isExam) {
+        initGabaritoStructure(10, PROVIDERS_CONFIG[currentProvider]?.name);
+        refreshGabaritoUI();
+      }
       log("\u{1F9F9} Todos os logs, gabaritos e filas foram limpos com sucesso!", "success");
     }
-    function renderLiveProviderOptions() {
+    function updateToggleBtnState() {
+      const btn = document.getElementById("btn-toggle-free-mode");
+      if (!btn) return;
+      if (showPaidModels) {
+        btn.textContent = "\u{1F48E} Free + Pagos";
+        btn.style.background = "#701a75";
+        btn.style.color = "#f5d0fe";
+        btn.style.borderColor = "#a21caf";
+        btn.title = "Modo Completo Ativo (Mostrando modelos Free e Pagos). Clique para restringir a apenas 100% Free.";
+      } else {
+        btn.textContent = "\u{1F7E2} Apenas Free";
+        btn.style.background = "#065f46";
+        btn.style.color = "#a7f3d0";
+        btn.style.borderColor = "#059669";
+        btn.title = "Modo 100% Free Ativo (Modelos pagos ocultos). Clique para exibir modelos pagos.";
+      }
+    }
+    function renderProviderOptions() {
       const aiSelect2 = document.getElementById("box-ai-select");
       const reviewSelect2 = document.getElementById("review-ai-select");
-      const liveKeys = getLiveProviders();
       if (aiSelect2) {
         aiSelect2.innerHTML = "";
-        if (liveKeys.length === 0) {
+        ALL_PROVIDERS.forEach((pKey) => {
+          const pConfig = PROVIDERS_CONFIG[pKey];
+          const key = getApiKeyFor(pKey);
+          const hasKey = Boolean(key);
+          const badge = hasKey ? "\u{1F7E2}" : "\u{1F511}";
           const opt = document.createElement("option");
-          opt.value = "";
-          opt.textContent = "\u26A0\uFE0F Nenhuma IA Live (Testar chave abaixo)";
+          opt.value = pKey;
+          opt.textContent = `${badge} ${pConfig?.name || pKey}`;
+          if (pKey === currentProvider) opt.selected = true;
           aiSelect2.appendChild(opt);
-        } else {
-          liveKeys.forEach((pKey) => {
-            const opt = document.createElement("option");
-            opt.value = pKey;
-            opt.textContent = `\u{1F7E2} ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
-            if (pKey === currentProvider) opt.selected = true;
-            aiSelect2.appendChild(opt);
-          });
-          if (!liveKeys.includes(currentProvider)) {
-            currentProvider = liveKeys[0];
-            currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
-            setSaved("active_provider", currentProvider);
-            setSaved("active_model", currentModel);
-          }
-        }
+        });
       }
       if (reviewSelect2) {
         reviewSelect2.innerHTML = "";
-        if (liveKeys.length === 0) {
+        ALL_PROVIDERS.forEach((pKey) => {
+          const pConfig = PROVIDERS_CONFIG[pKey];
+          const key = getApiKeyFor(pKey);
+          const hasKey = Boolean(key);
+          const badge = hasKey ? "\u{1F7E2}" : "\u{1F511}";
           const opt = document.createElement("option");
-          opt.value = "";
-          opt.textContent = "\u26A0\uFE0F Sem IA Live";
+          opt.value = pKey;
+          opt.textContent = `${badge} ${pConfig?.name || pKey}`;
+          if (pKey === reviewProvider) opt.selected = true;
           reviewSelect2.appendChild(opt);
-        } else {
-          liveKeys.forEach((pKey) => {
-            const opt = document.createElement("option");
-            opt.value = pKey;
-            opt.textContent = `\u{1F7E2} ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
-            if (pKey === reviewProvider) opt.selected = true;
-            reviewSelect2.appendChild(opt);
-          });
-        }
+        });
       }
       renderModelOptions(currentProvider, currentModel);
       updateFooterLabel();
@@ -1516,7 +2235,7 @@ Responda ESTRITAMENTE em formato JSON:
       const modelSelect2 = document.getElementById("box-model-select");
       if (!modelSelect2) return;
       modelSelect2.innerHTML = "";
-      const models = getModelsForProvider(providerKey);
+      const models = getModelsForProvider(providerKey, showPaidModels);
       models.forEach((m) => {
         const opt = document.createElement("option");
         opt.value = m.id;
@@ -1530,38 +2249,43 @@ Responda ESTRITAMENTE em formato JSON:
         modelSelect2.value = currentModel;
       }
     }
-    async function refreshDynamicModelsFromAPI(providerKey) {
+    async function refreshDynamicModelsFromAPI(providerKey, showLogs = false) {
       const key = getApiKeyFor(providerKey);
-      if (!key) return;
+      if (!key && providerKey !== "ollama") return;
+      const pName = PROVIDERS_CONFIG[providerKey]?.name || providerKey;
+      if (showLogs) log(`\u{1F50D} Consultando modelos dispon\xEDveis na API de ${pName}...`, "info");
       try {
-        const liveModels = await fetchLiveModels(providerKey, key);
+        const liveModels = await fetchLiveModels(providerKey, key, showPaidModels);
         if (liveModels.length > 0 && providerKey === currentProvider) {
           renderModelOptions(currentProvider, currentModel);
           updateFooterLabel();
+          if (showLogs) log(`\u2705 [Live] ${liveModels.length} modelos sincronizados diretamente da API de ${pName}!`, "success");
         }
       } catch (e) {
+        if (showLogs) log(`\u26A0\uFE0F N\xE3o foi poss\xEDvel sincronizar modelos ao vivo: ${e.message}`, "warning");
       }
     }
     function updateFooterLabel() {
       const footerEl = document.getElementById("box-footer-model");
       if (!footerEl) return;
-      const pName = PROVIDERS_CONFIG[currentProvider]?.name || "Nenhuma IA Live";
+      const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
       footerEl.textContent = `${pName} (${currentModel})`;
     }
     function refreshGabaritoUI() {
       const container = document.getElementById("gabarito-panel");
       const badgesEl = document.getElementById("gabarito-badges");
-      renderSavedGabarito(container, badgesEl, reviewProvider, (qNum) => {
-        reviewSingleQuestion(
-          qNum,
-          reviewProvider,
-          log,
-          (q, isReviewing) => {
-            const badgeEl = document.getElementById(`badge-q-${q}`);
-            if (badgeEl) badgeEl.classList.toggle("reviewing", isReviewing);
-          },
-          refreshGabaritoUI
-        );
+      renderSavedGabarito(container, badgesEl, reviewProvider, async (qNum, currentStatus) => {
+        if (isBusy) return;
+        isBusy = true;
+        try {
+          if (currentStatus === "done") {
+            await reviewSingleQuestion(qNum, reviewProvider, log, refreshGabaritoUI);
+          } else {
+            await solveSingleQuestion(qNum, currentProvider, currentModel, log, refreshGabaritoUI);
+          }
+        } finally {
+          isBusy = false;
+        }
       });
     }
     const targetSelect = document.getElementById("config-target-select");
@@ -1569,62 +2293,125 @@ Responda ESTRITAMENTE em formato JSON:
     const aiSelect = document.getElementById("box-ai-select");
     const modelSelect = document.getElementById("box-model-select");
     const btnSaveKey = document.getElementById("btn-save-key");
-    const allProvidersList = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
-    allProvidersList.forEach((p) => {
-      const k = getApiKeyFor(p);
-      if (k && getProviderStatus(p) === "untested") {
-        setProviderStatus(p, "live");
-      }
-    });
+    const btnRefreshModels = document.getElementById("btn-refresh-models");
+    const btnToggleFreeMode = document.getElementById("btn-toggle-free-mode");
+    const btnApplyGabarito = document.getElementById("btn-apply-gabarito");
     targetSelect.value = configTargetProvider;
     keyInput.value = getApiKeyFor(configTargetProvider);
-    renderLiveProviderOptions();
-    refreshDynamicModelsFromAPI(currentProvider);
-    targetSelect.addEventListener("change", (e) => {
-      configTargetProvider = e.target.value;
-      setSaved("config_target_provider", configTargetProvider);
-      keyInput.value = getApiKeyFor(configTargetProvider);
+    updateToggleBtnState();
+    renderProviderOptions();
+    refreshDynamicModelsFromAPI(currentProvider, false);
+    if (isExam) {
+      const totalQ = getTotalExamQuestionsCount();
+      initGabaritoStructure(totalQ, PROVIDERS_CONFIG[currentProvider]?.name);
+      refreshGabaritoUI();
+    }
+    onStorageChange(() => {
+      showPaidModels = getShowPaidModels();
+      updateToggleBtnState();
+      currentProvider = getSaved("active_provider", "groq");
+      currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel);
+      configTargetProvider = currentProvider;
+      if (targetSelect) targetSelect.value = currentProvider;
+      if (keyInput) keyInput.value = getApiKeyFor(currentProvider);
+      renderProviderOptions();
+      refreshDynamicModelsFromAPI(currentProvider, false);
+      if (isExam) refreshGabaritoUI();
     });
+    if (btnToggleFreeMode) {
+      btnToggleFreeMode.addEventListener("click", (e) => {
+        e.preventDefault();
+        showPaidModels = !showPaidModels;
+        setShowPaidModels(showPaidModels);
+        updateToggleBtnState();
+        renderModelOptions(currentProvider, currentModel);
+        updateFooterLabel();
+        log(showPaidModels ? "\u{1F48E} Modo Completo: Exibindo modelos Free e Pagos/Premium." : "\u{1F7E2} Modo 100% Free: Exibindo apenas modelos gratuitos.", "info");
+      });
+    }
+    if (btnApplyGabarito) {
+      btnApplyGabarito.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (isBusy) return;
+        isBusy = true;
+        btnApplyGabarito.disabled = true;
+        btnApplyGabarito.textContent = "\u23F3 Marcando...";
+        try {
+          await applySavedGabaritoToDOM(log, refreshGabaritoUI);
+        } finally {
+          isBusy = false;
+          btnApplyGabarito.disabled = false;
+          btnApplyGabarito.textContent = "\u26A1 Aplicar na Prova";
+        }
+      });
+    }
     aiSelect.addEventListener("change", async (e) => {
       currentProvider = e.target.value;
       currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
       setSaved("active_provider", currentProvider);
       setSaved("active_model", currentModel);
+      configTargetProvider = currentProvider;
+      targetSelect.value = currentProvider;
+      keyInput.value = getApiKeyFor(currentProvider);
       renderModelOptions(currentProvider, currentModel);
       updateFooterLabel();
       log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name}`, "success");
-      await refreshDynamicModelsFromAPI(currentProvider);
+      await refreshDynamicModelsFromAPI(currentProvider, true);
+    });
+    targetSelect.addEventListener("change", (e) => {
+      configTargetProvider = e.target.value;
+      setSaved("config_target_provider", configTargetProvider);
+      keyInput.value = getApiKeyFor(configTargetProvider);
     });
     modelSelect.addEventListener("change", (e) => {
       currentModel = e.target.value;
       setSaved("active_model", currentModel);
       updateFooterLabel();
-      log(`Modelo alterado para: ${currentModel}`, "info");
+      log(`\u{1F3AF} Modelo ativo definido para: ${currentModel}`, "success");
     });
+    if (btnRefreshModels) {
+      btnRefreshModels.addEventListener("click", async (e) => {
+        e.preventDefault();
+        btnRefreshModels.disabled = true;
+        btnRefreshModels.textContent = "\u23F3 Buscando...";
+        await refreshDynamicModelsFromAPI(currentProvider, true);
+        btnRefreshModels.disabled = false;
+        btnRefreshModels.textContent = "\u{1F504} Atualizar";
+      });
+    }
     btnSaveKey.addEventListener("click", async () => {
       const p = configTargetProvider;
       const val = keyInput.value.trim();
       const pName = PROVIDERS_CONFIG[p]?.name || p;
-      if (!val) {
+      const selectedModelFromDom = document.getElementById("box-model-select")?.value;
+      const targetModelToTest = (p === currentProvider && selectedModelFromDom ? selectedModelFromDom : null) || currentModel || PROVIDERS_CONFIG[p]?.defaultModel;
+      if (!val && p !== "ollama") {
         setApiKeyFor(p, "");
         setSaved(`status_${p}`, "error");
-        renderLiveProviderOptions();
+        renderProviderOptions();
         log(`Chave do ${pName} removida.`, "warning");
         return;
       }
       btnSaveKey.disabled = true;
       btnSaveKey.textContent = "\u23F3 Testando...";
-      log(`Testando chave e buscando modelos ao vivo de ${pName}...`, "info");
+      log(`Testando chave de ${pName} (com modelo ${targetModelToTest})...`, "info");
       try {
-        await testProviderKey(p, val);
-        setApiKeyFor(p, val);
+        const testRes = await testProviderKey(p, val || "http://localhost:11434", targetModelToTest);
+        setApiKeyFor(p, val || (p === "ollama" ? "http://localhost:11434" : ""));
         setSaved("active_provider", p);
         currentProvider = p;
-        const dynamicModels = await fetchLiveModels(p, val);
-        currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
+        const dynamicModels = await fetchLiveModels(p, val, showPaidModels);
+        if (testRes.model) {
+          currentModel = testRes.model;
+        } else if (dynamicModels.length > 0 && !dynamicModels.some((m) => m.id === currentModel)) {
+          currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
+        }
         setSaved("active_model", currentModel);
-        renderLiveProviderOptions();
-        log(`\u2705 [Live] ${pName} ativo com ${dynamicModels.length} modelos sincronizados diretamente da API! \u{1F7E2}`, "success");
+        renderProviderOptions();
+        if (testRes.warning) {
+          log(`\u26A0\uFE0F ${testRes.warning}`, "warning");
+        }
+        log(`\u2705 [Live] ${pName} configurado com sucesso e ativo! (Modelo: ${currentModel}) \u{1F7E2}`, "success");
       } catch (err) {
         log(`\u274C Falha no teste do ${pName}: ${err.message}`, "error");
       } finally {
@@ -1673,7 +2460,6 @@ Responda ESTRITAMENTE em formato JSON:
     });
     const actionBtn = document.getElementById("btn-action-main");
     if (isExam) {
-      refreshGabaritoUI();
       actionBtn.addEventListener("click", async () => {
         if (isBusy) return;
         isBusy = true;

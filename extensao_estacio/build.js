@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const USERSCRIPT_BANNER = `// ==UserScript==
 // @name         Estácio Suite AI (Solver, Gabarito & Revisão Multi-IA)
 // @namespace    https://github.com/m3coder/estragacio
-// @version      2.0.1
+// @version      2.5.5
 // @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek) 2) Troca Rápida de Modelo e Provedor 3) Revisão com 1-Clique no Gabarito 4) Auto-Conclusão de Temas.
 // @author       m3coder
 // @match        https://estacio.saladeavaliacoes.com.br/*

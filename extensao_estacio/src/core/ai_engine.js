@@ -1,14 +1,15 @@
-// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Teste Live e Multi-Fallback
+// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, OpenRouter, Ollama, Mistral, OpenAI, DeepSeek) + Teste Live e Multi-Fallback
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
-import { getApiKeyFor, setApiKeyFor, setProviderStatus, getLiveProviders } from '../config/storage.js';
+import { getApiKeyFor, setApiKeyFor, setProviderStatus, getLiveProviders, getSaved, setSaved } from '../config/storage.js';
 import { buildPhDExamPrompt } from './prompt_builder.js';
+import { universalFetch } from './network.js';
 
 export async function executeAICall(provider, model, statement, alternatives) {
   const apiKey = getApiKeyFor(provider);
   const pConfig = PROVIDERS_CONFIG[provider];
 
-  if (!apiKey) {
+  if (!apiKey && provider !== 'ollama') {
     throw new Error(`Chave de API do ${pConfig?.name || provider} não configurada. Insira sua chave no campo e clique em Testar & Salvar.`);
   }
 
@@ -21,7 +22,7 @@ export async function executeAICall(provider, model, statement, alternatives) {
 
     const systemPrompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato. Responda ESTRITAMENTE em formato JSON no formato: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
 
-    const res = await fetch(claudeUrl, {
+    const res = await universalFetch(claudeUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export async function executeAICall(provider, model, statement, alternatives) {
     const selectedModel = model || pConfig.defaultModel;
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent`;
 
-    const res = await fetch(geminiUrl, {
+    const res = await universalFetch(geminiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,18 +87,20 @@ export async function executeAICall(provider, model, statement, alternatives) {
     };
   }
 
-  // 3. OpenAI-compatible APIs (Groq, Mistral, OpenAI, DeepSeek)
+  // 3. OpenAI-compatible APIs (Groq, OpenRouter, Ollama, Mistral, OpenAI, DeepSeek)
   const endpoint = pConfig?.endpoint || 'https://api.groq.com/openai/v1/chat/completions';
   const selectedModel = model || pConfig?.defaultModel;
 
   const systemPrompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
 
-  const res = await fetch(endpoint, {
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  const res = await universalFetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+    headers: headers,
     body: JSON.stringify({
       model: selectedModel,
       messages: [
@@ -123,12 +126,16 @@ export async function executeAICall(provider, model, statement, alternatives) {
   };
 }
 
-export async function testProviderKey(provider, testKey) {
+export async function testProviderKey(provider, testKey, specificModel = null) {
   const pConfig = PROVIDERS_CONFIG[provider];
-  if (!testKey) throw new Error('Chave de API não informada.');
+  if (!testKey && provider !== 'ollama') throw new Error('Chave de API não informada.');
 
   const originalKey = getApiKeyFor(provider);
-  setApiKeyFor(provider, testKey);
+  if (testKey || provider === 'ollama') {
+    setApiKeyFor(provider, testKey || 'local');
+  }
+
+  let modelToTest = specificModel || getSaved('active_model') || pConfig.defaultModel;
 
   const testStatement = "Resolva esta questão acadêmica de teste: Quanto é 2 + 2?";
   const testAlternatives = [
@@ -137,13 +144,75 @@ export async function testProviderKey(provider, testKey) {
   ];
 
   try {
-    const result = await executeAICall(provider, pConfig.defaultModel, testStatement, testAlternatives);
+    const result = await executeAICall(provider, modelToTest, testStatement, testAlternatives);
     if (result && result.letra) {
       setProviderStatus(provider, 'live');
-      return { success: true, result };
+      return { success: true, result, model: modelToTest };
     }
     throw new Error('Resposta sem formato esperado.');
   } catch (err) {
+    // 1. Auto-recovery para OpenRouter (se slug :free foi descontinuado pelo provedor)
+    if (provider === 'openrouter') {
+      const openRouterFallbacks = [
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'deepseek/deepseek-r1:free',
+        'google/gemini-2.0-flash-exp:free',
+        'openrouter/auto:free',
+        'nousresearch/hermes-3-llama-3.1-405b'
+      ];
+      for (const fallbackModel of openRouterFallbacks) {
+        if (fallbackModel !== modelToTest) {
+          try {
+            const fbResult = await executeAICall(provider, fallbackModel, testStatement, testAlternatives);
+            if (fbResult && fbResult.letra) {
+              setProviderStatus(provider, 'live');
+              setSaved('active_model', fallbackModel);
+              return {
+                success: true,
+                result: fbResult,
+                model: fallbackModel,
+                warning: `O modelo ${modelToTest} não aceitou requisição gratuita no OpenRouter. Chave validada via ${fallbackModel}!`
+              };
+            }
+          } catch (fbErr) {}
+        }
+      }
+    }
+
+    // 2. Auto-recovery para Google Gemini (cooldown de RPM / rate limit temporário)
+    if (provider === 'gemini' && /quota|rate limit|429/i.test(err.message)) {
+      const geminiFallbacks = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+      for (const fbModel of geminiFallbacks) {
+        if (fbModel !== modelToTest) {
+          try {
+            const fbResult = await executeAICall(provider, fbModel, testStatement, testAlternatives);
+            if (fbResult && fbResult.letra) {
+              setProviderStatus(provider, 'live');
+              setSaved('active_model', fbModel);
+              return {
+                success: true,
+                result: fbResult,
+                model: fbModel,
+                warning: `O modelo ${modelToTest} estava em cooldown de 1 min na API do Google. Chave validada via ${fbModel}!`
+              };
+            }
+          } catch (fbErr) {}
+        }
+      }
+    }
+
+    // 3. Auto-recovery para Groq
+    if (provider === 'groq' && /quota|rate limit|429/i.test(err.message)) {
+      try {
+        const fbResult = await executeAICall(provider, 'llama-3.1-8b-instant', testStatement, testAlternatives);
+        if (fbResult && fbResult.letra) {
+          setProviderStatus(provider, 'live');
+          setSaved('active_model', 'llama-3.1-8b-instant');
+          return { success: true, result: fbResult, model: 'llama-3.1-8b-instant', warning: `Chave validada via Llama 3.1 8B!` };
+        }
+      } catch (fbErr) {}
+    }
+
     setProviderStatus(provider, 'error');
     setApiKeyFor(provider, originalKey);
     throw err;

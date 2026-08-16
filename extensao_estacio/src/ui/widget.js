@@ -1,24 +1,28 @@
-// Construtor e Controlador da Interface do Widget (com Descoberta Dinâmica de Modelos via API Oficial)
+// Widget In-Page Flutuante - Sincronização Unificada com Popup e Multi-Provedores de IA
 
-import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
-import { getSaved, setSaved, getApiKeyFor, setApiKeyFor, getLiveProviders, getProviderStatus } from '../config/storage.js';
 import { setupUniversalDraggable } from './draggable.js';
-import { renderSavedGabarito, copyGabarito, copyAllLogs } from '../modules/gabarito.js';
+import { PROVIDERS_CONFIG } from '../config/providers.js';
+import { getSaved, setSaved, getApiKeyFor, setApiKeyFor, getProviderStatus, setProviderStatus, onStorageChange, getShowPaidModels, setShowPaidModels } from '../config/storage.js';
+import { copyAllLogs, copyGabarito, renderSavedGabarito, initGabaritoStructure } from '../modules/gabarito.js';
 import { reviewSingleQuestion } from '../modules/reviewer.js';
-import { runExamQueue } from '../modules/exam_solver.js';
+import { runExamQueue, solveSingleQuestion, applySavedGabaritoToDOM } from '../modules/exam_solver.js';
 import { startThemeCompletion, processAutomatorStateMachine } from '../modules/theme_automator.js';
 import { testProviderKey } from '../core/ai_engine.js';
 import { fetchLiveModels, getModelsForProvider } from '../modules/model_fetcher.js';
+import { getTotalExamQuestionsCount } from '../modules/dom_parser.js';
 
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;
 
+  const ALL_PROVIDERS = ['groq', 'gemini', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
+
   const isExam = window.location.hostname.includes('saladeavaliacoes.com.br');
-  let configTargetProvider = getSaved('config_target_provider', 'groq');
   let currentProvider = getSaved('active_provider', 'groq');
   let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
   let reviewProvider = getSaved('review_provider', 'claude');
+  let configTargetProvider = currentProvider;
+  let showPaidModels = getShowPaidModels();
   let isBusy = false;
 
   const savedLogsRaw = localStorage.getItem('estacio_suite_logs');
@@ -32,7 +36,7 @@ export function createSuiteWidget() {
       <div class="box-header" id="box-drag-handle">
         <div class="box-title">
           <img src="${CAT_MASCOT_DATA_URI}" class="cat-dancing-avatar" alt="Mascote">
-          <span>Estácio Suite AI</span>
+          <span>Estácio Suite AI v2.5.5</span>
         </div>
         <div class="box-controls">
           <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">🧹</button>
@@ -43,14 +47,20 @@ export function createSuiteWidget() {
       </div>
 
       <div class="box-body">
-        <!-- Seletor Principal de IA Ativa (Apenas IAs com teste Live Aprovado) -->
+        <!-- Seletor Principal de IA Ativa -->
         <div class="ai-selector-container">
           <div class="ai-selector-row">
             <span style="color:#94a3b8; font-weight:700;">🤖 IA Ativa:</span>
             <select id="box-ai-select" class="ai-selector-select"></select>
           </div>
           <div class="ai-selector-row">
-            <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <button id="btn-toggle-free-mode" title="Alternar entre apenas modelos 100% gratuitos ou todos os modelos" style="background:#065f46; color:#a7f3d0; border:1px solid #059669; border-radius:4px; font-size:10px; cursor:pointer; padding:1px 6px; font-weight:700;">🟢 Apenas Free</button>
+                <button id="btn-refresh-models" title="Buscar modelos ao vivo da API" style="background:none; border:none; color:#38bdf8; font-size:11px; cursor:pointer; padding:0 2px; font-weight:600;">🔄 Atualizar</button>
+              </div>
+            </div>
             <select id="box-model-select" class="ai-selector-select"></select>
           </div>
         </div>
@@ -61,9 +71,11 @@ export function createSuiteWidget() {
             <span style="color:#38bdf8; font-size:10px; font-weight:700;">🔑 Adicionar/Testar Chave:</span>
             <select id="config-target-select" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; font-size:10px; padding:2px 4px;">
               <option value="groq">Groq</option>
-              <option value="claude">Anthropic Claude</option>
-              <option value="mistral">Mistral AI</option>
               <option value="gemini">Google Gemini</option>
+              <option value="openrouter">OpenRouter (Hermes)</option>
+              <option value="ollama">Ollama (Local)</option>
+              <option value="mistral">Mistral AI</option>
+              <option value="claude">Anthropic Claude</option>
               <option value="openai">ChatGPT (OpenAI)</option>
               <option value="deepseek">DeepSeek</option>
             </select>
@@ -85,7 +97,7 @@ export function createSuiteWidget() {
             <span>🎯</span> Resolver e Marcar Prova
           </button>
 
-          <!-- Barra de Segunda Opinião / Revisão Direta (Apenas IAs Live) -->
+          <!-- Barra de Segunda Opinião / Revisão Direta -->
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
             <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;"></select>
@@ -103,10 +115,11 @@ export function createSuiteWidget() {
         <!-- Painel Visual do Gabarito Persistente -->
         <div id="gabarito-panel" class="gabarito-container" style="display:none;">
           <div class="gabarito-header">
-            <span>📝 Gabarito (Clique na questão p/ revisar)</span>
-            <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">
-              📋 Copiar
-            </button>
+            <span style="font-weight:700;">📝 Gabarito</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button id="btn-apply-gabarito" style="background:#0284c7; border:none; color:#fff; border-radius:4px; font-size:10px; font-weight:700; padding:2px 6px; cursor:pointer;" title="Aplica todas as respostas salvas no gabarito diretamente na prova sem gastar IA">⚡ Aplicar na Prova</button>
+              <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">📋 Copiar</button>
+            </div>
           </div>
           <div id="gabarito-badges" class="gabarito-badges"></div>
         </div>
@@ -175,7 +188,7 @@ export function createSuiteWidget() {
   } else {
     const div = document.createElement('div');
     div.className = 'log-item info';
-    div.textContent = `[${new Date().toLocaleTimeString()}] Pronto. Suíte Estácio AI pronta para uso.`;
+    div.textContent = `[${new Date().toLocaleTimeString()}] Pronto. Suíte Estácio AI v2.5.5 pronta para uso.`;
     logBox.appendChild(div);
   }
 
@@ -209,56 +222,65 @@ export function createSuiteWidget() {
     if (gabaritoPanel) gabaritoPanel.style.display = 'none';
     if (gabaritoBadges) gabaritoBadges.innerHTML = '';
 
+    if (isExam) {
+      initGabaritoStructure(10, PROVIDERS_CONFIG[currentProvider]?.name);
+      refreshGabaritoUI();
+    }
+
     log('🧹 Todos os logs, gabaritos e filas foram limpos com sucesso!', 'success');
   }
 
-  // RENDERIZA APENAS PROVEDORES QUE POSSUEM CHAVE E PASSARAM NO TESTE LIVE
-  function renderLiveProviderOptions() {
+  function updateToggleBtnState() {
+    const btn = document.getElementById('btn-toggle-free-mode');
+    if (!btn) return;
+    if (showPaidModels) {
+      btn.textContent = '💎 Free + Pagos';
+      btn.style.background = '#701a75';
+      btn.style.color = '#f5d0fe';
+      btn.style.borderColor = '#a21caf';
+      btn.title = 'Modo Completo Ativo (Mostrando modelos Free e Pagos). Clique para restringir a apenas 100% Free.';
+    } else {
+      btn.textContent = '🟢 Apenas Free';
+      btn.style.background = '#065f46';
+      btn.style.color = '#a7f3d0';
+      btn.style.borderColor = '#059669';
+      btn.title = 'Modo 100% Free Ativo (Modelos pagos ocultos). Clique para exibir modelos pagos.';
+    }
+  }
+
+  // RENDERIZA TODOS OS PROVEDORES NO DROPDOWN COM ÍCONES DE STATUS
+  function renderProviderOptions() {
     const aiSelect = document.getElementById('box-ai-select');
     const reviewSelect = document.getElementById('review-ai-select');
-    const liveKeys = getLiveProviders();
 
     if (aiSelect) {
       aiSelect.innerHTML = '';
-      if (liveKeys.length === 0) {
+      ALL_PROVIDERS.forEach(pKey => {
+        const pConfig = PROVIDERS_CONFIG[pKey];
+        const key = getApiKeyFor(pKey);
+        const hasKey = Boolean(key);
+        const badge = hasKey ? '🟢' : '🔑';
         const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '⚠️ Nenhuma IA Live (Testar chave abaixo)';
+        opt.value = pKey;
+        opt.textContent = `${badge} ${pConfig?.name || pKey}`;
+        if (pKey === currentProvider) opt.selected = true;
         aiSelect.appendChild(opt);
-      } else {
-        liveKeys.forEach(pKey => {
-          const opt = document.createElement('option');
-          opt.value = pKey;
-          opt.textContent = `🟢 ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
-          if (pKey === currentProvider) opt.selected = true;
-          aiSelect.appendChild(opt);
-        });
-
-        if (!liveKeys.includes(currentProvider)) {
-          currentProvider = liveKeys[0];
-          currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
-          setSaved('active_provider', currentProvider);
-          setSaved('active_model', currentModel);
-        }
-      }
+      });
     }
 
     if (reviewSelect) {
       reviewSelect.innerHTML = '';
-      if (liveKeys.length === 0) {
+      ALL_PROVIDERS.forEach(pKey => {
+        const pConfig = PROVIDERS_CONFIG[pKey];
+        const key = getApiKeyFor(pKey);
+        const hasKey = Boolean(key);
+        const badge = hasKey ? '🟢' : '🔑';
         const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '⚠️ Sem IA Live';
+        opt.value = pKey;
+        opt.textContent = `${badge} ${pConfig?.name || pKey}`;
+        if (pKey === reviewProvider) opt.selected = true;
         reviewSelect.appendChild(opt);
-      } else {
-        liveKeys.forEach(pKey => {
-          const opt = document.createElement('option');
-          opt.value = pKey;
-          opt.textContent = `🟢 ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
-          if (pKey === reviewProvider) opt.selected = true;
-          reviewSelect.appendChild(opt);
-        });
-      }
+      });
     }
 
     renderModelOptions(currentProvider, currentModel);
@@ -270,7 +292,7 @@ export function createSuiteWidget() {
     if (!modelSelect) return;
     modelSelect.innerHTML = '';
 
-    const models = getModelsForProvider(providerKey);
+    const models = getModelsForProvider(providerKey, showPaidModels);
 
     models.forEach(m => {
       const opt = document.createElement('option');
@@ -280,7 +302,6 @@ export function createSuiteWidget() {
       modelSelect.appendChild(opt);
     });
 
-    // Se o modelo salvo não estiver na lista, seleciona o primeiro
     if (models.length > 0 && !models.some(m => m.id === selectedModelId)) {
       currentModel = models[0].id;
       setSaved('active_model', currentModel);
@@ -288,40 +309,49 @@ export function createSuiteWidget() {
     }
   }
 
-  async function refreshDynamicModelsFromAPI(providerKey) {
+  async function refreshDynamicModelsFromAPI(providerKey, showLogs = false) {
     const key = getApiKeyFor(providerKey);
-    if (!key) return;
+    if (!key && providerKey !== 'ollama') return;
+
+    const pName = PROVIDERS_CONFIG[providerKey]?.name || providerKey;
+    if (showLogs) log(`🔍 Consultando modelos disponíveis na API de ${pName}...`, 'info');
 
     try {
-      const liveModels = await fetchLiveModels(providerKey, key);
+      const liveModels = await fetchLiveModels(providerKey, key, showPaidModels);
       if (liveModels.length > 0 && providerKey === currentProvider) {
         renderModelOptions(currentProvider, currentModel);
         updateFooterLabel();
+        if (showLogs) log(`✅ [Live] ${liveModels.length} modelos sincronizados diretamente da API de ${pName}!`, 'success');
       }
-    } catch (e) {}
+    } catch (e) {
+      if (showLogs) log(`⚠️ Não foi possível sincronizar modelos ao vivo: ${e.message}`, 'warning');
+    }
   }
 
   function updateFooterLabel() {
     const footerEl = document.getElementById('box-footer-model');
     if (!footerEl) return;
-    const pName = PROVIDERS_CONFIG[currentProvider]?.name || 'Nenhuma IA Live';
+    const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
     footerEl.textContent = `${pName} (${currentModel})`;
   }
 
   function refreshGabaritoUI() {
     const container = document.getElementById('gabarito-panel');
     const badgesEl = document.getElementById('gabarito-badges');
-    renderSavedGabarito(container, badgesEl, reviewProvider, (qNum) => {
-      reviewSingleQuestion(
-        qNum,
-        reviewProvider,
-        log,
-        (q, isReviewing) => {
-          const badgeEl = document.getElementById(`badge-q-${q}`);
-          if (badgeEl) badgeEl.classList.toggle('reviewing', isReviewing);
-        },
-        refreshGabaritoUI
-      );
+    renderSavedGabarito(container, badgesEl, reviewProvider, async (qNum, currentStatus) => {
+      if (isBusy) return;
+      isBusy = true;
+      try {
+        if (currentStatus === 'done') {
+          // Se já está concluída, clique revisa com 2ª opinião
+          await reviewSingleQuestion(qNum, reviewProvider, log, refreshGabaritoUI);
+        } else {
+          // Se está pendente ou com falha, clique resolve imediatamente com a IA ativa
+          await solveSingleQuestion(qNum, currentProvider, currentModel, log, refreshGabaritoUI);
+        }
+      } finally {
+        isBusy = false;
+      }
     });
   }
 
@@ -330,77 +360,154 @@ export function createSuiteWidget() {
   const aiSelect = document.getElementById('box-ai-select');
   const modelSelect = document.getElementById('box-model-select');
   const btnSaveKey = document.getElementById('btn-save-key');
-
-  // Inicializa com chaves que já estão no storage
-  const allProvidersList = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
-  allProvidersList.forEach(p => {
-    const k = getApiKeyFor(p);
-    if (k && getProviderStatus(p) === 'untested') {
-      setProviderStatus(p, 'live');
-    }
-  });
+  const btnRefreshModels = document.getElementById('btn-refresh-models');
+  const btnToggleFreeMode = document.getElementById('btn-toggle-free-mode');
+  const btnApplyGabarito = document.getElementById('btn-apply-gabarito');
 
   targetSelect.value = configTargetProvider;
   keyInput.value = getApiKeyFor(configTargetProvider);
 
-  renderLiveProviderOptions();
-  refreshDynamicModelsFromAPI(currentProvider);
+  updateToggleBtnState();
+  renderProviderOptions();
+  refreshDynamicModelsFromAPI(currentProvider, false);
 
+  // Inicializa e exibe o gabarito das 10 questões imediatamente na Sala de Provas
+  if (isExam) {
+    const totalQ = getTotalExamQuestionsCount();
+    initGabaritoStructure(totalQ, PROVIDERS_CONFIG[currentProvider]?.name);
+    refreshGabaritoUI();
+  }
+
+  // OUVE MUDANÇAS DE STORAGE EM TEMPO REAL DO POPUP
+  onStorageChange(() => {
+    showPaidModels = getShowPaidModels();
+    updateToggleBtnState();
+    currentProvider = getSaved('active_provider', 'groq');
+    currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel);
+    configTargetProvider = currentProvider;
+    if (targetSelect) targetSelect.value = currentProvider;
+    if (keyInput) keyInput.value = getApiKeyFor(currentProvider);
+    renderProviderOptions();
+    refreshDynamicModelsFromAPI(currentProvider, false);
+    if (isExam) refreshGabaritoUI();
+  });
+
+  // BOTÃO DE ALTERNÂNCIA DE MODO FREE / PAGO
+  if (btnToggleFreeMode) {
+    btnToggleFreeMode.addEventListener('click', (e) => {
+      e.preventDefault();
+      showPaidModels = !showPaidModels;
+      setShowPaidModels(showPaidModels);
+      updateToggleBtnState();
+      renderModelOptions(currentProvider, currentModel);
+      updateFooterLabel();
+      log(showPaidModels ? '💎 Modo Completo: Exibindo modelos Free e Pagos/Premium.' : '🟢 Modo 100% Free: Exibindo apenas modelos gratuitos.', 'info');
+    });
+  }
+
+  // BOTÃO DE APLICAR GABARITO NA PROVA (SEM USAR IA)
+  if (btnApplyGabarito) {
+    btnApplyGabarito.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (isBusy) return;
+      isBusy = true;
+      btnApplyGabarito.disabled = true;
+      btnApplyGabarito.textContent = '⏳ Marcando...';
+      try {
+        await applySavedGabaritoToDOM(log, refreshGabaritoUI);
+      } finally {
+        isBusy = false;
+        btnApplyGabarito.disabled = false;
+        btnApplyGabarito.textContent = '⚡ Aplicar na Prova';
+      }
+    });
+  }
+
+  // MUDANÇA DE IA ATIVA NO SELETOR PRINCIPAL
+  aiSelect.addEventListener('change', async (e) => {
+    currentProvider = e.target.value;
+    currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
+    setSaved('active_provider', currentProvider);
+    setSaved('active_model', currentModel);
+
+    // Sincroniza o painel de chave para o provedor selecionado
+    configTargetProvider = currentProvider;
+    targetSelect.value = currentProvider;
+    keyInput.value = getApiKeyFor(currentProvider);
+
+    renderModelOptions(currentProvider, currentModel);
+    updateFooterLabel();
+    log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name}`, 'success');
+    await refreshDynamicModelsFromAPI(currentProvider, true);
+  });
+
+  // MUDANÇA DE ALVO NO PAINEL DE CHAVES
   targetSelect.addEventListener('change', (e) => {
     configTargetProvider = e.target.value;
     setSaved('config_target_provider', configTargetProvider);
     keyInput.value = getApiKeyFor(configTargetProvider);
   });
 
-  aiSelect.addEventListener('change', async (e) => {
-    currentProvider = e.target.value;
-    currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
-    setSaved('active_provider', currentProvider);
-    setSaved('active_model', currentModel);
-    renderModelOptions(currentProvider, currentModel);
-    updateFooterLabel();
-    log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name}`, 'success');
-    await refreshDynamicModelsFromAPI(currentProvider);
-  });
-
+  // MUDANÇA MANUAL DE MODELO (DEFINIÇÃO INSTANTÂNEA)
   modelSelect.addEventListener('change', (e) => {
     currentModel = e.target.value;
     setSaved('active_model', currentModel);
     updateFooterLabel();
-    log(`Modelo alterado para: ${currentModel}`, 'info');
+    log(`🎯 Modelo ativo definido para: ${currentModel}`, 'success');
   });
 
-  // BOTÃO DE TESTAR & SALVAR CHAVE (TESTE LIVE + DESCOBERTA DINÂMICA DE MODELOS)
+  // BOTÃO ATUALIZAR MODELOS AO VIVO
+  if (btnRefreshModels) {
+    btnRefreshModels.addEventListener('click', async (e) => {
+      e.preventDefault();
+      btnRefreshModels.disabled = true;
+      btnRefreshModels.textContent = '⏳ Buscando...';
+      await refreshDynamicModelsFromAPI(currentProvider, true);
+      btnRefreshModels.disabled = false;
+      btnRefreshModels.textContent = '🔄 Atualizar';
+    });
+  }
+
+  // BOTÃO DE TESTAR & SALVAR CHAVE (TESTE LIVE COM MODELO ESPECÍFICO)
   btnSaveKey.addEventListener('click', async () => {
     const p = configTargetProvider;
     const val = keyInput.value.trim();
     const pName = PROVIDERS_CONFIG[p]?.name || p;
+    const selectedModelFromDom = document.getElementById('box-model-select')?.value;
+    const targetModelToTest = (p === currentProvider && selectedModelFromDom ? selectedModelFromDom : null) || currentModel || PROVIDERS_CONFIG[p]?.defaultModel;
 
-    if (!val) {
+    if (!val && p !== 'ollama') {
       setApiKeyFor(p, '');
       setSaved(`status_${p}`, 'error');
-      renderLiveProviderOptions();
+      renderProviderOptions();
       log(`Chave do ${pName} removida.`, 'warning');
       return;
     }
 
     btnSaveKey.disabled = true;
     btnSaveKey.textContent = '⏳ Testando...';
-    log(`Testando chave e buscando modelos ao vivo de ${pName}...`, 'info');
+    log(`Testando chave de ${pName} (com modelo ${targetModelToTest})...`, 'info');
 
     try {
-      await testProviderKey(p, val);
-      setApiKeyFor(p, val);
+      const testRes = await testProviderKey(p, val || 'http://localhost:11434', targetModelToTest);
+      setApiKeyFor(p, val || (p === 'ollama' ? 'http://localhost:11434' : ''));
       setSaved('active_provider', p);
       currentProvider = p;
 
       // Puxa lista real de modelos retornada pela API
-      const dynamicModels = await fetchLiveModels(p, val);
-      currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
+      const dynamicModels = await fetchLiveModels(p, val, showPaidModels);
+      if (testRes.model) {
+        currentModel = testRes.model;
+      } else if (dynamicModels.length > 0 && !dynamicModels.some(m => m.id === currentModel)) {
+        currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
+      }
       setSaved('active_model', currentModel);
 
-      renderLiveProviderOptions();
-      log(`✅ [Live] ${pName} ativo com ${dynamicModels.length} modelos sincronizados diretamente da API! 🟢`, 'success');
+      renderProviderOptions();
+      if (testRes.warning) {
+        log(`⚠️ ${testRes.warning}`, 'warning');
+      }
+      log(`✅ [Live] ${pName} configurado com sucesso e ativo! (Modelo: ${currentModel}) 🟢`, 'success');
     } catch (err) {
       log(`❌ Falha no teste do ${pName}: ${err.message}`, 'error');
     } finally {
@@ -458,7 +565,6 @@ export function createSuiteWidget() {
 
   const actionBtn = document.getElementById('btn-action-main');
   if (isExam) {
-    refreshGabaritoUI();
     actionBtn.addEventListener('click', async () => {
       if (isBusy) return;
       isBusy = true;

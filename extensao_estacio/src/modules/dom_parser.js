@@ -1,4 +1,4 @@
-// Extrator do DOM (Deduplicação Precisa por temaNum e Detecção Correta de Concluído/Pendente)
+// Extrator do DOM (Deduplicação Precisa por temaNum, Detecção de Questões e Navegação Inteligente)
 
 export function getQuestionCards() {
   const allTestIds = Array.from(document.querySelectorAll('[data-testid]'));
@@ -19,6 +19,53 @@ export function getQuestionCards() {
     index: parseInt(el.getAttribute('data-testid')?.replace('question-', '') || el.id || `${i + 1}`),
     element: el
   }));
+}
+
+export function getTotalExamQuestionsCount() {
+  const cards = getQuestionCards();
+  if (cards.length > 0) {
+    return Math.max(...cards.map(c => c.index), cards.length);
+  }
+
+  const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+  const numButtons = buttons
+    .map(b => parseInt(b.innerText?.trim() || '0'))
+    .filter(n => !isNaN(n) && n >= 1 && n <= 30);
+
+  if (numButtons.length > 0) {
+    return Math.max(...numButtons);
+  }
+
+  return 10;
+}
+
+export async function navigateToQuestionCard(qNum) {
+  let cards = getQuestionCards();
+  let found = cards.find(c => c.index === qNum);
+  if (found && found.element) {
+    found.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return found;
+  }
+
+  // Tenta clicar no botão de navegação / paginação da barra lateral
+  const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+  const targetBtn = buttons.find(b => {
+    const txt = b.innerText?.trim();
+    return txt === String(qNum) || b.getAttribute('data-testid') === `question-nav-${qNum}` || b.getAttribute('aria-label')?.includes(`Questão ${qNum}`);
+  });
+
+  if (targetBtn) {
+    targetBtn.click();
+    await new Promise(r => setTimeout(r, 350));
+    cards = getQuestionCards();
+    found = cards.find(c => c.index === qNum) || cards[0];
+    if (found && found.element) {
+      found.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return found;
+    }
+  }
+
+  return null;
 }
 
 export function extractStatement(cardEl, qNum) {
@@ -74,13 +121,11 @@ export function getThemeCardsFromDom() {
   const candidates = Array.from(document.querySelectorAll('button, a[href*="/conteudos/"], [role="button"], article, section, [class*="card"], div'));
 
   candidates.forEach((el) => {
-    // Sobe até encontrar o container completo do card
     let card = el.closest('article, section, [class*="card"], div');
     if (!card) return;
 
     const text = (card.innerText || '').replace(/\s+/g, ' ').trim();
     
-    // Ignora o banner de topo "Continue de onde parou" se não for o card de grade
     if (text.toLowerCase().includes('continue de onde parou') && !text.match(/Tema\s*1\s*\|/i)) {
       return;
     }
@@ -89,7 +134,6 @@ export function getThemeCardsFromDom() {
     if (match && text.length < 400) {
       const temaNum = parseInt(match[1]);
 
-      // Deduplicação estrita: apenas 1 card registrado por temaNum
       if (!cardsMap.has(temaNum)) {
         const isConcluido = /conclu[ií]do/i.test(text);
         const itemsMatch = text.match(/(\d+)\s*Itens?/i);
@@ -97,8 +141,6 @@ export function getThemeCardsFromDom() {
 
         const link = card.querySelector('a[href*="/conteudos/"]');
         const href = link ? link.href : (card.getAttribute('href') || '');
-
-        // Botão de ação: a seta redonda [ → ] ou link
         const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
 
         cardsMap.set(temaNum, {

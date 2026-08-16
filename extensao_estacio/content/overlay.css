@@ -75,16 +75,17 @@
   cursor: grabbing;
 }
 
-/* Anime Dancing Cat Mascot Animations */
+/* Anime Dancing Cat Mascot Animations (Fortnite Dance Passinho) */
 .cat-dancing-avatar {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid #60a5fa;
-  animation: catBop 0.6s infinite alternate ease-in-out;
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
+  animation: catBop 0.8s infinite ease-in-out;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.7);
   flex-shrink: 0;
+  display: inline-block;
 }
 
 .cat-bubble-avatar {
@@ -92,21 +93,26 @@
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  animation: catDance 0.8s infinite alternate ease-in-out;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+  animation: catDance 0.8s infinite ease-in-out;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);
   pointer-events: none;
+  display: inline-block;
 }
 
 @keyframes catBop {
-  0% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(-2px) scale(1.08) rotate(0deg); }
-  100% { transform: translateY(0) rotate(5deg); }
+  0% { transform: translateY(0) rotate(-8deg) scale(1); }
+  25% { transform: translateY(-4px) rotate(4deg) scale(1.08); }
+  50% { transform: translateY(0) rotate(8deg) scale(1.02); }
+  75% { transform: translateY(-4px) rotate(-4deg) scale(1.08); }
+  100% { transform: translateY(0) rotate(-8deg) scale(1); }
 }
 
 @keyframes catDance {
-  0% { transform: translateY(0) rotate(-8deg) scale(1); }
-  50% { transform: translateY(-3px) rotate(0deg) scale(1.1); }
-  100% { transform: translateY(0) rotate(8deg) scale(1); }
+  0% { transform: translateY(0) rotate(-14deg) scale(1); }
+  25% { transform: translateY(-6px) rotate(6deg) scale(1.12); }
+  50% { transform: translateY(0) rotate(14deg) scale(1.05); }
+  75% { transform: translateY(-6px) rotate(-6deg) scale(1.12); }
+  100% { transform: translateY(0) rotate(-14deg) scale(1); }
 }
 
 .box-header,
@@ -130,6 +136,7 @@
   font-size: 13px;
   font-weight: 700;
   background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: flex;
@@ -295,43 +302,82 @@
 }
 
 .gabarito-badge {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 5px;
   padding: 3px 7px;
   font-size: 11px;
   font-weight: 600;
-  color: #f1f5f9;
   display: flex;
   align-items: center;
   gap: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
+  user-select: none;
 }
 
 .gabarito-badge:hover {
-  border-color: #a855f7;
-  background: rgba(168, 85, 247, 0.2);
   transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
 }
 
-.gabarito-badge.reviewing {
-  border-color: #f59e0b !important;
-  background: rgba(245, 158, 11, 0.25) !important;
+.gabarito-badge.badge-done {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid #10b981;
+  color: #34d399;
+}
+.gabarito-badge.badge-done:hover {
+  background: rgba(16, 185, 129, 0.32);
+  border-color: #34d399;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+.gabarito-badge.badge-failed {
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid #ef4444;
+  color: #f87171;
+  animation: pulse-fail 1.5s infinite alternate;
+}
+.gabarito-badge.badge-failed:hover {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: #f87171;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);
+}
+
+.gabarito-badge.badge-processing {
+  background: rgba(59, 130, 246, 0.28);
+  border: 1px solid #60a5fa;
+  color: #93c5fd;
   animation: pulse 1s infinite alternate;
 }
 
+.gabarito-badge.badge-pending {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+}
+.gabarito-badge.badge-pending:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);
+}
+
 @keyframes pulse {
-  0% { opacity: 0.7; }
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.03); }
+}
+
+@keyframes pulse-fail {
+  0% { opacity: 0.85; }
   100% { opacity: 1; }
 }
 
-.gabarito-badge .badge-q { color: #94a3b8; }
-.gabarito-badge .badge-a { color: #34d399; font-weight: 700; }
-.gabarito-badge .badge-rev-icon { font-size: 10px; color: #c084fc; opacity: 0.7; }
-.gabarito-badge:hover .badge-rev-icon { opacity: 1; color: #e879f9; }
+.gabarito-badge .badge-q { color: #94a3b8; font-size: 10px; font-weight: 500; }
+.gabarito-badge .badge-letter { color: #34d399; font-weight: 700; font-size: 12px; }
+.gabarito-badge .badge-fail { color: #f87171; font-weight: 700; font-size: 12px; }
+.gabarito-badge .badge-proc { color: #60a5fa; font-weight: 700; font-size: 12px; }
+.gabarito-badge .badge-pend { color: #64748b; font-weight: 700; font-size: 12px; }
+.gabarito-badge .badge-icon { font-size: 10px; opacity: 0.8; }
+.gabarito-badge:hover .badge-icon { opacity: 1; }
 
 .review-config-bar {
   display: flex;

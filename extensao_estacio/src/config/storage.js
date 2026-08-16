@@ -1,23 +1,47 @@
-// Camada de Armazenamento e Sessão Unificada (GM_*, Chrome Storage e LocalStorage)
+// Camada de Armazenamento e Sessão Unificada (GM_*, Chrome Storage e LocalStorage) com Live Event Sync
+
+const storageListeners = new Set();
+
+export function onStorageChange(callback) {
+  storageListeners.add(callback);
+  return () => storageListeners.delete(callback);
+}
 
 export function getSaved(key, defaultValue = '') {
+  let val = null;
   if (typeof GM_getValue !== 'undefined') {
-    return GM_getValue(key, defaultValue);
+    val = GM_getValue(key, null);
   }
-  const val = localStorage.getItem('estacio_' + key);
-  return val !== null ? val : defaultValue;
+  if (val === null || val === undefined) {
+    val = localStorage.getItem('estacio_' + key);
+  }
+  if (val === null || val === undefined) {
+    return defaultValue;
+  }
+  try {
+    if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+      return JSON.parse(val);
+    }
+  } catch (e) {}
+  return val;
 }
 
 export function setSaved(key, value) {
-  if (typeof GM_setValue !== 'undefined') {
-    GM_setValue(key, value);
-    return;
-  }
-  localStorage.setItem('estacio_' + key, value);
+  const serialized = typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
 
-  // Sincroniza em segundo plano com o chrome.storage.local da extensão
+  // 1. Userscript Tampermonkey
+  if (typeof GM_setValue !== 'undefined') {
+    GM_setValue(key, serialized);
+  }
+
+  // 2. LocalStorage da Página / Popup
+  try {
+    localStorage.setItem('estacio_' + key, serialized);
+  } catch (e) {}
+
+  // 3. Chrome Extension Storage Sync
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.set({ ['estacio_' + key]: value }).catch(() => {});
+    chrome.storage.local.set({ ['estacio_' + key]: serialized }).catch(() => {});
   }
 }
 
@@ -37,16 +61,24 @@ export function setProviderStatus(provider, status) {
   setSaved(`status_${provider}`, status);
 }
 
+export function getShowPaidModels() {
+  return getSaved('show_paid_models', 'false') === 'true';
+}
+
+export function setShowPaidModels(showPaid) {
+  setSaved('show_paid_models', showPaid ? 'true' : 'false');
+}
+
 export function getLiveProviders() {
-  const all = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
+  const all = ['groq', 'gemini', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
   return all.filter(p => {
     const key = getApiKeyFor(p);
     const status = getProviderStatus(p);
-    return Boolean(key && status === 'live');
+    return Boolean(key && (status === 'live' || status === 'untested'));
   });
 }
 
-// Sincronização inicial na carga da página (Puxa chaves salvas no Popup da Extensão)
+// Sincronização inicial na carga da página (Puxa chaves e modelos salvos no Popup da Extensão)
 export async function syncStorageFromChromeExtension() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     try {
@@ -54,7 +86,7 @@ export async function syncStorageFromChromeExtension() {
       if (all) {
         Object.keys(all).forEach(k => {
           if (k.startsWith('estacio_')) {
-            localStorage.setItem(k, all[k]);
+            localStorage.setItem(k, typeof all[k] === 'object' ? JSON.stringify(all[k]) : all[k]);
           }
         });
       }
@@ -62,7 +94,27 @@ export async function syncStorageFromChromeExtension() {
   }
 }
 
-// Executa sincronização silenciosa
+// Ouvinte de eventos do Chrome Storage para sincronização bidirecional em tempo real
+if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local') {
+      Object.keys(changes).forEach(k => {
+        if (k.startsWith('estacio_')) {
+          const val = changes[k].newValue;
+          try {
+            localStorage.setItem(k, typeof val === 'object' ? JSON.stringify(val) : String(val !== undefined ? val : ''));
+          } catch (e) {}
+        }
+      });
+
+      storageListeners.forEach(cb => {
+        try { cb(changes); } catch (e) {}
+      });
+    }
+  });
+}
+
+// Executa sincronização silenciosa inicial
 syncStorageFromChromeExtension();
 
 export function getBearerToken() {

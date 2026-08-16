@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="extensao_estacio/icons/cat_dancing.gif" width="120" alt="Mascote Anime Dançante" style="border-radius: 50%; box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);" />
+  <img src="extensao_estacio/icons/cat_dancing.gif" width="120" alt="Mascote Gatinho Dançarino" style="border-radius: 50%; box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);" />
 </p>
 
-<h1 align="center">⚡ Estácio Suite AI v2.0.1</h1>
+<h1 align="center">⚡ Estácio Suite AI v2.5.5</h1>
 
 <p align="center">
-  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Multi-Provedores (Claude 3.7, Mistral PhD, Groq, Gemini, OpenAI, DeepSeek) com Descoberta Dinâmica de Modelos, Teste Live, Solver Incremental, Gabarito com 2ª Opinião e Auto-Conclusão de Matérias</b>
+  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Multi-Provedores (Groq, Gemini, OpenRouter/Hermes, Ollama Local, Mistral, Claude, OpenAI, DeepSeek), Filtro Free/Pagos, Mapeamento Visual de 10 Questões, 1-Click Retry/Revisão, Aplicação Instantânea de Gabarito (0 IA) e Auto-Conclusão de Matérias</b>
 </p>
 
 <p align="center">
@@ -22,34 +22,28 @@
 
 ---
 
-## 🌟 Funcionalidades Principais
+## 🌟 Novidades da Versão 2.5.5
 
-### 1. 🎯 Resolução Inteligente e Incremental de Provas (`saladeavaliacoes.com.br`)
-- 🤖 **Multi-Provedores com Claude 3.7 Sonnet**: Suporte nativo a Anthropic Claude (`claude-3-7-sonnet-20250219`, `claude-3-5-sonnet`, `claude-3-5-haiku`), Mistral Large PhD, Groq Llama 3.3 70B, Google Gemini, OpenAI GPT-4o e DeepSeek R1.
-- 📡 **Descoberta Dinâmica de Modelos (`GET /models`)**: Lista de modelos atualizada diretamente da API oficial de cada provedor em tempo real.
-- 🧪 **Teste Live de Chaves (`[🧪 Testar & Salvar]`)**: Testa a conexão com a API antes de ativar o provedor. Apenas IAs com status `Live 🟢` aparecem nas listas de resolução.
-- ⏩ **Solver Incremental (Anti-429 & Economia de Cota)**: Se atingir limite de cota durante uma prova, as questões já respondidas ficam salvas no gabarito. Ao clicar novamente, o sistema reaproveita o que já foi feito e consulta a IA **apenas para as questões pendentes**.
-- 📝 **Gabarito Persistente com Revisão de 1-Clique**: Badges visuais no widget (`[Q1: B 🔍]...`). Clique em qualquer badge para pedir uma **2ª Opinião** para outra IA sem digitar nada.
-- 🖱️ **Clique Nativo React Fiber**: Dispara o `setState` real do React para persistir as marcações com segurança.
+1. **🗺️ Mapeamento Visual das 10 Questões no Gabarito**:
+   - As 10 questões são mapeadas e renderizadas de imediato no painel do widget (`Q1` a `Q10`).
+   - Estados visuais em tempo real:
+     - 🟢 **Verde (`Qx: [ Letra ] ✅ 🔍`)**: Concluída e marcada com sucesso. Clique para pedir **2ª Opinião / Revisão**!
+     - 🔴 **Vermelho (`Qx: ❌ Retry`)**: Questão com falha ou rate-limit. Clique para **Tentar Novamente (Retry Instantâneo)**!
+     - 🔄 **Azul Pulsante (`Qx: 🔄`)**: Sendo processada pela IA no momento.
+     - ⚪ **Cinza (`Qx: - ⏳`)**: Pendente. Clique para resolver individualmente com 1 clique.
 
----
+2. **⚡ Botão "Aplicar na Prova" (0 Consumo de IA)**:
+   - Se a página recarregar ou as opções desmarcarem, basta clicar em **`[⚡ Aplicar na Prova]`**: o robô lê as respostas já salvas no Gabarito e marca todas as alternativas na tela em segundos sem gastar tokens ou requisições de IA.
 
-### 2. 📚 Conclusão Automática de Temas & Matérias (`estudante.estacio.br`)
-- 🚀 **Ciclo de 2 Ondas de POST + Clique Ativo**:
-  1. **1ª Onda**: Dispara o `POST /conclusoes` para registrar o progresso e liberar o botão na tela (eliminando o timer de espera).
-  2. **Clique Físico**: Rola a tela até o final, destrava e clica no botão `[Marcar como concluído]`.
-  3. **2ª Onda**: Dispara o POST de confirmação imediata.
-- 🔄 **Navegação Determinística**: Retorna diretamente para `https://estudante.estacio.br/disciplinas/{id_materia}/conteudos` (nunca volta para a tela inicial de todas as matérias).
-- 🔒 **Deduplicação Estrita por Tema**: Processa perfeitamente temas simples e temas com múltiplos sub-itens (`Tema 1 | 2 Itens`) em loop contínuo até atingir 100% de conclusão.
-- 🔑 **Captura Automática de Sessão**: Intercepta o `Bearer token` ativo automaticamente sem necessidade de login manual.
+3. **🔘 Filtro Inteligente Free / Pagos (`[🟢 Apenas Free]` $\leftrightarrow$ `[💎 Free + Pagos]`)**:
+   - Por padrão, exibe apenas modelos 100% gratuitos e de cota livre (Groq, Gemini Flash, OpenRouter `:free`, Ollama local).
+   - Com 1 clique no botão toggle, desbloqueia todos os modelos premium e avançados (Claude Opus, GPT-4o, Mistral Large, Hermes 405B).
 
----
+4. **💃 Mascote Gatinho com Passinho Fortnite**:
+   - Animação estilizada e ritmada em 4 tempos no cabeçalho do widget e na bolha minimizada.
 
-### 3. 🎨 Widget Flutuante com Mascote Chibi Animado
-- 🐱 **Mascote Anime Dançante**: Animação suave no header do widget e na bolha minimizada.
-- 🖱️ **100% Arrastável com Memória de Posição**: Posicione onde preferir; as coordenadas são salvas no `localStorage`.
-- 🧹 **Limpeza em 1-Clique**: Botão de vassourinha `[🧹]` para limpar logs, gabaritos e filas acumuladas.
-- 📋 **Cópia Silenciosa**: Cópia limpa e instantânea de gabaritos e logs sem poluir o terminal.
+5. **🤖 8 Provedores de IA Suportados**:
+   - Groq, Google Gemini, OpenRouter (Nous Hermes), Ollama (Local Offline), Mistral AI, Anthropic Claude, OpenAI e DeepSeek.
 
 ---
 
@@ -59,9 +53,9 @@
 
 ```mermaid
 flowchart TD
-    A([🎯 Início: Resolver Prova]) --> B[Carrega Gabarito Salvo do localStorage]
-    B --> C[Captura Question Cards no DOM]
-    C --> D{Questão já respondida no Gabarito?}
+    A([🎯 Início: Resolver Prova]) --> B[Mapeia 10 Questões no Gabarito]
+    B --> C[Verifica Respostas Salvas]
+    C --> D{Questão já concluída?}
     
     D -- Sim --> E[Marca Alternativa na Tela em 1ms ✅]
     D -- Não --> F[Extrai Enunciado e Alternativas A-E]
@@ -69,13 +63,13 @@ flowchart TD
     G --> H{Consulta IA Selecionada}
     
     H -- Sucesso --> I[Recebe Letra e Justificativa]
-    H -- Erro / 429 --> J{Existe Outra IA Live 🟢?}
-    J -- Sim: Groq / Claude / Mistral --> K[Chama Provedor Secundário]
+    H -- Erro / 429 --> J{Existe Auto-Fallback 🟢?}
+    J -- Sim: Gemini Flash / Groq / OpenRouter --> K[Chama Modelo Secundário]
     K --> I
-    J -- Não --> L[Pausa Inteligente & Salva Progresso]
+    J -- Não --> L[Marca Badge como Vermelho ❌ Retry]
     
     I --> M[Dispara Clique Nativo React Fiber]
-    M --> N[Salva Resposta Imediatamente no Gabarito]
+    M --> N[Atualiza Badge para Verde 🟢 no Gabarito]
     N --> O{Mais Questões?}
     O -- Sim --> D
     O -- Não --> P([🎉 Prova Finalizada & Gabarito Salvo!])
@@ -110,15 +104,17 @@ sequenceDiagram
 
 ---
 
-## 🔑 Banco de Chaves de API (Multi-Keys)
+## 🔑 Banco de Provedores e Chaves de API
 
-| Provedor | Modelo Padrão | Modelos Disponíveis | Onde Obter Chave |
+| Provedor | Modelo Padrão Free | Modelos Disponíveis | Onde Obter Chave |
 | :--- | :--- | :--- | :--- |
-| **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
-| **Groq** *(Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
-| **Mistral AI** *(PhD)* | `mistral-large-latest` | `Mistral Large`, `Codestral`, `Mistral Small` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
-| **Google Gemini** | `gemini-flash-latest` | `Gemini Flash Latest`, `Gemini Pro Latest`, `Gemini 2.5 Flash` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
-| **OpenAI** | `gpt-4o` | `GPT-4o`, `GPT-4o Mini`, `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **Groq** *(100% Free / Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
+| **Google Gemini** | `gemini-2.5-flash` | `Gemini 2.5 Flash`, `Gemini 3.7 Flash`, `Gemini 3.5 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| **OpenRouter** *(Nous Hermes)* | `meta-llama/llama-3.3-70b-instruct:free` | `Hermes 3`, `DeepSeek R1 (free)`, `Gemini 2.0 Flash (free)` | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **Ollama** *(100% Local Offline)* | `llama3.3` | `Llama 3.3`, `DeepSeek R1`, `Hermes 3`, `Qwen 2.5`, `Mistral` | [ollama.com](https://ollama.com) |
+| **Mistral AI** *(PhD)* | `codestral-latest` | `Codestral Latest`, `Mistral Small`, `Mistral Large` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
+| **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude Opus 4.6`, `Claude 3.5 Sonnet` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
+| **OpenAI** | `gpt-4o-mini` | `GPT-4o Mini`, `GPT-4o`, `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **DeepSeek** | `deepseek-chat` | `DeepSeek V3`, `DeepSeek R1` | [platform.deepseek.com](https://platform.deepseek.com) |
 
 ---

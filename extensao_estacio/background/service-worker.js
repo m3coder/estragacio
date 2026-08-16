@@ -1,6 +1,37 @@
-// Estácio Solver Background Service Worker (Multi-Model Support with Smart Auto-Fallback)
+// Estácio Solver Background Service Worker (Proxy Fetch & Multi-Model Support with Smart Auto-Fallback)
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'PROXY_FETCH') {
+    fetch(request.url, request.options || {})
+      .then(async (res) => {
+        const text = await res.text();
+        let parsed = text;
+        try {
+          parsed = JSON.parse(text);
+        } catch (e) {}
+
+        const headerObj = {};
+        res.headers.forEach((val, key) => {
+          headerObj[key.toLowerCase()] = val;
+        });
+
+        sendResponse({
+          success: true,
+          status: res.status,
+          statusText: res.statusText,
+          headers: headerObj,
+          data: parsed
+        });
+      })
+      .catch((err) => {
+        sendResponse({
+          success: false,
+          error: err.message
+        });
+      });
+    return true; // Keep channel open for async response
+  }
+
   if (request.type === 'CALL_AI') {
     handleAICallWithFallback(request.payload)
       .then(response => sendResponse({ success: true, data: response }))
@@ -16,17 +47,18 @@ async function handleAICallWithFallback(payload) {
     console.warn(`[AI Primary Error] ${payload.provider}: ${primaryError.message}. Tentando fallback...`);
 
     // Busca chaves salvas no storage para tentar fallback
-    const settings = await new Promise(r => chrome.storage.sync.get(['apiKeys', 'apiKey'], r));
-    const keys = settings.apiKeys || {};
+    const settings = await new Promise(r => chrome.storage.local.get(null, r));
+    const groqKey = settings.estacio_key_groq || settings.apiKey;
+    const mistralKey = settings.estacio_key_mistral;
 
     if (payload.provider === 'gemini' || primaryError.message.includes('high demand') || primaryError.message.includes('503') || primaryError.message.includes('quota')) {
       // 1. Tenta Groq se houver chave
-      if (keys.groq) {
+      if (groqKey) {
         try {
           return await handleSingleAICall({
             provider: 'groq',
             model: 'llama-3.3-70b-versatile',
-            apiKey: keys.groq,
+            apiKey: groqKey,
             prompt: payload.prompt
           });
         } catch (groqErr) {
@@ -35,12 +67,12 @@ async function handleAICallWithFallback(payload) {
       }
 
       // 2. Tenta Mistral se houver chave
-      if (keys.mistral) {
+      if (mistralKey) {
         try {
           return await handleSingleAICall({
             provider: 'mistral',
             model: 'mistral-large-latest',
-            apiKey: keys.mistral,
+            apiKey: mistralKey,
             prompt: payload.prompt
           });
         } catch (mistralErr) {}
@@ -60,11 +92,7 @@ async function handleSingleAICall(payload) {
 
   // 1. Google Gemini
   if (provider === 'gemini') {
-    let selectedModel = model || 'gemini-flash-latest';
-    if (selectedModel.includes('1.5') || selectedModel.includes('2.0') || !selectedModel) {
-      selectedModel = 'gemini-flash-latest';
-    }
-
+    let selectedModel = model || 'gemini-3.7-flash';
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent`;
     const res = await fetch(geminiUrl, {
       method: 'POST',
@@ -89,13 +117,15 @@ async function handleSingleAICall(payload) {
     return { letra: match ? match[1].toUpperCase() : 'A', explicacao: txt.slice(0, 100) };
   }
 
-  // 2. OpenAI / DeepSeek / Groq / Mistral / Custom
+  // 2. OpenAI / DeepSeek / Groq / OpenRouter / Ollama / Mistral / Claude / Custom
   let endpoint = '';
   if (provider === 'openai') endpoint = 'https://api.openai.com/v1/chat/completions';
   else if (provider === 'deepseek') endpoint = 'https://api.deepseek.com/v1/chat/completions';
   else if (provider === 'groq') endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+  else if (provider === 'openrouter') endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+  else if (provider === 'ollama') endpoint = 'http://localhost:11434/v1/chat/completions';
   else if (provider === 'mistral') endpoint = 'https://api.mistral.ai/v1/chat/completions';
-  else endpoint = customEndpoint || 'https://api.mimocode.com/v1/chat/completions';
+  else endpoint = customEndpoint || 'https://api.groq.com/openai/v1/chat/completions';
 
   const systemPrompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa curta em 1 frase"}`;
 
