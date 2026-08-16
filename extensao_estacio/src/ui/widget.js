@@ -1,18 +1,20 @@
-// Construtor e Controlador da Interface do Widget (com Persistência e Limpeza de Dados)
+// Construtor e Controlador da Interface do Widget (com Validação Live e Filtragem de IAs Ativas)
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
-import { getSaved, setSaved, getApiKeyFor, setApiKeyFor } from '../config/storage.js';
+import { getSaved, setSaved, getApiKeyFor, setApiKeyFor, getLiveProviders, getProviderStatus } from '../config/storage.js';
 import { setupUniversalDraggable } from './draggable.js';
 import { renderSavedGabarito, copyGabarito, copyAllLogs } from '../modules/gabarito.js';
 import { reviewSingleQuestion } from '../modules/reviewer.js';
 import { runExamQueue } from '../modules/exam_solver.js';
 import { startThemeCompletion, processAutomatorStateMachine } from '../modules/theme_automator.js';
+import { testProviderKey } from '../core/ai_engine.js';
 
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;
 
   const isExam = window.location.hostname.includes('saladeavaliacoes.com.br');
+  let configTargetProvider = getSaved('config_target_provider', 'groq');
   let currentProvider = getSaved('active_provider', 'groq');
   let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
   let reviewProvider = getSaved('review_provider', 'claude');
@@ -40,18 +42,11 @@ export function createSuiteWidget() {
       </div>
 
       <div class="box-body">
-        <!-- Seletor Duplo de Provedor e Modelo -->
+        <!-- Seletor Principal de IA Ativa (Apenas IAs com teste Live Aprovado) -->
         <div class="ai-selector-container">
           <div class="ai-selector-row">
-            <span style="color:#94a3b8; font-weight:700;">🤖 IA:</span>
-            <select id="box-ai-select" class="ai-selector-select">
-              <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Ultra Rápido)</option>
-              <option value="claude" ${currentProvider === 'claude' ? 'selected' : ''}>Anthropic Claude (3.7 / 3.5)</option>
-              <option value="mistral" ${currentProvider === 'mistral' ? 'selected' : ''}>Mistral AI (PhD)</option>
-              <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
-              <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>ChatGPT (OpenAI)</option>
-              <option value="deepseek" ${currentProvider === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
-            </select>
+            <span style="color:#94a3b8; font-weight:700;">🤖 IA Ativa:</span>
+            <select id="box-ai-select" class="ai-selector-select"></select>
           </div>
           <div class="ai-selector-row">
             <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
@@ -59,11 +54,25 @@ export function createSuiteWidget() {
           </div>
         </div>
 
-        <!-- Campo de Chave de API -->
-        <div class="key-config-row">
-          <span style="color:#94a3b8; font-size:10px; font-weight:700;">🔑 Chave:</span>
-          <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui...">
-          <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700;">Salvar</button>
+        <!-- Painel de Cadastro e Teste Live de Chaves -->
+        <div class="key-config-container" style="background:#0f172a; border:1px solid #1e293b; border-radius:6px; padding:6px; margin:4px 0 8px 0; display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#38bdf8; font-size:10px; font-weight:700;">🔑 Adicionar/Testar Chave:</span>
+            <select id="config-target-select" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; font-size:10px; padding:2px 4px;">
+              <option value="groq">Groq</option>
+              <option value="claude">Anthropic Claude</option>
+              <option value="mistral">Mistral AI</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">ChatGPT (OpenAI)</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui..." style="flex:1;">
+            <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700; white-space:nowrap;">
+              🧪 Testar & Salvar
+            </button>
+          </div>
         </div>
 
         ${isExam ? `
@@ -75,17 +84,10 @@ export function createSuiteWidget() {
             <span>🎯</span> Resolver e Marcar Prova
           </button>
 
-          <!-- Barra de Segunda Opinião / Revisão Direta -->
+          <!-- Barra de Segunda Opinião / Revisão Direta (Apenas IAs Live) -->
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
-            <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;">
-              <option value="claude" ${reviewProvider === 'claude' ? 'selected' : ''}>Claude 3.7 Sonnet</option>
-              <option value="mistral" ${reviewProvider === 'mistral' ? 'selected' : ''}>Mistral Large (PhD)</option>
-              <option value="groq" ${reviewProvider === 'groq' ? 'selected' : ''}>Groq Llama 70B</option>
-              <option value="gemini" ${reviewProvider === 'gemini' ? 'selected' : ''}>Gemini Flash</option>
-              <option value="openai" ${reviewProvider === 'openai' ? 'selected' : ''}>ChatGPT (4o)</option>
-              <option value="deepseek" ${reviewProvider === 'deepseek' ? 'selected' : ''}>DeepSeek R1</option>
-            </select>
+            <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;"></select>
           </div>
         ` : `
           <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
@@ -112,7 +114,7 @@ export function createSuiteWidget() {
       </div>
 
       <div class="box-footer">
-        <span id="box-footer-model" style="color:#38bdf8; font-weight:600;">${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})</span>
+        <span id="box-footer-model" style="color:#38bdf8; font-weight:600;"></span>
         <div style="display:flex; align-items:center; gap:6px;">
           <button id="btn-clear-footer" class="footer-btn" title="Limpar logs e dados acumulados">
             <span>🧹</span> Limpar
@@ -172,7 +174,7 @@ export function createSuiteWidget() {
   } else {
     const div = document.createElement('div');
     div.className = 'log-item info';
-    div.textContent = `[${new Date().toLocaleTimeString()}] Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.`;
+    div.textContent = `[${new Date().toLocaleTimeString()}] Pronto. Suíte Estácio AI pronta para uso.`;
     logBox.appendChild(div);
   }
 
@@ -185,7 +187,6 @@ export function createSuiteWidget() {
     logBox.appendChild(div);
     logBox.scrollTop = logBox.scrollHeight;
 
-    // Persiste até os últimos 40 logs
     try {
       const current = JSON.parse(localStorage.getItem('estacio_suite_logs') || '[]');
       current.push({ text: formatted, type: type });
@@ -210,6 +211,59 @@ export function createSuiteWidget() {
     log('🧹 Todos os logs, gabaritos e filas foram limpos com sucesso!', 'success');
   }
 
+  // RENDERIZA APENAS PROVEDORES QUE POSSUEM CHAVE E PASSARAM NO TESTE LIVE
+  function renderLiveProviderOptions() {
+    const aiSelect = document.getElementById('box-ai-select');
+    const reviewSelect = document.getElementById('review-ai-select');
+    const liveKeys = getLiveProviders();
+
+    if (aiSelect) {
+      aiSelect.innerHTML = '';
+      if (liveKeys.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '⚠️ Nenhuma IA Live (Testar chave abaixo)';
+        aiSelect.appendChild(opt);
+      } else {
+        liveKeys.forEach(pKey => {
+          const opt = document.createElement('option');
+          opt.value = pKey;
+          opt.textContent = `🟢 ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
+          if (pKey === currentProvider) opt.selected = true;
+          aiSelect.appendChild(opt);
+        });
+
+        if (!liveKeys.includes(currentProvider)) {
+          currentProvider = liveKeys[0];
+          currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
+          setSaved('active_provider', currentProvider);
+          setSaved('active_model', currentModel);
+        }
+      }
+    }
+
+    if (reviewSelect) {
+      reviewSelect.innerHTML = '';
+      if (liveKeys.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '⚠️ Sem IA Live';
+        reviewSelect.appendChild(opt);
+      } else {
+        liveKeys.forEach(pKey => {
+          const opt = document.createElement('option');
+          opt.value = pKey;
+          opt.textContent = `🟢 ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
+          if (pKey === reviewProvider) opt.selected = true;
+          reviewSelect.appendChild(opt);
+        });
+      }
+    }
+
+    renderModelOptions(currentProvider, currentModel);
+    updateFooterLabel();
+  }
+
   function renderModelOptions(providerKey, selectedModelId) {
     const modelSelect = document.getElementById('box-model-select');
     if (!modelSelect) return;
@@ -229,7 +283,7 @@ export function createSuiteWidget() {
   function updateFooterLabel() {
     const footerEl = document.getElementById('box-footer-model');
     if (!footerEl) return;
-    const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
+    const pName = PROVIDERS_CONFIG[currentProvider]?.name || 'Nenhuma IA Live';
     footerEl.textContent = `${pName} (${currentModel})`;
   }
 
@@ -250,12 +304,31 @@ export function createSuiteWidget() {
     });
   }
 
+  const targetSelect = document.getElementById('config-target-select');
   const keyInput = document.getElementById('box-key-input');
   const aiSelect = document.getElementById('box-ai-select');
   const modelSelect = document.getElementById('box-model-select');
+  const btnSaveKey = document.getElementById('btn-save-key');
 
-  renderModelOptions(currentProvider, currentModel);
-  keyInput.value = getApiKeyFor(currentProvider);
+  // Inicializa com chaves que já estão no storage
+  const allProvidersList = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
+  allProvidersList.forEach(p => {
+    const k = getApiKeyFor(p);
+    if (k && getProviderStatus(p) === 'untested') {
+      setProviderStatus(p, 'live'); // Promove chaves salvas pré-existentes
+    }
+  });
+
+  targetSelect.value = configTargetProvider;
+  keyInput.value = getApiKeyFor(configTargetProvider);
+
+  renderLiveProviderOptions();
+
+  targetSelect.addEventListener('change', (e) => {
+    configTargetProvider = e.target.value;
+    setSaved('config_target_provider', configTargetProvider);
+    keyInput.value = getApiKeyFor(configTargetProvider);
+  });
 
   aiSelect.addEventListener('change', (e) => {
     currentProvider = e.target.value;
@@ -263,13 +336,8 @@ export function createSuiteWidget() {
     setSaved('active_provider', currentProvider);
     setSaved('active_model', currentModel);
     renderModelOptions(currentProvider, currentModel);
-    keyInput.value = getApiKeyFor(currentProvider);
     updateFooterLabel();
-    log(`IA alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, 'success');
-
-    if (!keyInput.value) {
-      log(`⚠️ Nenhuma chave salva para ${PROVIDERS_CONFIG[currentProvider]?.name}. Cole sua chave e clique em Salvar.`, 'warning');
-    }
+    log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, 'success');
   });
 
   modelSelect.addEventListener('change', (e) => {
@@ -279,13 +347,39 @@ export function createSuiteWidget() {
     log(`Modelo alterado para: ${currentModel}`, 'info');
   });
 
-  document.getElementById('btn-save-key').addEventListener('click', () => {
+  // BOTÃO DE TESTAR & SALVAR CHAVE (TESTE LIVE EM TEMPO REAL)
+  btnSaveKey.addEventListener('click', async () => {
+    const p = configTargetProvider;
     const val = keyInput.value.trim();
-    setApiKeyFor(currentProvider, val);
-    if (val) {
-      log(`✅ Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} salva com sucesso!`, 'success');
-    } else {
-      log(`⚠️ Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} removida.`, 'warning');
+    const pName = PROVIDERS_CONFIG[p]?.name || p;
+
+    if (!val) {
+      setApiKeyFor(p, '');
+      setSaved(`status_${p}`, 'error');
+      renderLiveProviderOptions();
+      log(`Chave do ${pName} removida.`, 'warning');
+      return;
+    }
+
+    btnSaveKey.disabled = true;
+    btnSaveKey.textContent = '⏳ Testando...';
+    log(`Testando chave de API com chamada Live para ${pName}...`, 'info');
+
+    try {
+      await testProviderKey(p, val);
+      setApiKeyFor(p, val);
+      setSaved('active_provider', p);
+      currentProvider = p;
+      currentModel = PROVIDERS_CONFIG[p]?.defaultModel;
+      setSaved('active_model', currentModel);
+
+      renderLiveProviderOptions();
+      log(`✅ [Live] Chave do ${pName} testada com sucesso e APROVADA! Modelo pronto para uso. 🟢`, 'success');
+    } catch (err) {
+      log(`❌ Falha no teste do ${pName}: ${err.message}`, 'error');
+    } finally {
+      btnSaveKey.disabled = false;
+      btnSaveKey.textContent = '🧪 Testar & Salvar';
     }
   });
 
@@ -309,7 +403,7 @@ export function createSuiteWidget() {
     clearAllStoredData();
   });
 
-  // Botões de Cópia Silenciosa (Sem disparar log undefined)
+  // Botões de Cópia Silenciosa
   document.getElementById('btn-copy-header').addEventListener('click', (e) => {
     e.stopPropagation();
     copyAllLogs(document.getElementById('box-log'));

@@ -1,7 +1,7 @@
-// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Multi-Fallback com Retry
+// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Teste Live e Multi-Fallback
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
-import { getApiKeyFor } from '../config/storage.js';
+import { getApiKeyFor, setApiKeyFor, setProviderStatus, getLiveProviders } from '../config/storage.js';
 import { buildPhDExamPrompt } from './prompt_builder.js';
 
 export async function executeAICall(provider, model, statement, alternatives) {
@@ -9,7 +9,7 @@ export async function executeAICall(provider, model, statement, alternatives) {
   const pConfig = PROVIDERS_CONFIG[provider];
 
   if (!apiKey) {
-    throw new Error(`Chave de API do ${pConfig?.name || provider} não configurada. Insira sua chave no campo e clique em Salvar.`);
+    throw new Error(`Chave de API do ${pConfig?.name || provider} não configurada. Insira sua chave no campo e clique em Testar & Salvar.`);
   }
 
   const prompt = buildPhDExamPrompt(statement, alternatives);
@@ -123,22 +123,44 @@ export async function executeAICall(provider, model, statement, alternatives) {
   };
 }
 
+export async function testProviderKey(provider, testKey) {
+  const pConfig = PROVIDERS_CONFIG[provider];
+  if (!testKey) throw new Error('Chave de API não informada.');
+
+  const originalKey = getApiKeyFor(provider);
+  setApiKeyFor(provider, testKey);
+
+  const testStatement = "Resolva esta questão acadêmica de teste: Quanto é 2 + 2?";
+  const testAlternatives = [
+    { letter: "A", text: "4" },
+    { letter: "B", text: "5" }
+  ];
+
+  try {
+    const result = await executeAICall(provider, pConfig.defaultModel, testStatement, testAlternatives);
+    if (result && result.letra) {
+      setProviderStatus(provider, 'live');
+      return { success: true, result };
+    }
+    throw new Error('Resposta sem formato esperado.');
+  } catch (err) {
+    setProviderStatus(provider, 'error');
+    setApiKeyFor(provider, originalKey);
+    throw err;
+  }
+}
+
 export async function callAIWithFallback(provider, model, statement, alternatives, onFallbackLog = null) {
-  // Ordem de provedores para tentar caso a IA principal falhe
-  const allProviders = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
+  const liveList = getLiveProviders();
   const fallbackQueue = [
     { p: provider, m: model },
-    ...allProviders.filter(p => p !== provider).map(p => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
+    ...liveList.filter(p => p !== provider).map(p => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
   ];
 
   let lastError = null;
 
   for (let attempt = 0; attempt < fallbackQueue.length; attempt++) {
     const current = fallbackQueue[attempt];
-    const key = getApiKeyFor(current.p);
-    
-    // Pula provedores sem chave cadastrada (exceto a tentativa inicial para mostrar o erro)
-    if (!key && attempt > 0) continue;
 
     try {
       if (attempt > 0 && onFallbackLog) {
@@ -150,10 +172,9 @@ export async function callAIWithFallback(provider, model, statement, alternative
       const isRateLimit = /429|quota|rate limit/i.test(err.message);
       
       if (onFallbackLog) {
-        onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...). Ativando fallback...`, 'warning');
+        onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...).`, 'warning');
       }
 
-      // Se for rate limit e for o único provedor disponível, faz espera inteligente de backoff
       if (isRateLimit && attempt === fallbackQueue.length - 1) {
         if (onFallbackLog) onFallbackLog(`Aguardando 4s de respiro para alívio de cota...`, 'info');
         await new Promise(r => setTimeout(r, 4000));
@@ -166,5 +187,5 @@ export async function callAIWithFallback(provider, model, statement, alternative
     }
   }
 
-  throw lastError || new Error('Todas as IAs de fallback falharam.');
+  throw lastError || new Error('Todas as IAs ativas falharam.');
 }

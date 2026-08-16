@@ -24,6 +24,23 @@ export function setApiKeyFor(provider, key) {
   setSaved(`key_${provider}`, key);
 }
 
+export function getProviderStatus(provider) {
+  return getSaved(`status_${provider}`, 'untested'); // 'live', 'error', 'untested'
+}
+
+export function setProviderStatus(provider, status) {
+  setSaved(`status_${provider}`, status);
+}
+
+export function getLiveProviders() {
+  const all = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
+  return all.filter(p => {
+    const key = getApiKeyFor(p);
+    const status = getProviderStatus(p);
+    return Boolean(key && status === 'live');
+  });
+}
+
 export function getBearerToken() {
   if (typeof window !== 'undefined' && window.__estacio_bearer) {
     return window.__estacio_bearer;

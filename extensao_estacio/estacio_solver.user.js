@@ -118,6 +118,20 @@
   function setApiKeyFor(provider, key) {
     setSaved(`key_${provider}`, key);
   }
+  function getProviderStatus(provider) {
+    return getSaved(`status_${provider}`, "untested");
+  }
+  function setProviderStatus2(provider, status) {
+    setSaved(`status_${provider}`, status);
+  }
+  function getLiveProviders() {
+    const all = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
+    return all.filter((p) => {
+      const key = getApiKeyFor(p);
+      const status = getProviderStatus(p);
+      return Boolean(key && status === "live");
+    });
+  }
   function getBearerToken() {
     if (typeof window !== "undefined" && window.__estacio_bearer) {
       return window.__estacio_bearer;
@@ -322,7 +336,7 @@ Responda ESTRITAMENTE em formato JSON:
     const apiKey = getApiKeyFor(provider);
     const pConfig = PROVIDERS_CONFIG[provider];
     if (!apiKey) {
-      throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Salvar.`);
+      throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Testar & Salvar.`);
     }
     const prompt = buildPhDExamPrompt(statement, alternatives);
     if (provider === "claude") {
@@ -416,17 +430,38 @@ Responda ESTRITAMENTE em formato JSON:
       explicacao: content.slice(0, 100)
     };
   }
+  async function testProviderKey(provider, testKey) {
+    const pConfig = PROVIDERS_CONFIG[provider];
+    if (!testKey) throw new Error("Chave de API n\xE3o informada.");
+    const originalKey = getApiKeyFor(provider);
+    setApiKeyFor(provider, testKey);
+    const testStatement = "Resolva esta quest\xE3o acad\xEAmica de teste: Quanto \xE9 2 + 2?";
+    const testAlternatives = [
+      { letter: "A", text: "4" },
+      { letter: "B", text: "5" }
+    ];
+    try {
+      const result = await executeAICall(provider, pConfig.defaultModel, testStatement, testAlternatives);
+      if (result && result.letra) {
+        setProviderStatus2(provider, "live");
+        return { success: true, result };
+      }
+      throw new Error("Resposta sem formato esperado.");
+    } catch (err) {
+      setProviderStatus2(provider, "error");
+      setApiKeyFor(provider, originalKey);
+      throw err;
+    }
+  }
   async function callAIWithFallback(provider, model, statement, alternatives, onFallbackLog = null) {
-    const allProviders = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
+    const liveList = getLiveProviders();
     const fallbackQueue = [
       { p: provider, m: model },
-      ...allProviders.filter((p) => p !== provider).map((p) => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
+      ...liveList.filter((p) => p !== provider).map((p) => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
     ];
     let lastError = null;
     for (let attempt = 0; attempt < fallbackQueue.length; attempt++) {
       const current = fallbackQueue[attempt];
-      const key = getApiKeyFor(current.p);
-      if (!key && attempt > 0) continue;
       try {
         if (attempt > 0 && onFallbackLog) {
           onFallbackLog(`Fallback ativado: Consultando ${PROVIDERS_CONFIG[current.p]?.name || current.p}...`, "info");
@@ -436,7 +471,7 @@ Responda ESTRITAMENTE em formato JSON:
         lastError = err;
         const isRateLimit = /429|quota|rate limit/i.test(err.message);
         if (onFallbackLog) {
-          onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...). Ativando fallback...`, "warning");
+          onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...).`, "warning");
         }
         if (isRateLimit && attempt === fallbackQueue.length - 1) {
           if (onFallbackLog) onFallbackLog(`Aguardando 4s de respiro para al\xEDvio de cota...`, "info");
@@ -449,7 +484,7 @@ Responda ESTRITAMENTE em formato JSON:
         }
       }
     }
-    throw lastError || new Error("Todas as IAs de fallback falharam.");
+    throw lastError || new Error("Todas as IAs ativas falharam.");
   }
 
   // src/core/react_fiber.js
@@ -1103,6 +1138,7 @@ Responda ESTRITAMENTE em formato JSON:
   function createSuiteWidget() {
     if (document.getElementById("estacio-suite-box")) return;
     const isExam = window.location.hostname.includes("saladeavaliacoes.com.br");
+    let configTargetProvider = getSaved("config_target_provider", "groq");
     let currentProvider = getSaved("active_provider", "groq");
     let currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel || "llama-3.3-70b-versatile");
     let reviewProvider = getSaved("review_provider", "claude");
@@ -1131,18 +1167,11 @@ Responda ESTRITAMENTE em formato JSON:
       </div>
 
       <div class="box-body">
-        <!-- Seletor Duplo de Provedor e Modelo -->
+        <!-- Seletor Principal de IA Ativa (Apenas IAs com teste Live Aprovado) -->
         <div class="ai-selector-container">
           <div class="ai-selector-row">
-            <span style="color:#94a3b8; font-weight:700;">\u{1F916} IA:</span>
-            <select id="box-ai-select" class="ai-selector-select">
-              <option value="groq" ${currentProvider === "groq" ? "selected" : ""}>Groq (Ultra R\xE1pido)</option>
-              <option value="claude" ${currentProvider === "claude" ? "selected" : ""}>Anthropic Claude (3.7 / 3.5)</option>
-              <option value="mistral" ${currentProvider === "mistral" ? "selected" : ""}>Mistral AI (PhD)</option>
-              <option value="gemini" ${currentProvider === "gemini" ? "selected" : ""}>Google Gemini</option>
-              <option value="openai" ${currentProvider === "openai" ? "selected" : ""}>ChatGPT (OpenAI)</option>
-              <option value="deepseek" ${currentProvider === "deepseek" ? "selected" : ""}>DeepSeek</option>
-            </select>
+            <span style="color:#94a3b8; font-weight:700;">\u{1F916} IA Ativa:</span>
+            <select id="box-ai-select" class="ai-selector-select"></select>
           </div>
           <div class="ai-selector-row">
             <span style="color:#94a3b8; font-weight:700;">\u{1F9E0} Modelo:</span>
@@ -1150,11 +1179,25 @@ Responda ESTRITAMENTE em formato JSON:
           </div>
         </div>
 
-        <!-- Campo de Chave de API -->
-        <div class="key-config-row">
-          <span style="color:#94a3b8; font-size:10px; font-weight:700;">\u{1F511} Chave:</span>
-          <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui...">
-          <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700;">Salvar</button>
+        <!-- Painel de Cadastro e Teste Live de Chaves -->
+        <div class="key-config-container" style="background:#0f172a; border:1px solid #1e293b; border-radius:6px; padding:6px; margin:4px 0 8px 0; display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#38bdf8; font-size:10px; font-weight:700;">\u{1F511} Adicionar/Testar Chave:</span>
+            <select id="config-target-select" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; font-size:10px; padding:2px 4px;">
+              <option value="groq">Groq</option>
+              <option value="claude">Anthropic Claude</option>
+              <option value="mistral">Mistral AI</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">ChatGPT (OpenAI)</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui..." style="flex:1;">
+            <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700; white-space:nowrap;">
+              \u{1F9EA} Testar & Salvar
+            </button>
+          </div>
         </div>
 
         ${isExam ? `
@@ -1166,17 +1209,10 @@ Responda ESTRITAMENTE em formato JSON:
             <span>\u{1F3AF}</span> Resolver e Marcar Prova
           </button>
 
-          <!-- Barra de Segunda Opini\xE3o / Revis\xE3o Direta -->
+          <!-- Barra de Segunda Opini\xE3o / Revis\xE3o Direta (Apenas IAs Live) -->
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">\u{1F50D} 2\xAA Opini\xE3o com:</span>
-            <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;">
-              <option value="claude" ${reviewProvider === "claude" ? "selected" : ""}>Claude 3.7 Sonnet</option>
-              <option value="mistral" ${reviewProvider === "mistral" ? "selected" : ""}>Mistral Large (PhD)</option>
-              <option value="groq" ${reviewProvider === "groq" ? "selected" : ""}>Groq Llama 70B</option>
-              <option value="gemini" ${reviewProvider === "gemini" ? "selected" : ""}>Gemini Flash</option>
-              <option value="openai" ${reviewProvider === "openai" ? "selected" : ""}>ChatGPT (4o)</option>
-              <option value="deepseek" ${reviewProvider === "deepseek" ? "selected" : ""}>DeepSeek R1</option>
-            </select>
+            <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;"></select>
           </div>
         ` : `
           <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
@@ -1203,7 +1239,7 @@ Responda ESTRITAMENTE em formato JSON:
       </div>
 
       <div class="box-footer">
-        <span id="box-footer-model" style="color:#38bdf8; font-weight:600;">${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})</span>
+        <span id="box-footer-model" style="color:#38bdf8; font-weight:600;"></span>
         <div style="display:flex; align-items:center; gap:6px;">
           <button id="btn-clear-footer" class="footer-btn" title="Limpar logs e dados acumulados">
             <span>\u{1F9F9}</span> Limpar
@@ -1253,7 +1289,7 @@ Responda ESTRITAMENTE em formato JSON:
     } else {
       const div = document.createElement("div");
       div.className = "log-item info";
-      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.`;
+      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Pronto. Su\xEDte Est\xE1cio AI pronta para uso.`;
       logBox.appendChild(div);
     }
     function log(msg, type = "info") {
@@ -1284,6 +1320,53 @@ Responda ESTRITAMENTE em formato JSON:
       if (gabaritoBadges) gabaritoBadges.innerHTML = "";
       log("\u{1F9F9} Todos os logs, gabaritos e filas foram limpos com sucesso!", "success");
     }
+    function renderLiveProviderOptions() {
+      const aiSelect2 = document.getElementById("box-ai-select");
+      const reviewSelect2 = document.getElementById("review-ai-select");
+      const liveKeys = getLiveProviders();
+      if (aiSelect2) {
+        aiSelect2.innerHTML = "";
+        if (liveKeys.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "\u26A0\uFE0F Nenhuma IA Live (Testar chave abaixo)";
+          aiSelect2.appendChild(opt);
+        } else {
+          liveKeys.forEach((pKey) => {
+            const opt = document.createElement("option");
+            opt.value = pKey;
+            opt.textContent = `\u{1F7E2} ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
+            if (pKey === currentProvider) opt.selected = true;
+            aiSelect2.appendChild(opt);
+          });
+          if (!liveKeys.includes(currentProvider)) {
+            currentProvider = liveKeys[0];
+            currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
+            setSaved("active_provider", currentProvider);
+            setSaved("active_model", currentModel);
+          }
+        }
+      }
+      if (reviewSelect2) {
+        reviewSelect2.innerHTML = "";
+        if (liveKeys.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "\u26A0\uFE0F Sem IA Live";
+          reviewSelect2.appendChild(opt);
+        } else {
+          liveKeys.forEach((pKey) => {
+            const opt = document.createElement("option");
+            opt.value = pKey;
+            opt.textContent = `\u{1F7E2} ${PROVIDERS_CONFIG[pKey]?.name || pKey}`;
+            if (pKey === reviewProvider) opt.selected = true;
+            reviewSelect2.appendChild(opt);
+          });
+        }
+      }
+      renderModelOptions(currentProvider, currentModel);
+      updateFooterLabel();
+    }
     function renderModelOptions(providerKey, selectedModelId) {
       const modelSelect2 = document.getElementById("box-model-select");
       if (!modelSelect2) return;
@@ -1301,7 +1384,7 @@ Responda ESTRITAMENTE em formato JSON:
     function updateFooterLabel() {
       const footerEl = document.getElementById("box-footer-model");
       if (!footerEl) return;
-      const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
+      const pName = PROVIDERS_CONFIG[currentProvider]?.name || "Nenhuma IA Live";
       footerEl.textContent = `${pName} (${currentModel})`;
     }
     function refreshGabaritoUI() {
@@ -1320,23 +1403,34 @@ Responda ESTRITAMENTE em formato JSON:
         );
       });
     }
+    const targetSelect = document.getElementById("config-target-select");
     const keyInput = document.getElementById("box-key-input");
     const aiSelect = document.getElementById("box-ai-select");
     const modelSelect = document.getElementById("box-model-select");
-    renderModelOptions(currentProvider, currentModel);
-    keyInput.value = getApiKeyFor(currentProvider);
+    const btnSaveKey = document.getElementById("btn-save-key");
+    const allProvidersList = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
+    allProvidersList.forEach((p) => {
+      const k = getApiKeyFor(p);
+      if (k && getProviderStatus(p) === "untested") {
+        setProviderStatus(p, "live");
+      }
+    });
+    targetSelect.value = configTargetProvider;
+    keyInput.value = getApiKeyFor(configTargetProvider);
+    renderLiveProviderOptions();
+    targetSelect.addEventListener("change", (e) => {
+      configTargetProvider = e.target.value;
+      setSaved("config_target_provider", configTargetProvider);
+      keyInput.value = getApiKeyFor(configTargetProvider);
+    });
     aiSelect.addEventListener("change", (e) => {
       currentProvider = e.target.value;
       currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
       setSaved("active_provider", currentProvider);
       setSaved("active_model", currentModel);
       renderModelOptions(currentProvider, currentModel);
-      keyInput.value = getApiKeyFor(currentProvider);
       updateFooterLabel();
-      log(`IA alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, "success");
-      if (!keyInput.value) {
-        log(`\u26A0\uFE0F Nenhuma chave salva para ${PROVIDERS_CONFIG[currentProvider]?.name}. Cole sua chave e clique em Salvar.`, "warning");
-      }
+      log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, "success");
     });
     modelSelect.addEventListener("change", (e) => {
       currentModel = e.target.value;
@@ -1344,13 +1438,34 @@ Responda ESTRITAMENTE em formato JSON:
       updateFooterLabel();
       log(`Modelo alterado para: ${currentModel}`, "info");
     });
-    document.getElementById("btn-save-key").addEventListener("click", () => {
+    btnSaveKey.addEventListener("click", async () => {
+      const p = configTargetProvider;
       const val = keyInput.value.trim();
-      setApiKeyFor(currentProvider, val);
-      if (val) {
-        log(`\u2705 Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} salva com sucesso!`, "success");
-      } else {
-        log(`\u26A0\uFE0F Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} removida.`, "warning");
+      const pName = PROVIDERS_CONFIG[p]?.name || p;
+      if (!val) {
+        setApiKeyFor(p, "");
+        setSaved(`status_${p}`, "error");
+        renderLiveProviderOptions();
+        log(`Chave do ${pName} removida.`, "warning");
+        return;
+      }
+      btnSaveKey.disabled = true;
+      btnSaveKey.textContent = "\u23F3 Testando...";
+      log(`Testando chave de API com chamada Live para ${pName}...`, "info");
+      try {
+        await testProviderKey(p, val);
+        setApiKeyFor(p, val);
+        setSaved("active_provider", p);
+        currentProvider = p;
+        currentModel = PROVIDERS_CONFIG[p]?.defaultModel;
+        setSaved("active_model", currentModel);
+        renderLiveProviderOptions();
+        log(`\u2705 [Live] Chave do ${pName} testada com sucesso e APROVADA! Modelo pronto para uso. \u{1F7E2}`, "success");
+      } catch (err) {
+        log(`\u274C Falha no teste do ${pName}: ${err.message}`, "error");
+      } finally {
+        btnSaveKey.disabled = false;
+        btnSaveKey.textContent = "\u{1F9EA} Testar & Salvar";
       }
     });
     const reviewSelect = document.getElementById("review-ai-select");
