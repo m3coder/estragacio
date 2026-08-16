@@ -1,4 +1,4 @@
-// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Fallback
+// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Multi-Fallback com Retry
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { getApiKeyFor } from '../config/storage.js';
@@ -73,7 +73,8 @@ export async function executeAICall(provider, model, statement, alternatives) {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+      const msg = err.error?.message || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
 
     const data = await res.json();
@@ -123,40 +124,47 @@ export async function executeAICall(provider, model, statement, alternatives) {
 }
 
 export async function callAIWithFallback(provider, model, statement, alternatives, onFallbackLog = null) {
-  try {
-    return await executeAICall(provider, model, statement, alternatives);
-  } catch (err) {
-    if (onFallbackLog) {
-      onFallbackLog(`[Aviso] ${provider} falhou (${err.message}). Ativando fallback automático...`);
-    }
+  // Ordem de provedores para tentar caso a IA principal falhe
+  const allProviders = ['groq', 'claude', 'mistral', 'gemini', 'openai', 'deepseek'];
+  const fallbackQueue = [
+    { p: provider, m: model },
+    ...allProviders.filter(p => p !== provider).map(p => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
+  ];
 
-    // 1. Tenta Groq
-    const groqKey = getApiKeyFor('groq');
-    if (groqKey && provider !== 'groq') {
-      try {
-        if (onFallbackLog) onFallbackLog('Fallback ativado: Consultando Groq Llama 3.3 70B...');
-        return await executeAICall('groq', 'llama-3.3-70b-versatile', statement, alternatives);
-      } catch (e) {}
-    }
+  let lastError = null;
 
-    // 2. Tenta Mistral
-    const mistralKey = getApiKeyFor('mistral');
-    if (mistralKey && provider !== 'mistral') {
-      try {
-        if (onFallbackLog) onFallbackLog('Fallback ativado: Consultando Mistral Large...');
-        return await executeAICall('mistral', 'mistral-large-latest', statement, alternatives);
-      } catch (e) {}
-    }
+  for (let attempt = 0; attempt < fallbackQueue.length; attempt++) {
+    const current = fallbackQueue[attempt];
+    const key = getApiKeyFor(current.p);
+    
+    // Pula provedores sem chave cadastrada (exceto a tentativa inicial para mostrar o erro)
+    if (!key && attempt > 0) continue;
 
-    // 3. Tenta Claude se houver chave
-    const claudeKey = getApiKeyFor('claude');
-    if (claudeKey && provider !== 'claude') {
-      try {
-        if (onFallbackLog) onFallbackLog('Fallback ativado: Consultando Claude 3.7 Sonnet...');
-        return await executeAICall('claude', 'claude-3-7-sonnet-20250219', statement, alternatives);
-      } catch (e) {}
-    }
+    try {
+      if (attempt > 0 && onFallbackLog) {
+        onFallbackLog(`Fallback ativado: Consultando ${PROVIDERS_CONFIG[current.p]?.name || current.p}...`, 'info');
+      }
+      return await executeAICall(current.p, current.m, statement, alternatives);
+    } catch (err) {
+      lastError = err;
+      const isRateLimit = /429|quota|rate limit/i.test(err.message);
+      
+      if (onFallbackLog) {
+        onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...). Ativando fallback...`, 'warning');
+      }
 
-    throw err;
+      // Se for rate limit e for o único provedor disponível, faz espera inteligente de backoff
+      if (isRateLimit && attempt === fallbackQueue.length - 1) {
+        if (onFallbackLog) onFallbackLog(`Aguardando 4s de respiro para alívio de cota...`, 'info');
+        await new Promise(r => setTimeout(r, 4000));
+        try {
+          return await executeAICall(current.p, current.m, statement, alternatives);
+        } catch (retryErr) {
+          lastError = retryErr;
+        }
+      }
+    }
   }
+
+  throw lastError || new Error('Todas as IAs de fallback falharam.');
 }

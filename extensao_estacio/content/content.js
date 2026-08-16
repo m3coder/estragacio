@@ -353,7 +353,8 @@ Responda ESTRITAMENTE em formato JSON:
       });
       if (!res2.ok) {
         const err = await res2.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res2.status}`);
+        const msg = err.error?.message || `HTTP ${res2.status}`;
+        throw new Error(msg);
       }
       const data2 = await res2.json();
       const txt = data2.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -394,38 +395,39 @@ Responda ESTRITAMENTE em formato JSON:
     };
   }
   async function callAIWithFallback(provider, model, statement, alternatives, onFallbackLog = null) {
-    try {
-      return await executeAICall(provider, model, statement, alternatives);
-    } catch (err) {
-      if (onFallbackLog) {
-        onFallbackLog(`[Aviso] ${provider} falhou (${err.message}). Ativando fallback autom\xE1tico...`);
-      }
-      const groqKey = getApiKeyFor("groq");
-      if (groqKey && provider !== "groq") {
-        try {
-          if (onFallbackLog) onFallbackLog("Fallback ativado: Consultando Groq Llama 3.3 70B...");
-          return await executeAICall("groq", "llama-3.3-70b-versatile", statement, alternatives);
-        } catch (e) {
+    const allProviders = ["groq", "claude", "mistral", "gemini", "openai", "deepseek"];
+    const fallbackQueue = [
+      { p: provider, m: model },
+      ...allProviders.filter((p) => p !== provider).map((p) => ({ p, m: PROVIDERS_CONFIG[p]?.defaultModel }))
+    ];
+    let lastError = null;
+    for (let attempt = 0; attempt < fallbackQueue.length; attempt++) {
+      const current = fallbackQueue[attempt];
+      const key = getApiKeyFor(current.p);
+      if (!key && attempt > 0) continue;
+      try {
+        if (attempt > 0 && onFallbackLog) {
+          onFallbackLog(`Fallback ativado: Consultando ${PROVIDERS_CONFIG[current.p]?.name || current.p}...`, "info");
+        }
+        return await executeAICall(current.p, current.m, statement, alternatives);
+      } catch (err) {
+        lastError = err;
+        const isRateLimit = /429|quota|rate limit/i.test(err.message);
+        if (onFallbackLog) {
+          onFallbackLog(`[Aviso] ${PROVIDERS_CONFIG[current.p]?.name || current.p} falhou (${err.message.slice(0, 80)}...). Ativando fallback...`, "warning");
+        }
+        if (isRateLimit && attempt === fallbackQueue.length - 1) {
+          if (onFallbackLog) onFallbackLog(`Aguardando 4s de respiro para al\xEDvio de cota...`, "info");
+          await new Promise((r) => setTimeout(r, 4e3));
+          try {
+            return await executeAICall(current.p, current.m, statement, alternatives);
+          } catch (retryErr) {
+            lastError = retryErr;
+          }
         }
       }
-      const mistralKey = getApiKeyFor("mistral");
-      if (mistralKey && provider !== "mistral") {
-        try {
-          if (onFallbackLog) onFallbackLog("Fallback ativado: Consultando Mistral Large...");
-          return await executeAICall("mistral", "mistral-large-latest", statement, alternatives);
-        } catch (e) {
-        }
-      }
-      const claudeKey = getApiKeyFor("claude");
-      if (claudeKey && provider !== "claude") {
-        try {
-          if (onFallbackLog) onFallbackLog("Fallback ativado: Consultando Claude 3.7 Sonnet...");
-          return await executeAICall("claude", "claude-3-7-sonnet-20250219", statement, alternatives);
-        } catch (e) {
-        }
-      }
-      throw err;
     }
+    throw lastError || new Error("Todas as IAs de fallback falharam.");
   }
 
   // src/core/react_fiber.js
@@ -650,18 +652,28 @@ Responda ESTRITAMENTE em formato JSON:
     const cards = getQuestionCards();
     const total = cards.length;
     const pName = PROVIDERS_CONFIG[provider]?.name || provider;
-    if (onLog) onLog(`Iniciando resolu\xE7\xE3o com ${pName} (${model}) [${total} quest\xF5es]...`, "info");
     if (total === 0) {
       if (onLog) onLog("Nenhuma quest\xE3o encontrada na p\xE1gina.", "error");
       return;
     }
-    const gabaritoList = [];
+    const existingGabarito = getSavedGabarito()?.answers || [];
+    const gabaritoMap = /* @__PURE__ */ new Map();
+    existingGabarito.forEach((a) => {
+      if (a.q && a.letter && !a.explanation?.toLowerCase().includes("dados insuficientes") && !a.explanation?.toLowerCase().includes("erro")) {
+        gabaritoMap.set(a.q, a);
+      }
+    });
+    const alreadyCount = gabaritoMap.size;
+    if (alreadyCount > 0 && onLog) {
+      onLog(`Retomando prova: ${alreadyCount} quest\xE3o(\xF5es) j\xE1 respondidas anteriormente ser\xE3o aproveitadas! \u23E9`, "info");
+    } else if (onLog) {
+      onLog(`Iniciando resolu\xE7\xE3o com ${pName} (${model}) [${total} quest\xF5es]...`, "info");
+    }
     for (let i = 0; i < total; i++) {
       const q = cards[i];
-      if (onLog) onLog(`[${i + 1}/${total}] Processando Quest\xE3o ${q.index}...`, "info");
       if (q.element) {
         q.element.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, 250));
       }
       const statement = extractStatement(q.element, q.index);
       const alternatives = extractAlternatives(q.element);
@@ -669,28 +681,48 @@ Responda ESTRITAMENTE em formato JSON:
         if (onLog) onLog(`[${i + 1}/${total}] Alternativas n\xE3o encontradas.`, "error");
         continue;
       }
+      if (gabaritoMap.has(q.index)) {
+        const saved = gabaritoMap.get(q.index);
+        const chosenLetter = saved.letter;
+        if (onLog) onLog(`[${i + 1}/${total}] Quest\xE3o ${q.index} j\xE1 respondida: [ ${chosenLetter} ] -> Marcando na tela \u2705`, "success");
+        const target = alternatives.find((o) => o.letter === chosenLetter);
+        if (target && target.element) {
+          clickOptionReact(target.element);
+        }
+        await new Promise((r) => setTimeout(r, 350));
+        continue;
+      }
+      if (onLog) onLog(`[${i + 1}/${total}] Processando Quest\xE3o ${q.index}...`, "info");
       try {
         if (onLog) onLog(`[${i + 1}/${total}] Consultando IA (${pName})...`, "info");
         const ans = await callAIWithFallback(provider, model, statement, alternatives, onLog);
         const chosenLetter = ans.letra?.toUpperCase() || "A";
         if (onLog) onLog(`[${i + 1}/${total}] -> Resposta: ${chosenLetter} (${ans.explicacao || ""})`, "success");
-        gabaritoList.push({
+        gabaritoMap.set(q.index, {
           q: q.index,
           letter: chosenLetter,
           explanation: ans.explicacao || ""
         });
-        saveGabarito(`${pName} (${model})`, gabaritoList);
+        const currentList = Array.from(gabaritoMap.values()).sort((a, b) => a.q - b.q);
+        saveGabarito(`${pName} (${model})`, currentList);
         if (onGabaritoUpdated) onGabaritoUpdated();
         const target = alternatives.find((o) => o.letter === chosenLetter);
         if (target && target.element) {
           clickOptionReact(target.element);
         }
+        const pauseMs = Math.floor(Math.random() * (2500 - 1800 + 1)) + 1800;
+        await new Promise((r) => setTimeout(r, pauseMs));
       } catch (err) {
-        if (onLog) onLog(`[${i + 1}/${total}] Erro: ${err.message}`, "error");
+        if (onLog) onLog(`[${i + 1}/${total}] Quest\xE3o ${q.index} falhou: ${err.message.slice(0, 90)}`, "error");
+        await new Promise((r) => setTimeout(r, 3e3));
       }
-      await new Promise((r) => setTimeout(r, 500));
     }
-    if (onLog) onLog("\u{1F389} Prova respondida e Gabarito Salvo com Sucesso! \u{1F4DD}", "success");
+    const finalCount = gabaritoMap.size;
+    if (finalCount >= total) {
+      if (onLog) onLog("\u{1F389} Todas as 10 quest\xF5es foram respondidas e salvas no Gabarito! \u{1F4DD}\u{1F3C6}", "success");
+    } else {
+      if (onLog) onLog(`\u26A0\uFE0F Prova pausada: ${finalCount}/${total} respondidas. Clique novamente em Resolver para continuar as restantes!`, "warning");
+    }
     if (onGabaritoUpdated) onGabaritoUpdated();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
