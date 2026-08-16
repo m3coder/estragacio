@@ -1,4 +1,4 @@
-// Descoberta Dinâmica de Modelos via API Oficial com Formatação Inteligente, Cache Unificado e Filtro Free/Paid
+// Descoberta Dinâmica de Modelos via API Oficial com Formatação Inteligente, Cache Unificado e Filtro Estrito Free/Paid
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { getSaved, setSaved, getShowPaidModels } from '../config/storage.js';
@@ -24,15 +24,42 @@ export function saveCachedModels(provider, modelsList) {
   } catch (e) {}
 }
 
-export function isModelFree(provider, modelId) {
-  if (provider === 'groq' || provider === 'ollama') return true;
-  if (provider === 'openrouter') return modelId.includes(':free');
+export function isModelFree(provider, modelId, displayName = '') {
+  const id = (modelId || '').toLowerCase();
+  const name = (displayName || '').toLowerCase();
+
+  // 1. Groq (Todos os modelos de texto suportados são 100% Free com 14.4k req/dia)
+  if (provider === 'groq') {
+    return !/whisper|tts|guard|embeddings|safeguard|distilbert/i.test(id);
+  }
+
+  // 2. OpenRouter (Apenas modelos oficiais com tag :free)
+  if (provider === 'openrouter') {
+    return id.endsWith(':free') || id.includes(':free');
+  }
+
+  // 3. Gemini (Apenas Flash text models da cota gratuita de 1.500 req/dia do AI Studio)
   if (provider === 'gemini') {
-    return !/gemini-2.5-pro|gemini-pro-latest/i.test(modelId);
+    // Rejeita qualquer modelo com imagem, gemma, custom tools, pro, embeddings, etc.
+    if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|pro|deep-research|live|audio/i.test(id)) {
+      return false;
+    }
+    if (/banana|image|pro|gemma|vision/i.test(name)) {
+      return false;
+    }
+    // Aceita apenas modelos Flash de texto padrão
+    return /flash/i.test(id);
   }
+
+  // 4. Ollama (100% Local e Ilimitado)
+  if (provider === 'ollama') return true;
+
+  // 5. Mistral (Apenas Codestral dev free tier e Mistral Small)
   if (provider === 'mistral') {
-    return /codestral|small/i.test(modelId);
+    return /codestral|small/i.test(id) && !/large|pixtral|embed/i.test(id);
   }
+
+  // 6. Provedores pagos por token (Claude, OpenAI, DeepSeek)
   return false;
 }
 
@@ -47,8 +74,7 @@ export function getModelsForProvider(provider, showPaid = null) {
 
   // Modo Apenas Free (Default)
   const freeList = rawList.filter(m => {
-    if (typeof m.isFree === 'boolean') return m.isFree;
-    return isModelFree(provider, m.id);
+    return isModelFree(provider, m.id, m.name);
   });
 
   if (freeList.length > 0) return freeList;
@@ -74,12 +100,12 @@ function formatDisplayName(provider, modelItem) {
     if (modelId === 'gemini-3.6-flash') return 'Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)';
     if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia)';
     if (modelId === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite (⚡ Grátis)';
-    if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio Avançado)';
     if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis)';
     if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
-    if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
     if (modelId === 'gemini-flash-latest') return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
-    if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (🎁 Grátis AI Studio)';
+    if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (💎 Pago • Raciocínio Avançado)';
+    if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
+    if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (💎 Pago AI Studio)';
   } else if (provider === 'openrouter') {
     const isFree = modelId.includes(':free');
     const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
@@ -148,7 +174,7 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
         const json = await res.json();
         const rawList = Array.isArray(json) ? json : (json.data || []);
         const filtered = rawList
-          .filter(m => !/whisper|tts|guard|embeddings|orpheus|safeguard|distilbert/i.test(m.id))
+          .filter(m => isModelFree('groq', m.id, m.display_name))
           .map(m => ({
             id: m.id,
             name: formatDisplayName('groq', m),
@@ -188,7 +214,7 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
         const filtered = rawList
           .filter(m => !/audio|whisper|moderation|embedding/i.test(m.id))
           .map(m => {
-            const isFree = m.id.includes(':free');
+            const isFree = isModelFree('openrouter', m.id, m.name);
             return {
               id: m.id,
               name: formatDisplayName('openrouter', m),
@@ -316,7 +342,7 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
           .map(m => ({
             id: m.id,
             name: formatDisplayName('mistral', m),
-            isFree: /codestral|small/i.test(m.id)
+            isFree: isModelFree('mistral', m.id, m.name)
           }));
 
         filtered.sort((a, b) => {
@@ -346,14 +372,20 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
         const rawList = json.models || (Array.isArray(json) ? json : []);
         const filtered = rawList
           .filter(m => {
-            const clean = (m.name || '').replace(/^models\//, '');
+            const clean = (m.name || '').replace(/^models\//, '').toLowerCase();
+            const dName = (m.displayName || '').toLowerCase();
             const methods = m.supportedGenerationMethods || [];
             const isGen = methods.length === 0 || methods.includes('generateContent');
-            return isGen && !/embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research/i.test(clean);
+
+            // Filtra rigorosamente ruídos, modelos de imagem, embeddings e ferramentas não-chat
+            const isGarbage = /embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research|image|custom-tools/i.test(clean) ||
+                              /banana|image|vision|embedding|robotics/i.test(dName);
+
+            return isGen && !isGarbage;
           })
           .map(m => {
             const cleanId = m.name.replace(/^models\//, '');
-            const isFree = !/gemini-2.5-pro|gemini-pro-latest/i.test(cleanId);
+            const isFree = isModelFree('gemini', cleanId, m.displayName);
             return {
               id: cleanId,
               name: formatDisplayName('gemini', { id: cleanId, displayName: m.displayName }),
@@ -369,11 +401,12 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null) {
             if (id === 'gemini-3.6-flash') return 4;
             if (id === 'gemini-3.5-flash') return 5;
             if (id === 'gemini-3.5-flash-lite') return 6;
-            if (id === 'gemini-3.1-pro-preview') return 7;
-            if (id === 'gemini-3.1-flash-lite') return 8;
+            if (id === 'gemini-3.1-flash-lite') return 7;
+            if (id === 'gemini-flash-latest') return 8;
             if (id === 'gemini-3-flash-preview') return 9;
             if (id === 'gemini-2.5-pro') return 10;
-            if (id === 'gemini-flash-latest') return 11;
+            if (id === 'gemini-3.1-pro-preview') return 11;
+            if (id === 'gemini-pro-latest') return 12;
             return 20;
           };
           return priority(a.id) - priority(b.id);

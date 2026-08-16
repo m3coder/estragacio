@@ -1572,14 +1572,27 @@ Responda ESTRITAMENTE em formato JSON:
     } catch (e) {
     }
   }
-  function isModelFree(provider, modelId) {
-    if (provider === "groq" || provider === "ollama") return true;
-    if (provider === "openrouter") return modelId.includes(":free");
-    if (provider === "gemini") {
-      return !/gemini-2.5-pro|gemini-pro-latest/i.test(modelId);
+  function isModelFree(provider, modelId, displayName = "") {
+    const id = (modelId || "").toLowerCase();
+    const name = (displayName || "").toLowerCase();
+    if (provider === "groq") {
+      return !/whisper|tts|guard|embeddings|safeguard|distilbert/i.test(id);
     }
+    if (provider === "openrouter") {
+      return id.endsWith(":free") || id.includes(":free");
+    }
+    if (provider === "gemini") {
+      if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|pro|deep-research|live|audio/i.test(id)) {
+        return false;
+      }
+      if (/banana|image|pro|gemma|vision/i.test(name)) {
+        return false;
+      }
+      return /flash/i.test(id);
+    }
+    if (provider === "ollama") return true;
     if (provider === "mistral") {
-      return /codestral|small/i.test(modelId);
+      return /codestral|small/i.test(id) && !/large|pixtral|embed/i.test(id);
     }
     return false;
   }
@@ -1591,8 +1604,7 @@ Responda ESTRITAMENTE em formato JSON:
       return rawList;
     }
     const freeList = rawList.filter((m) => {
-      if (typeof m.isFree === "boolean") return m.isFree;
-      return isModelFree(provider, m.id);
+      return isModelFree(provider, m.id, m.name);
     });
     if (freeList.length > 0) return freeList;
     return rawList;
@@ -1615,12 +1627,12 @@ Responda ESTRITAMENTE em formato JSON:
       if (modelId === "gemini-3.6-flash") return "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
       if (modelId === "gemini-3.5-flash") return "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
       if (modelId === "gemini-3.5-flash-lite") return "Gemini 3.5 Flash-Lite (\u26A1 Gr\xE1tis)";
-      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio Avan\xE7ado)";
       if (modelId === "gemini-3.1-flash-lite") return "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis)";
       if (modelId === "gemini-3-flash-preview") return "Gemini 3 Flash Preview (\u{1F381} Gr\xE1tis)";
-      if (modelId === "gemini-2.5-pro") return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)";
       if (modelId === "gemini-flash-latest") return "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)";
-      if (modelId === "gemini-pro-latest") return "Gemini Pro Latest (\u{1F381} Gr\xE1tis AI Studio)";
+      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F48E} Pago \u2022 Racioc\xEDnio Avan\xE7ado)";
+      if (modelId === "gemini-2.5-pro") return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)";
+      if (modelId === "gemini-pro-latest") return "Gemini Pro Latest (\u{1F48E} Pago AI Studio)";
     } else if (provider === "openrouter") {
       const isFree = modelId.includes(":free");
       const freeBadge = isFree ? " (\u{1F525} 100% Gr\xE1tis)" : " (\u{1F48E} Pago)";
@@ -1683,7 +1695,7 @@ Responda ESTRITAMENTE em formato JSON:
         if (res.ok) {
           const json = await res.json();
           const rawList = Array.isArray(json) ? json : json.data || [];
-          const filtered = rawList.filter((m) => !/whisper|tts|guard|embeddings|orpheus|safeguard|distilbert/i.test(m.id)).map((m) => ({
+          const filtered = rawList.filter((m) => isModelFree("groq", m.id, m.display_name)).map((m) => ({
             id: m.id,
             name: formatDisplayName("groq", m),
             isFree: true
@@ -1716,7 +1728,7 @@ Responda ESTRITAMENTE em formato JSON:
           const json = await res.json();
           const rawList = Array.isArray(json) ? json : json.data || [];
           const filtered = rawList.filter((m) => !/audio|whisper|moderation|embedding/i.test(m.id)).map((m) => {
-            const isFree = m.id.includes(":free");
+            const isFree = isModelFree("openrouter", m.id, m.name);
             return {
               id: m.id,
               name: formatDisplayName("openrouter", m),
@@ -1832,7 +1844,7 @@ Responda ESTRITAMENTE em formato JSON:
           const filtered = rawList.filter((m) => !m.archived && m.capabilities?.completion_chat !== false && !/embed|moderation|ocr|audio/i.test(m.id)).map((m) => ({
             id: m.id,
             name: formatDisplayName("mistral", m),
-            isFree: /codestral|small/i.test(m.id)
+            isFree: isModelFree("mistral", m.id, m.name)
           }));
           filtered.sort((a, b) => {
             const priority = (id) => {
@@ -1857,13 +1869,15 @@ Responda ESTRITAMENTE em formato JSON:
           const json = await res.json();
           const rawList = json.models || (Array.isArray(json) ? json : []);
           const filtered = rawList.filter((m) => {
-            const clean = (m.name || "").replace(/^models\//, "");
+            const clean = (m.name || "").replace(/^models\//, "").toLowerCase();
+            const dName = (m.displayName || "").toLowerCase();
             const methods = m.supportedGenerationMethods || [];
             const isGen = methods.length === 0 || methods.includes("generateContent");
-            return isGen && !/embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research/i.test(clean);
+            const isGarbage = /embedding|aqa|imagen|veo|lyria|banana|robotics|audio|tts|live|translate|computer-use|deep-research|image|custom-tools/i.test(clean) || /banana|image|vision|embedding|robotics/i.test(dName);
+            return isGen && !isGarbage;
           }).map((m) => {
             const cleanId = m.name.replace(/^models\//, "");
-            const isFree = !/gemini-2.5-pro|gemini-pro-latest/i.test(cleanId);
+            const isFree = isModelFree("gemini", cleanId, m.displayName);
             return {
               id: cleanId,
               name: formatDisplayName("gemini", { id: cleanId, displayName: m.displayName }),
@@ -1878,11 +1892,12 @@ Responda ESTRITAMENTE em formato JSON:
               if (id === "gemini-3.6-flash") return 4;
               if (id === "gemini-3.5-flash") return 5;
               if (id === "gemini-3.5-flash-lite") return 6;
-              if (id === "gemini-3.1-pro-preview") return 7;
-              if (id === "gemini-3.1-flash-lite") return 8;
+              if (id === "gemini-3.1-flash-lite") return 7;
+              if (id === "gemini-flash-latest") return 8;
               if (id === "gemini-3-flash-preview") return 9;
               if (id === "gemini-2.5-pro") return 10;
-              if (id === "gemini-flash-latest") return 11;
+              if (id === "gemini-3.1-pro-preview") return 11;
+              if (id === "gemini-pro-latest") return 12;
               return 20;
             };
             return priority(a.id) - priority(b.id);
