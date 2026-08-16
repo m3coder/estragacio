@@ -1,24 +1,22 @@
 {
   "name": "estacio-suite-ai",
-  "version": "11.0.0",
-  "description": "Suite All-in-One da Estácio: Solver com IA Multi-Provedor, Gabarito Persistente e Auto-Conclusão de Matérias",
+  "version": "2.0.1",
+  "description": "Suíte All-in-One da Estácio: Solver Multi-IA, Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias.",
   "type": "module",
   "scripts": {
     "build": "node build.js",
-    "watch": "node build.js --watch"
+    "watch": "node --watch build.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   },
   "keywords": [
     "estacio",
     "tampermonkey",
-    "chrome-extension",
+    "userscript",
     "ai-solver",
-    "groq",
-    "mistral",
-    "gemini"
+    "chrome-extension"
   ],
   "author": "m3coder",
-  "license": "MIT",
-  "devDependencies": {
-    "esbuild": "^0.25.12"
-  }
+  "license": "MIT"
 }

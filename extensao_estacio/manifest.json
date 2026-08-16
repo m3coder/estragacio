@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Estácio Suite AI (Solver & Conclusão de Temas)",
-  "version": "3.3.0",
+  "version": "2.0.1",
   "description": "Automação completa da Estácio: Resolução de Provas com IA e Conclusão Automática de Temas e Matérias.",
   "icons": {
     "16": "icons/icon16.png",
