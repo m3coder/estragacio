@@ -1134,6 +1134,131 @@ Responda ESTRITAMENTE em formato JSON:
     });
   }
 
+  // src/modules/model_fetcher.js
+  function getCachedModels(provider) {
+    try {
+      const raw = localStorage.getItem(`estacio_models_${provider}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  function saveCachedModels(provider, modelsList) {
+    try {
+      if (Array.isArray(modelsList) && modelsList.length > 0) {
+        localStorage.setItem(`estacio_models_${provider}`, JSON.stringify(modelsList));
+      }
+    } catch (e) {
+    }
+  }
+  function getModelsForProvider(provider) {
+    const cached = getCachedModels(provider);
+    if (cached) return cached;
+    return PROVIDERS_CONFIG[provider]?.models || [];
+  }
+  async function fetchLiveModels(provider, apiKey) {
+    if (!apiKey) return getModelsForProvider(provider);
+    try {
+      if (provider === "groq") {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const models = (json.data || []).filter((m) => !/whisper|tts|guard|embeddings/i.test(m.id)).map((m) => ({ id: m.id, name: m.id }));
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      }
+      if (provider === "claude") {
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/models", {
+            headers: {
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true"
+            }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const models = (json.data || []).map((m) => ({
+              id: m.id,
+              name: m.display_name || m.id
+            }));
+            if (models.length > 0) {
+              saveCachedModels(provider, models);
+              return models;
+            }
+          }
+        } catch (e) {
+        }
+      }
+      if (provider === "mistral") {
+        const res = await fetch("https://api.mistral.ai/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const models = (json.data || []).filter((m) => !/embed/i.test(m.id)).map((m) => ({ id: m.id, name: m.id }));
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      }
+      if (provider === "gemini") {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (res.ok) {
+          const json = await res.json();
+          const models = (json.models || []).filter((m) => {
+            const methods = m.supportedGenerationMethods || [];
+            return methods.includes("generateContent") && !/embedding|aqa|imagen/i.test(m.name);
+          }).map((m) => {
+            const cleanId = m.name.replace(/^models\//, "");
+            return { id: cleanId, name: m.displayName ? `${m.displayName} (${cleanId})` : cleanId };
+          });
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      }
+      if (provider === "openai") {
+        const res = await fetch("https://api.openai.com/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const models = (json.data || []).filter((m) => /^(gpt-|o1|o3|chatgpt)/i.test(m.id) && !/realtime|audio|transcription|tts|embedding/i.test(m.id)).sort((a, b) => a.id.localeCompare(b.id)).map((m) => ({ id: m.id, name: m.id }));
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      }
+      if (provider === "deepseek") {
+        const res = await fetch("https://api.deepseek.com/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const models = (json.data || []).map((m) => ({ id: m.id, name: m.id }));
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      }
+    } catch (e) {
+    }
+    return getModelsForProvider(provider);
+  }
+
   // src/ui/widget.js
   function createSuiteWidget() {
     if (document.getElementById("estacio-suite-box")) return;
@@ -1371,15 +1496,31 @@ Responda ESTRITAMENTE em formato JSON:
       const modelSelect2 = document.getElementById("box-model-select");
       if (!modelSelect2) return;
       modelSelect2.innerHTML = "";
-      const p = PROVIDERS_CONFIG[providerKey];
-      if (!p) return;
-      p.models.forEach((m) => {
+      const models = getModelsForProvider(providerKey);
+      models.forEach((m) => {
         const opt = document.createElement("option");
         opt.value = m.id;
         opt.textContent = m.name;
         if (m.id === selectedModelId) opt.selected = true;
         modelSelect2.appendChild(opt);
       });
+      if (models.length > 0 && !models.some((m) => m.id === selectedModelId)) {
+        currentModel = models[0].id;
+        setSaved("active_model", currentModel);
+        modelSelect2.value = currentModel;
+      }
+    }
+    async function refreshDynamicModelsFromAPI(providerKey) {
+      const key = getApiKeyFor(providerKey);
+      if (!key) return;
+      try {
+        const liveModels = await fetchLiveModels(providerKey, key);
+        if (liveModels.length > 0 && providerKey === currentProvider) {
+          renderModelOptions(currentProvider, currentModel);
+          updateFooterLabel();
+        }
+      } catch (e) {
+      }
     }
     function updateFooterLabel() {
       const footerEl = document.getElementById("box-footer-model");
@@ -1418,19 +1559,21 @@ Responda ESTRITAMENTE em formato JSON:
     targetSelect.value = configTargetProvider;
     keyInput.value = getApiKeyFor(configTargetProvider);
     renderLiveProviderOptions();
+    refreshDynamicModelsFromAPI(currentProvider);
     targetSelect.addEventListener("change", (e) => {
       configTargetProvider = e.target.value;
       setSaved("config_target_provider", configTargetProvider);
       keyInput.value = getApiKeyFor(configTargetProvider);
     });
-    aiSelect.addEventListener("change", (e) => {
+    aiSelect.addEventListener("change", async (e) => {
       currentProvider = e.target.value;
       currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
       setSaved("active_provider", currentProvider);
       setSaved("active_model", currentModel);
       renderModelOptions(currentProvider, currentModel);
       updateFooterLabel();
-      log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, "success");
+      log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name}`, "success");
+      await refreshDynamicModelsFromAPI(currentProvider);
     });
     modelSelect.addEventListener("change", (e) => {
       currentModel = e.target.value;
@@ -1451,16 +1594,17 @@ Responda ESTRITAMENTE em formato JSON:
       }
       btnSaveKey.disabled = true;
       btnSaveKey.textContent = "\u23F3 Testando...";
-      log(`Testando chave de API com chamada Live para ${pName}...`, "info");
+      log(`Testando chave e buscando modelos ao vivo de ${pName}...`, "info");
       try {
         await testProviderKey(p, val);
         setApiKeyFor(p, val);
         setSaved("active_provider", p);
         currentProvider = p;
-        currentModel = PROVIDERS_CONFIG[p]?.defaultModel;
+        const dynamicModels = await fetchLiveModels(p, val);
+        currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
         setSaved("active_model", currentModel);
         renderLiveProviderOptions();
-        log(`\u2705 [Live] Chave do ${pName} testada com sucesso e APROVADA! Modelo pronto para uso. \u{1F7E2}`, "success");
+        log(`\u2705 [Live] ${pName} ativo com ${dynamicModels.length} modelos sincronizados diretamente da API! \u{1F7E2}`, "success");
       } catch (err) {
         log(`\u274C Falha no teste do ${pName}: ${err.message}`, "error");
       } finally {

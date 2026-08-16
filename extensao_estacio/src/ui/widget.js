@@ -1,4 +1,4 @@
-// Construtor e Controlador da Interface do Widget (com Validação Live e Filtragem de IAs Ativas)
+// Construtor e Controlador da Interface do Widget (com Descoberta Dinâmica de Modelos via API Oficial)
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
@@ -9,6 +9,7 @@ import { reviewSingleQuestion } from '../modules/reviewer.js';
 import { runExamQueue } from '../modules/exam_solver.js';
 import { startThemeCompletion, processAutomatorStateMachine } from '../modules/theme_automator.js';
 import { testProviderKey } from '../core/ai_engine.js';
+import { fetchLiveModels, getModelsForProvider } from '../modules/model_fetcher.js';
 
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;
@@ -268,16 +269,36 @@ export function createSuiteWidget() {
     const modelSelect = document.getElementById('box-model-select');
     if (!modelSelect) return;
     modelSelect.innerHTML = '';
-    const p = PROVIDERS_CONFIG[providerKey];
-    if (!p) return;
 
-    p.models.forEach(m => {
+    const models = getModelsForProvider(providerKey);
+
+    models.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.id;
       opt.textContent = m.name;
       if (m.id === selectedModelId) opt.selected = true;
       modelSelect.appendChild(opt);
     });
+
+    // Se o modelo salvo não estiver na lista, seleciona o primeiro
+    if (models.length > 0 && !models.some(m => m.id === selectedModelId)) {
+      currentModel = models[0].id;
+      setSaved('active_model', currentModel);
+      modelSelect.value = currentModel;
+    }
+  }
+
+  async function refreshDynamicModelsFromAPI(providerKey) {
+    const key = getApiKeyFor(providerKey);
+    if (!key) return;
+
+    try {
+      const liveModels = await fetchLiveModels(providerKey, key);
+      if (liveModels.length > 0 && providerKey === currentProvider) {
+        renderModelOptions(currentProvider, currentModel);
+        updateFooterLabel();
+      }
+    } catch (e) {}
   }
 
   function updateFooterLabel() {
@@ -315,7 +336,7 @@ export function createSuiteWidget() {
   allProvidersList.forEach(p => {
     const k = getApiKeyFor(p);
     if (k && getProviderStatus(p) === 'untested') {
-      setProviderStatus(p, 'live'); // Promove chaves salvas pré-existentes
+      setProviderStatus(p, 'live');
     }
   });
 
@@ -323,6 +344,7 @@ export function createSuiteWidget() {
   keyInput.value = getApiKeyFor(configTargetProvider);
 
   renderLiveProviderOptions();
+  refreshDynamicModelsFromAPI(currentProvider);
 
   targetSelect.addEventListener('change', (e) => {
     configTargetProvider = e.target.value;
@@ -330,14 +352,15 @@ export function createSuiteWidget() {
     keyInput.value = getApiKeyFor(configTargetProvider);
   });
 
-  aiSelect.addEventListener('change', (e) => {
+  aiSelect.addEventListener('change', async (e) => {
     currentProvider = e.target.value;
     currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
     setSaved('active_provider', currentProvider);
     setSaved('active_model', currentModel);
     renderModelOptions(currentProvider, currentModel);
     updateFooterLabel();
-    log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, 'success');
+    log(`IA ativa alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name}`, 'success');
+    await refreshDynamicModelsFromAPI(currentProvider);
   });
 
   modelSelect.addEventListener('change', (e) => {
@@ -347,7 +370,7 @@ export function createSuiteWidget() {
     log(`Modelo alterado para: ${currentModel}`, 'info');
   });
 
-  // BOTÃO DE TESTAR & SALVAR CHAVE (TESTE LIVE EM TEMPO REAL)
+  // BOTÃO DE TESTAR & SALVAR CHAVE (TESTE LIVE + DESCOBERTA DINÂMICA DE MODELOS)
   btnSaveKey.addEventListener('click', async () => {
     const p = configTargetProvider;
     const val = keyInput.value.trim();
@@ -363,18 +386,21 @@ export function createSuiteWidget() {
 
     btnSaveKey.disabled = true;
     btnSaveKey.textContent = '⏳ Testando...';
-    log(`Testando chave de API com chamada Live para ${pName}...`, 'info');
+    log(`Testando chave e buscando modelos ao vivo de ${pName}...`, 'info');
 
     try {
       await testProviderKey(p, val);
       setApiKeyFor(p, val);
       setSaved('active_provider', p);
       currentProvider = p;
-      currentModel = PROVIDERS_CONFIG[p]?.defaultModel;
+
+      // Puxa lista real de modelos retornada pela API
+      const dynamicModels = await fetchLiveModels(p, val);
+      currentModel = dynamicModels[0]?.id || PROVIDERS_CONFIG[p]?.defaultModel;
       setSaved('active_model', currentModel);
 
       renderLiveProviderOptions();
-      log(`✅ [Live] Chave do ${pName} testada com sucesso e APROVADA! Modelo pronto para uso. 🟢`, 'success');
+      log(`✅ [Live] ${pName} ativo com ${dynamicModels.length} modelos sincronizados diretamente da API! 🟢`, 'success');
     } catch (err) {
       log(`❌ Falha no teste do ${pName}: ${err.message}`, 'error');
     } finally {
