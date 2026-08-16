@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="icons/cat_mascot.png" width="140" alt="Estácio Suite AI Mascote" style="border-radius: 50%; box-shadow: 0 0 20px rgba(96, 165, 250, 0.6);" />
+  <img src="icons/cat_dancing.gif" width="120" alt="Mascote Anime Dançante" style="border-radius: 50%; box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);" />
 </p>
 
 <h1 align="center">⚡ Estácio Suite AI (Extension & Userscript)</h1>
 
 <p align="center">
-  <b>Suite All-in-One da Estácio: Solver de Provas com IA Multi-Provedor, Gabarito com 1-Clique para Revisão e Auto-Conclusão de Matérias</b>
+  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Solver com Multi-Provedores, Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias</b>
 </p>
 
 <p align="center">
@@ -14,6 +14,10 @@
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Userscript-Tampermonkey-00485B?logo=tampermonkey&logoColor=white" alt="Tampermonkey"></a>
   <a href="https://esbuild.github.io/"><img src="https://img.shields.io/badge/Bundler-esbuild-FFCF00?logo=esbuild&logoColor=black" alt="esbuild"></a>
   <a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License MIT"></a>
+</p>
+
+<p align="center">
+  <img src="icons/banner.png" width="100%" alt="Estácio Suite AI Dashboard Banner" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" />
 </p>
 
 ---
@@ -47,45 +51,138 @@
 
 ---
 
-## 🏗️ Arquitetura Modular (`src/`)
+## 📊 Diagramas de Fluxo & Arquitetura (Mermaid)
 
-```text
-extensao_estacio/
-├── src/
-│   ├── config/
-│   │   ├── providers.js       # Registro de IAs, modelos e endpoints
-│   │   ├── storage.js         # Camada de armazenamento e tokens de sessão
-│   │   └── mascot.js          # Mascote anime embutido em Base64
-│   │
-│   ├── core/
-│   │   ├── ai_engine.js       # Chamadas HTTP para IAs e Auto-Fallback
-│   │   ├── prompt_builder.js  # Formatação do prompt PhD com JSON estrito
-│   │   └── react_fiber.js     # Dispatchers nativos do React (__reactProps$)
-│   │
-│   ├── modules/
-│   │   ├── dom_parser.js      # Extração de questões e grade de matérias
-│   │   ├── exam_solver.js     # Orquestrador da fila de resolução da prova
-│   │   ├── gabarito.js        # Gerenciador de gabarito persistente e cópia
-│   │   ├── reviewer.js        # Revisão com 1-clique (Segunda Opinião)
-│   │   └── theme_automator.js # State Machine de conclusão automática
-│   │
-│   ├── ui/
-│   │   ├── draggable.js       # Mecânica universal de drag & drop com memória
-│   │   ├── widget.js          # Construtor da interface e eventos
-│   │   └── widget.css         # Folha de estilos desacoplada
-│   │
-│   └── index.js               # Entry point do projeto
-│
-├── icons/                     # Ícones em PNG (16, 48, 128, mascot)
-├── build.js                   # Empacotador rápido (esbuild)
-├── package.json
-└── estacio_solver.user.js     # Bundle compilado final pronto para uso
+### 🔄 1. Pipeline de Resolução de Provas & Auto-Fallback
+
+```mermaid
+flowchart TD
+    A([🎯 Início: Resolver Prova]) --> B[Captura Question Cards no DOM]
+    B --> C[Extrai Enunciado e Alternativas A-E]
+    C --> D[Monta Prompt Acadêmico PhD JSON]
+    D --> E{Consulta IA Selecionada}
+    
+    E -- Sucesso --> F[Recebe Letra e Justificativa]
+    E -- Erro / 429 / 503 --> G{Existe Fallback Ativo?}
+    G -- Sim: Groq / Mistral --> H[Chama Provedor Secundário]
+    H --> F
+    G -- Não --> I[Registra Erro no Log]
+    
+    F --> J[Dispara Clique Nativo React Fiber]
+    J --> K[Marca Alternativa na Tela]
+    K --> L[Adiciona Resposta ao Gabarito Salvo]
+    L --> M[Renderiza Badges no Widget]
+    M --> N{Mais Questões?}
+    N -- Sim --> C
+    N -- Não --> O([🎉 Prova Finalizada & Gabarito Salvo!])
+
+    style A fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style F fill:#10b981,stroke:#047857,color:#fff
+    style G fill:#f59e0b,stroke:#b45309,color:#fff
+    style O fill:#8b5cf6,stroke:#6d28d9,color:#fff
 ```
 
-### ⚡ Como compilar alterações:
-```bash
-npm install
-npm run build
+---
+
+### 🔍 2. Fluxo de Revisão de 1-Clique no Gabarito (Segunda Opinião)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Aluno as 👤 Aluno
+    participant Widget as ⚡ Gabarito Widget
+    participant DOM as 🖥️ DOM / React Fiber
+    participant AI2 as 🧠 2ª IA (ex: Mistral Large)
+
+    Aluno->>Widget: Clica na Badge [Q3: B 🔍]
+    Widget->>Widget: Inicia Animação de Análise (Badge Dourada ⏳)
+    Widget->>DOM: Rola suavemente até a Questão 3
+    Widget->>AI2: Envia Enunciado + Alternativas
+    AI2-->>Widget: Retorna {"letra": "D", "explicacao": "Cálculo corrigido..."}
+    Widget->>DOM: Remarca Alternativa [D] via React Fiber
+    Widget->>Widget: Atualiza Gabarito no localStorage
+    Widget->>Widget: Atualiza Badge para [Q3: D 🔍] e Loga Parecer
+```
+
+---
+
+### ⚙️ 3. State Machine da Conclusão Automática de Temas
+
+```mermaid
+stateDiagram-v2
+    [*] --> CatalogaGrade: Usuário clica em 'Concluir Temas'
+    CatalogaGrade --> IniciaFila: Identifica Temas Pendentes
+    IniciaFila --> AbreTema: Clica no botão do Tema N
+    
+    state "Dentro do Tema" as InsideTheme {
+        AbreTema --> ExtraiIDs: Lê turmaId, temaId, conteudoUuid
+        ExtraiIDs --> EnviaPOST: POST /conclusoes + Bearer Token
+        EnviaPOST --> AguardaDelay: Delay Humanizado (3.0s - 5.0s)
+    }
+    
+    AguardaDelay --> VoltaGrade: Redireciona para /conteudos
+    VoltaGrade --> ChecaRestantes: Incrementa ponteiro da fila
+    
+    ChecaRestantes --> AbreTema: Ainda há temas pendentes
+    ChecaRestantes --> Concluido: Todos os temas finalizados
+    Concluido --> [*]: 🏆 100% Concluído!
+```
+
+---
+
+### 🏗️ 4. Arquitetura Modular do Código (`src/`)
+
+```mermaid
+graph TD
+    subgraph UI ["🎨 Camada de Interface (UI)"]
+        WIDGET[widget.js]
+        DRAG[draggable.js]
+        CSS[widget.css]
+    end
+
+    subgraph MODULES ["📦 Módulos de Domínio"]
+        SOLVER[exam_solver.js]
+        GABARITO[gabarito.js]
+        REVIEW[reviewer.js]
+        AUTOMATOR[theme_automator.js]
+        PARSER[dom_parser.js]
+    end
+
+    subgraph CORE ["⚡ Núcleo e Integrações"]
+        AI_ENG[ai_engine.js]
+        PROMPT[prompt_builder.js]
+        REACT[react_fiber.js]
+    end
+
+    subgraph CONFIG ["🔑 Configurações & Storage"]
+        PROVIDERS[providers.js]
+        STORAGE[storage.js]
+        MASCOT[mascot.js]
+    end
+
+    WIDGET --> SOLVER
+    WIDGET --> GABARITO
+    WIDGET --> REVIEW
+    WIDGET --> AUTOMATOR
+    WIDGET --> DRAG
+    WIDGET --> CSS
+
+    SOLVER --> PARSER
+    SOLVER --> AI_ENG
+    SOLVER --> REACT
+    SOLVER --> GABARITO
+
+    REVIEW --> AI_ENG
+    REVIEW --> REACT
+    REVIEW --> GABARITO
+
+    AUTOMATOR --> PARSER
+    AUTOMATOR --> REACT
+    AUTOMATOR --> STORAGE
+
+    AI_ENG --> PROMPT
+    AI_ENG --> PROVIDERS
+    AI_ENG --> STORAGE
 ```
 
 ---
