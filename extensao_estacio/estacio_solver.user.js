@@ -994,6 +994,7 @@ Responda ESTRITAMENTE em formato JSON:
           <span>Est\xE1cio Suite AI</span>
         </div>
         <div class="box-controls">
+          <button id="btn-clear-header" class="box-ctrl-btn" title="Limpar Logs e Cache">\u{1F9F9}</button>
           <button id="btn-copy-header" class="box-ctrl-btn" title="Copiar Logs">\u{1F4CB}</button>
           <button id="btn-min" class="box-ctrl-btn" title="Minimizar (vira bolha)">_</button>
           <button id="btn-hide" class="box-ctrl-btn" title="Ocultar (bot\xE3o flutuante)">\u2715</button>
@@ -1074,9 +1075,12 @@ Responda ESTRITAMENTE em formato JSON:
 
       <div class="box-footer">
         <span id="box-footer-model" style="color:#38bdf8; font-weight:600;">${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})</span>
-        <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button id="btn-clear-footer" class="footer-btn" title="Limpar logs e dados acumulados">
+            <span>\u{1F9F9}</span> Limpar
+          </button>
           <button id="btn-copy-footer" class="footer-btn" title="Copiar todos os logs">
-            <span>\u{1F4CB}</span> Copiar Logs
+            <span>\u{1F4CB}</span> Copiar
           </button>
         </div>
       </div>
@@ -1136,6 +1140,18 @@ Responda ESTRITAMENTE em formato JSON:
         localStorage.setItem("estacio_suite_logs", JSON.stringify(current));
       } catch (e) {
       }
+    }
+    function clearAllStoredData() {
+      localStorage.removeItem("estacio_suite_logs");
+      localStorage.removeItem("estacio_last_gabarito");
+      localStorage.removeItem("estacio_catalog_queue");
+      sessionStorage.removeItem("estacio_catalog_queue");
+      if (logBox) logBox.innerHTML = "";
+      const gabaritoPanel = document.getElementById("gabarito-panel");
+      const gabaritoBadges = document.getElementById("gabarito-badges");
+      if (gabaritoPanel) gabaritoPanel.style.display = "none";
+      if (gabaritoBadges) gabaritoBadges.innerHTML = "";
+      log("\u{1F9F9} Todos os logs, gabaritos e filas foram limpos com sucesso!", "success");
     }
     function renderModelOptions(providerKey, selectedModelId) {
       const modelSelect2 = document.getElementById("box-model-select");
@@ -1215,6 +1231,14 @@ Responda ESTRITAMENTE em formato JSON:
         refreshGabaritoUI();
       });
     }
+    document.getElementById("btn-clear-header").addEventListener("click", (e) => {
+      e.stopPropagation();
+      clearAllStoredData();
+    });
+    document.getElementById("btn-clear-footer").addEventListener("click", (e) => {
+      e.stopPropagation();
+      clearAllStoredData();
+    });
     document.getElementById("btn-copy-header").addEventListener("click", (e) => {
       e.stopPropagation();
       copyAllLogs(document.getElementById("box-log"), log);
