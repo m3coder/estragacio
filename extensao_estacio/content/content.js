@@ -89,6 +89,10 @@
       return;
     }
     localStorage.setItem("estacio_" + key, value);
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ ["estacio_" + key]: value }).catch(() => {
+      });
+    }
   }
   function getApiKeyFor(provider) {
     return getSaved(`key_${provider}`, "");
@@ -110,6 +114,22 @@
       return Boolean(key && status === "live");
     });
   }
+  async function syncStorageFromChromeExtension() {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      try {
+        const all = await chrome.storage.local.get(null);
+        if (all) {
+          Object.keys(all).forEach((k) => {
+            if (k.startsWith("estacio_")) {
+              localStorage.setItem(k, all[k]);
+            }
+          });
+        }
+      } catch (e) {
+      }
+    }
+  }
+  syncStorageFromChromeExtension();
   function getBearerToken() {
     if (typeof window !== "undefined" && window.__estacio_bearer) {
       return window.__estacio_bearer;

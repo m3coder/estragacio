@@ -21,23 +21,17 @@
         <label for="provider">Inteligência Artificial Ativa</label>
         <select id="provider">
           <option value="groq">Groq (Ultra Rápido & Grátis - Recomendado)</option>
+          <option value="claude">Anthropic Claude (3.7 Sonnet / 3.5)</option>
           <option value="mistral">Mistral AI (Codestral / Large - PhD)</option>
           <option value="gemini">Google Gemini (Gemini Flash Latest)</option>
           <option value="openai">OpenAI (ChatGPT / GPT-4o / o3-mini)</option>
           <option value="deepseek">DeepSeek (R1 Reasoning / V3)</option>
-          <option value="custom">MimoCode / Custom (Xiaomi)</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="modelSelect">Modelo Selecionado</label>
         <select id="modelSelect"></select>
-        <input type="text" id="modelCustom" class="hidden" placeholder="Nome do modelo (ex: mimo-v1)">
-      </div>
-
-      <div id="endpointGroup" class="form-group hidden">
-        <label for="endpointInput">Endpoint URL</label>
-        <input type="text" id="endpointInput" placeholder="https://api.../v1/chat/completions">
       </div>
 
       <div class="form-group">
@@ -50,10 +44,14 @@
 
       <!-- Painel com todas as chaves salvas simultaneamente -->
       <div id="allKeysPanel" class="hidden" style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px; font-size:11px; display:flex; flex-direction:column; gap:8px;">
-        <div style="font-weight:700; color:#cbd5e1; margin-bottom:2px;">🔑 Banco de Chaves (Salvas Simultaneamente):</div>
+        <div style="font-weight:700; color:#cbd5e1; margin-bottom:2px;">🔑 Banco de Chaves (Sincronizado):</div>
         <div>
-          <label style="color:#94a3b8; display:block; margin-bottom:2px;">Groq Key (Grátis em console.groq.com):</label>
+          <label style="color:#94a3b8; display:block; margin-bottom:2px;">Groq Key (console.groq.com):</label>
           <input type="password" id="keyGroq" placeholder="gsk_..." style="width:100%; padding:4px 8px; border-radius:4px; background:#1e293b; border:1px solid #334155; color:#fff;">
+        </div>
+        <div>
+          <label style="color:#94a3b8; display:block; margin-bottom:2px;">Anthropic Claude Key (console.anthropic.com):</label>
+          <input type="password" id="keyClaude" placeholder="sk-ant-..." style="width:100%; padding:4px 8px; border-radius:4px; background:#1e293b; border:1px solid #334155; color:#fff;">
         </div>
         <div>
           <label style="color:#94a3b8; display:block; margin-bottom:2px;">Mistral Key (console.mistral.ai):</label>
@@ -75,14 +73,14 @@
 
       <div class="actions">
         <button id="saveBtn" class="btn btn-primary">Salvar Configurações</button>
-        <button id="testBtn" class="btn btn-secondary">Testar Conexão</button>
+        <button id="testBtn" class="btn btn-secondary">Testar Conexão Live</button>
       </div>
 
       <div id="statusMessage" class="status-msg hidden"></div>
     </main>
 
     <footer class="footer">
-      <small>Multi-Model AI Suite • Suporte a Groq, Mistral, Gemini, OpenAI & DeepSeek</small>
+      <small>Multi-Model AI Suite • Groq, Claude, Mistral, Gemini, OpenAI & DeepSeek</small>
     </footer>
   </div>
 

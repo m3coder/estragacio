@@ -1,4 +1,4 @@
-// Camada de Armazenamento e Sessão (Compatível com GM_*, Chrome Storage e LocalStorage)
+// Camada de Armazenamento e Sessão Unificada (GM_*, Chrome Storage e LocalStorage)
 
 export function getSaved(key, defaultValue = '') {
   if (typeof GM_getValue !== 'undefined') {
@@ -14,6 +14,11 @@ export function setSaved(key, value) {
     return;
   }
   localStorage.setItem('estacio_' + key, value);
+
+  // Sincroniza em segundo plano com o chrome.storage.local da extensão
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.set({ ['estacio_' + key]: value }).catch(() => {});
+  }
 }
 
 export function getApiKeyFor(provider) {
@@ -40,6 +45,25 @@ export function getLiveProviders() {
     return Boolean(key && status === 'live');
   });
 }
+
+// Sincronização inicial na carga da página (Puxa chaves salvas no Popup da Extensão)
+export async function syncStorageFromChromeExtension() {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    try {
+      const all = await chrome.storage.local.get(null);
+      if (all) {
+        Object.keys(all).forEach(k => {
+          if (k.startsWith('estacio_')) {
+            localStorage.setItem(k, all[k]);
+          }
+        });
+      }
+    } catch (e) {}
+  }
+}
+
+// Executa sincronização silenciosa
+syncStorageFromChromeExtension();
 
 export function getBearerToken() {
   if (typeof window !== 'undefined' && window.__estacio_bearer) {

@@ -2,10 +2,10 @@
   <img src="icons/cat_dancing.gif" width="120" alt="Mascote Anime Dançante" style="border-radius: 50%; box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);" />
 </p>
 
-<h1 align="center">⚡ Estácio Suite AI (Extension & Userscript)</h1>
+<h1 align="center">⚡ Estácio Suite AI (Extension & Userscript) v2.0.1</h1>
 
 <p align="center">
-  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Solver com Multi-Provedores (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek), Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias</b>
+  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Multi-Provedores (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek) com Descoberta Dinâmica de Modelos, Teste Live, Solver Incremental, Gabarito com 2ª Opinião e Auto-Conclusão de Matérias</b>
 </p>
 
 <p align="center">
@@ -22,25 +22,35 @@
 
 ---
 
-## 🌟 Funcionalidades Principais
+## 🌟 Novidades da Versão 2.0.1
 
-### 1. 🎯 Resolução Inteligente de Provas & Simulados (`saladeavaliacoes.com.br`)
-- 🤖 **Seleção Dinâmica de Provedor & Modelo**: Alterne na hora entre **Anthropic Claude** (`claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`), **Mistral AI** (`mistral-large-latest`, `codestral-latest`), **Groq** (`llama-3.3-70b-versatile`, `deepseek-r1-distill`), **Google Gemini** (`gemini-flash-latest`), **OpenAI** (`gpt-4o`, `o3-mini`) e **DeepSeek** (`deepseek-chat`, `deepseek-reasoner`).
-- ⚡ **Auto-Fallback Inteligente**: Se a IA principal atingir limite de cota ou instabilidade, o sistema recorre em milissegundos a outra IA salva sem interromper sua prova.
-- 📝 **Gabarito Visual Persistente**: Exibe badges com o gabarito completo na interface (`[Q1: B 🔍] [Q2: D 🔍]...`). Persiste contra `F5` / recarregamento de página.
-- 📋 **Cópia Instantânea de Gabarito**: Botão de 1-clique para copiar o gabarito formatado e detalhado para a área de transferência.
-- 🔍 **Revisão com 1-Clique Direto no Gabarito (Segunda Opinião)**: Dê 1 clique em qualquer badge do gabarito para reavaliar a questão instantaneamente com uma segunda IA (ex: reavaliar questão de cálculo com *Claude 3.7 Sonnet* ou *Mistral Large PhD*).
-- 🖱️ **Clique Nativo React Fiber**: Dispara o `setState` real do React para registrar as marcações de forma 100% persistente no banco da Estácio.
+1. **🔄 Sincronização Unificada de Chaves**:
+   - As chaves de API e configurações salvas no **Popup Dashboard da Extensão** são sincronizadas instantaneamente e de forma bidirecional com o **Widget Flutuante na Página** (`chrome.storage.local` $\leftrightarrow$ `localStorage`).
+
+2. **📡 Descoberta Dinâmica de Modelos (`GET /models`)**:
+   - A lista do seletor `🧠 Modelo` é puxada em tempo real direto da API oficial de cada provedor (Groq, Mistral, Gemini, Claude, OpenAI, DeepSeek), disponibilizando na hora os modelos mais recentes da sua conta.
+
+3. **🧪 Teste Live em Tempo Real (`[🧪 Testar & Salvar]`)**:
+   - Ao salvar uma chave, o sistema realiza um teste de conexão real. Apenas provedores aprovados e ativos (`Live 🟢`) são exibidos nas listas de resolução e de 2ª Opinião.
+
+4. **⏩ Solver Incremental Anti-429**:
+   - Resolução inteligente de provas: se atingir limite de cota em uma questão, o gabarito das anteriores fica gravado. Ao clicar novamente, o script **reaproveita as questões já respondidas** e consulta a IA **apenas para as questões pendentes** com intervalo anti-rate-limit.
+
+5. **📚 Auto-Conclusão de Matérias com Ciclo Completo de 2 Ondas**:
+   - **1ª Onda POST (`/conclusoes`)**: Registra leitura no backend e libera o botão físico na interface.
+   - **Clique Ativo React**: Rola a tela e clica no botão destravado `[Marcar como concluído]`.
+   - **2ª Onda POST**: Confirmação de persistência no banco da Estácio.
+   - **Deduplicação Estrita**: Reconhece perfeitamente temas de múltiplos sub-itens (`Tema 1 | 2 Itens`) e avança sequencialmente sem interrupção.
 
 ---
 
-## 🔑 Configuração de Chaves de API (Multi-Keys)
+## 🔑 Provedores Suportados e Onde Obter Chaves
 
 | Provedor | Modelo Padrão | Modelos Disponíveis | Onde Obter Chave |
 | :--- | :--- | :--- | :--- |
 | **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
-| **Mistral AI** *(PhD / Raciocínio)* | `mistral-large-latest` | `Mistral Large`, `Codestral`, `Mistral Small` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
 | **Groq** *(Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
+| **Mistral AI** *(PhD)* | `mistral-large-latest` | `Mistral Large`, `Codestral`, `Mistral Small` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
 | **Google Gemini** | `gemini-flash-latest` | `Gemini Flash Latest`, `Gemini Pro Latest`, `Gemini 2.5 Flash` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
 | **OpenAI** | `gpt-4o` | `GPT-4o`, `GPT-4o Mini`, `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **DeepSeek** | `deepseek-chat` | `DeepSeek V3`, `DeepSeek R1` | [platform.deepseek.com](https://platform.deepseek.com) |
@@ -56,7 +66,7 @@
 
 ### Opção B: Extensão do Chrome / Brave / Edge (Manifest V3)
 1. Acesse `chrome://extensions/` no seu navegador.
-2. Ative o **Modo do desenvolvedor**.
+2. Ative o **Modo do desenvolvedor** no canto superior direito.
 3. Clique em **Carregar sem compactação** e selecione esta pasta `extensao_estacio`.
 
 ---
