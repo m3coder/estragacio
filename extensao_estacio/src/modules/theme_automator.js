@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Retorno Fixo para /disciplinas/{id_materia}/conteudos)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Persistência em localStorage)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -152,7 +152,8 @@ export async function tryClickInPageConcludeButton() {
 export async function processAutomatorStateMachine(onLog) {
   if (isStateMachineRunning) return;
 
-  const queueRaw = sessionStorage.getItem('estacio_catalog_queue');
+  // Usa localStorage para nunca perder o estado entre reloads e trocas de rota
+  const queueRaw = localStorage.getItem('estacio_catalog_queue');
   if (!queueRaw) return;
 
   let queue = null;
@@ -181,7 +182,7 @@ export async function processAutomatorStateMachine(onLog) {
       const temaNum = headerMatch ? parseInt(headerMatch[1]) : (queue.pendingThemes[queue.currentPos] || 1);
       if (!temaId) temaId = `tema_${temaNum}`;
 
-      if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando identificadores de conteúdo...`, 'info');
+      if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando sub-conteúdos...`, 'info');
 
       // Coleta todos os UUIDs disponíveis
       const allUuids = new Set();
@@ -212,15 +213,15 @@ export async function processAutomatorStateMachine(onLog) {
       // Tenta clicar no botão nativo "Marcar como concluído"
       await tryClickInPageConcludeButton();
 
-      const delayMs = Math.floor(Math.random() * (3000 - 1800 + 1)) + 1800;
+      const delayMs = Math.floor(Math.random() * (2500 - 1500 + 1)) + 1500;
       const delaySec = (delayMs / 1000).toFixed(1);
       if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da matéria...`, 'info');
       await new Promise(r => setTimeout(r, delayMs));
 
       queue.currentPos += 1;
-      sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
+      localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
-      // RETORNO DETERMINÍSTICO DIRETO PARA /disciplinas/{turmaId}/conteudos (NUNCA VAI PARA HOME)
+      // Retorno determinístico direto para /disciplinas/{turmaId}/conteudos
       if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos ↩️`, 'info');
       window.location.href = targetMateriaUrl;
 
@@ -240,7 +241,7 @@ export async function processAutomatorStateMachine(onLog) {
       const pendentes = gridCards.filter(c => c.isPendente);
 
       if (pendentes.length === 0) {
-        sessionStorage.removeItem('estacio_catalog_queue');
+        localStorage.removeItem('estacio_catalog_queue');
         if (onLog) onLog('🏆 Todos os temas desta matéria estão 100% CONCLUÍDOS! Parabéns!', 'success');
         return;
       }
@@ -249,12 +250,12 @@ export async function processAutomatorStateMachine(onLog) {
 
       queue.pendingThemes = pendentes.map(c => c.temaNum);
       queue.currentPos = 0;
-      sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
+      localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
       const nextTema = pendentes[0];
-      if (onLog) onLog(`Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
+      if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
 
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 800));
       triggerNativeClick(nextTema.actionBtn);
 
     } finally {
@@ -290,7 +291,7 @@ export function startThemeCompletion(onLog) {
       pendingThemes: [1],
       currentPos: 0
     };
-    sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
+    localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
     processAutomatorStateMachine(onLog);
     return;
   }
@@ -302,7 +303,7 @@ export function startThemeCompletion(onLog) {
 
     if (pendentes.length === 0) {
       if (onLog) onLog('Todos os temas desta matéria já estão 100% concluídos! 🏆', 'success');
-      sessionStorage.removeItem('estacio_catalog_queue');
+      localStorage.removeItem('estacio_catalog_queue');
       return;
     }
 
@@ -315,7 +316,7 @@ export function startThemeCompletion(onLog) {
       currentPos: 0
     };
 
-    sessionStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
+    localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
     const firstTema = pendentes[0];
     if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, 'info');

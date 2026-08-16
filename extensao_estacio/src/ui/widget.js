@@ -1,4 +1,4 @@
-// Construtor e Controlador da Interface do Widget
+// Construtor e Controlador da Interface do Widget (com Persistência de Logs e Estado)
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { CAT_MASCOT_DATA_URI } from '../config/mascot.js';
@@ -17,6 +17,10 @@ export function createSuiteWidget() {
   let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
   let reviewProvider = getSaved('review_provider', 'claude');
   let isBusy = false;
+
+  const savedLogsRaw = localStorage.getItem('estacio_suite_logs');
+  let initialLogs = [];
+  try { initialLogs = JSON.parse(savedLogsRaw) || []; } catch(e) {}
 
   const box = document.createElement('div');
   box.id = 'estacio-suite-box';
@@ -103,9 +107,7 @@ export function createSuiteWidget() {
           <div id="gabarito-badges" class="gabarito-badges"></div>
         </div>
 
-        <div class="box-log" id="box-log">
-          <div class="log-item info">Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.</div>
-        </div>
+        <div class="box-log" id="box-log"></div>
       </div>
 
       <div class="box-footer">
@@ -150,14 +152,40 @@ export function createSuiteWidget() {
     toggleBtn.style.display = 'none';
   });
 
+  const logBox = document.getElementById('box-log');
+
+  // Restaura logs persistentes
+  if (initialLogs.length > 0) {
+    initialLogs.forEach(entry => {
+      const div = document.createElement('div');
+      div.className = `log-item ${entry.type || 'info'}`;
+      div.textContent = entry.text;
+      logBox.appendChild(div);
+    });
+    logBox.scrollTop = logBox.scrollHeight;
+  } else {
+    const div = document.createElement('div');
+    div.className = 'log-item info';
+    div.textContent = `[${new Date().toLocaleTimeString()}] Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.`;
+    logBox.appendChild(div);
+  }
+
   function log(msg, type = 'info') {
-    const logBox = document.getElementById('box-log');
     if (!logBox) return;
+    const formatted = `[${new Date().toLocaleTimeString()}] ${msg}`;
     const div = document.createElement('div');
     div.className = `log-item ${type}`;
-    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    div.textContent = formatted;
     logBox.appendChild(div);
     logBox.scrollTop = logBox.scrollHeight;
+
+    // Persiste até os últimos 40 logs
+    try {
+      const current = JSON.parse(localStorage.getItem('estacio_suite_logs') || '[]');
+      current.push({ text: formatted, type: type });
+      if (current.length > 40) current.splice(0, current.length - 40);
+      localStorage.setItem('estacio_suite_logs', JSON.stringify(current));
+    } catch(e) {}
   }
 
   function renderModelOptions(providerKey, selectedModelId) {
@@ -298,7 +326,7 @@ export function createSuiteWidget() {
   // Executa State Machine inicial
   processAutomatorStateMachine(log);
 
-  // Monitor Ativo de Rotas SPA (Detecta navegações do React Router sem refresh)
+  // Monitor Ativo de Rotas SPA
   let lastMonitoredUrl = window.location.href;
   setInterval(() => {
     if (window.location.href !== lastMonitoredUrl) {

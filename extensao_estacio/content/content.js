@@ -818,7 +818,7 @@ Responda ESTRITAMENTE em formato JSON:
   }
   async function processAutomatorStateMachine(onLog) {
     if (isStateMachineRunning) return;
-    const queueRaw = sessionStorage.getItem("estacio_catalog_queue");
+    const queueRaw = localStorage.getItem("estacio_catalog_queue");
     if (!queueRaw) return;
     let queue = null;
     try {
@@ -842,7 +842,7 @@ Responda ESTRITAMENTE em formato JSON:
         const headerMatch = headerText.match(/Tema\s*(\d+)/i);
         const temaNum = headerMatch ? parseInt(headerMatch[1]) : queue.pendingThemes[queue.currentPos] || 1;
         if (!temaId) temaId = `tema_${temaNum}`;
-        if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando identificadores de conte\xFAdo...`, "info");
+        if (onLog) onLog(`[Tema ${temaNum}] Aberto na tela! Coletando sub-conte\xFAdos...`, "info");
         const allUuids = /* @__PURE__ */ new Set();
         if (ids.conteudoUuid) allUuids.add(ids.conteudoUuid);
         harvestInPageContentUuids().forEach((u) => allUuids.add(u));
@@ -863,12 +863,12 @@ Responda ESTRITAMENTE em formato JSON:
           await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
         }
         await tryClickInPageConcludeButton();
-        const delayMs = Math.floor(Math.random() * (3e3 - 1800 + 1)) + 1800;
+        const delayMs = Math.floor(Math.random() * (2500 - 1500 + 1)) + 1500;
         const delaySec = (delayMs / 1e3).toFixed(1);
         if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da mat\xE9ria...`, "info");
         await new Promise((r) => setTimeout(r, delayMs));
         queue.currentPos += 1;
-        sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
+        localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos \u21A9\uFE0F`, "info");
         window.location.href = targetMateriaUrl;
       } finally {
@@ -882,17 +882,17 @@ Responda ESTRITAMENTE em formato JSON:
       try {
         const pendentes = gridCards.filter((c) => c.isPendente);
         if (pendentes.length === 0) {
-          sessionStorage.removeItem("estacio_catalog_queue");
+          localStorage.removeItem("estacio_catalog_queue");
           if (onLog) onLog("\u{1F3C6} Todos os temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!", "success");
           return;
         }
         if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na mat\xE9ria.`, "info");
         queue.pendingThemes = pendentes.map((c) => c.temaNum);
         queue.currentPos = 0;
-        sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
+        localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         const nextTema = pendentes[0];
-        if (onLog) onLog(`Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
-        await new Promise((r) => setTimeout(r, 600));
+        if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
+        await new Promise((r) => setTimeout(r, 800));
         triggerNativeClick(nextTema.actionBtn);
       } finally {
         isStateMachineRunning = false;
@@ -921,7 +921,7 @@ Responda ESTRITAMENTE em formato JSON:
         pendingThemes: [1],
         currentPos: 0
       };
-      sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
+      localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
       processAutomatorStateMachine(onLog);
       return;
     }
@@ -930,7 +930,7 @@ Responda ESTRITAMENTE em formato JSON:
       if (onLog) onLog(`Catalogados ${pendentes.length} tema(s) pendente(s).`, "info");
       if (pendentes.length === 0) {
         if (onLog) onLog("Todos os temas desta mat\xE9ria j\xE1 est\xE3o 100% conclu\xEDdos! \u{1F3C6}", "success");
-        sessionStorage.removeItem("estacio_catalog_queue");
+        localStorage.removeItem("estacio_catalog_queue");
         return;
       }
       const pendingNumbers = pendentes.map((t) => t.temaNum);
@@ -941,7 +941,7 @@ Responda ESTRITAMENTE em formato JSON:
         pendingThemes: pendingNumbers,
         currentPos: 0
       };
-      sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
+      localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
       const firstTema = pendentes[0];
       if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, "info");
       triggerNativeClick(firstTema.actionBtn);
@@ -956,6 +956,12 @@ Responda ESTRITAMENTE em formato JSON:
     let currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel || "llama-3.3-70b-versatile");
     let reviewProvider = getSaved("review_provider", "claude");
     let isBusy = false;
+    const savedLogsRaw = localStorage.getItem("estacio_suite_logs");
+    let initialLogs = [];
+    try {
+      initialLogs = JSON.parse(savedLogsRaw) || [];
+    } catch (e) {
+    }
     const box = document.createElement("div");
     box.id = "estacio-suite-box";
     box.innerHTML = `
@@ -1041,9 +1047,7 @@ Responda ESTRITAMENTE em formato JSON:
           <div id="gabarito-badges" class="gabarito-badges"></div>
         </div>
 
-        <div class="box-log" id="box-log">
-          <div class="log-item info">Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.</div>
-        </div>
+        <div class="box-log" id="box-log"></div>
       </div>
 
       <div class="box-footer">
@@ -1080,14 +1084,36 @@ Responda ESTRITAMENTE em formato JSON:
       minMascotImg.style.display = "none";
       toggleBtn.style.display = "none";
     });
+    const logBox = document.getElementById("box-log");
+    if (initialLogs.length > 0) {
+      initialLogs.forEach((entry) => {
+        const div = document.createElement("div");
+        div.className = `log-item ${entry.type || "info"}`;
+        div.textContent = entry.text;
+        logBox.appendChild(div);
+      });
+      logBox.scrollTop = logBox.scrollHeight;
+    } else {
+      const div = document.createElement("div");
+      div.className = "log-item info";
+      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.`;
+      logBox.appendChild(div);
+    }
     function log(msg, type = "info") {
-      const logBox = document.getElementById("box-log");
       if (!logBox) return;
+      const formatted = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] ${msg}`;
       const div = document.createElement("div");
       div.className = `log-item ${type}`;
-      div.textContent = `[${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] ${msg}`;
+      div.textContent = formatted;
       logBox.appendChild(div);
       logBox.scrollTop = logBox.scrollHeight;
+      try {
+        const current = JSON.parse(localStorage.getItem("estacio_suite_logs") || "[]");
+        current.push({ text: formatted, type });
+        if (current.length > 40) current.splice(0, current.length - 40);
+        localStorage.setItem("estacio_suite_logs", JSON.stringify(current));
+      } catch (e) {
+      }
     }
     function renderModelOptions(providerKey, selectedModelId) {
       const modelSelect2 = document.getElementById("box-model-select");
