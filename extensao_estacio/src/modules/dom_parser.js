@@ -1,4 +1,4 @@
-// Extrator do DOM (Questões, Enunciados, Alternativas e Grade de Temas)
+// Extrator do DOM (Questões, Enunciados, Alternativas e Grade de Temas com Suporte a Múltiplos Sub-Itens)
 
 export function getQuestionCards() {
   const allTestIds = Array.from(document.querySelectorAll('[data-testid]'));
@@ -83,12 +83,18 @@ export function getThemeCardsFromDom() {
         seen.add(card);
         const isConcluido = /conclu[ií]do/i.test(text);
         const temaNum = parseInt(match[1]);
+        
+        // Extrai contagem de itens se houver (ex: "Tema 1 | 2 Itens")
+        const itemsMatch = text.match(/(\d+)\s*Itens?/i);
+        const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
+
         const link = card.querySelector('a[href*="/conteudos/"]');
         const href = link ? link.href : (card.getAttribute('href') || '');
 
         cards.push({
           temaNum: temaNum,
           temaName: `Tema ${temaNum}`,
+          totalItems: totalItems,
           cardEl: card,
           actionBtn: btn,
           href: href,

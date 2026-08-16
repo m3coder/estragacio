@@ -563,11 +563,14 @@ Responda ESTRITAMENTE em formato JSON:
           seen.add(card);
           const isConcluido = /conclu[ií]do/i.test(text);
           const temaNum = parseInt(match[1]);
+          const itemsMatch = text.match(/(\d+)\s*Itens?/i);
+          const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
           const link = card.querySelector('a[href*="/conteudos/"]');
           const href = link ? link.href : card.getAttribute("href") || "";
           cards.push({
             temaNum,
             temaName: `Tema ${temaNum}`,
+            totalItems,
             cardEl: card,
             actionBtn: btn,
             href,
@@ -701,6 +704,50 @@ Responda ESTRITAMENTE em formato JSON:
       temaId: temaMatch ? temaMatch[1] : null
     };
   }
+  async function fetchAllThemeSubContents(turmaId, temaId, token) {
+    const discoveredUuids = /* @__PURE__ */ new Set();
+    const endpoints = [
+      `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos`,
+      `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}`,
+      `https://apis.estudante.estacio.br/rest/me/turmas/${turmaId}/temas/${temaId}/conteudos`
+    ];
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/json, text/plain, */*"
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : data.conteudos || data.itens || data.items || [];
+          if (Array.isArray(items)) {
+            items.forEach((item) => {
+              const uuid = item.idConteudo || item.conteudoUuid || item.uuid || item.id;
+              if (uuid && typeof uuid === "string" && uuid.length > 20) {
+                discoveredUuids.add(uuid);
+              }
+            });
+          }
+        }
+      } catch (e) {
+      }
+    }
+    return Array.from(discoveredUuids);
+  }
+  function harvestInPageContentUuids() {
+    const uuids = /* @__PURE__ */ new Set();
+    const allLinks = Array.from(document.querySelectorAll('a[href*="/conteudos/"], button[data-uuid], [data-conteudo-id]'));
+    allLinks.forEach((el) => {
+      const href = el.href || el.getAttribute("data-href") || "";
+      const match = href.match(/\/conteudos\/([a-f0-9-]{36})/i);
+      if (match) uuids.add(match[1]);
+      const directId = el.getAttribute("data-uuid") || el.getAttribute("data-conteudo-id");
+      if (directId && directId.length > 20) uuids.add(directId);
+    });
+    return Array.from(uuids);
+  }
   async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula) {
     const matriculaParam = matricula ? `?matricula=${matricula}` : "";
     const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
@@ -709,12 +756,13 @@ Responda ESTRITAMENTE em formato JSON:
       "Authorization": `Bearer ${token}`,
       "Accept": "application/json, text/plain, */*"
     };
+    let success = false;
     try {
       const res = await fetch(endpointLegado, {
         method: "POST",
         headers: headersBase
       });
-      if (res.status >= 200 && res.status < 300) return true;
+      if (res.status >= 200 && res.status < 300) success = true;
     } catch (e) {
     }
     try {
@@ -730,10 +778,23 @@ Responda ESTRITAMENTE em formato JSON:
           idConteudo: conteudoUuid
         })
       });
-      if (res.status >= 200 && res.status < 300) return true;
+      if (res.status >= 200 && res.status < 300) success = true;
     } catch (e) {
     }
-    return true;
+    return success;
+  }
+  async function tryClickInPageConcludeButton() {
+    const buttons = Array.from(document.querySelectorAll("button, a"));
+    const concludeBtn = buttons.find((b) => {
+      const txt = b.innerText.toLowerCase();
+      return (txt.includes("marcar como conclu") || txt.includes("concluir") || txt.includes("finalizar")) && !b.closest("#estacio-suite-box");
+    });
+    if (concludeBtn) {
+      try {
+        triggerNativeClick(concludeBtn);
+      } catch (e) {
+      }
+    }
   }
   async function processAutomatorStateMachine(onLog) {
     const queueRaw = sessionStorage.getItem("estacio_catalog_queue");
@@ -752,68 +813,72 @@ Responda ESTRITAMENTE em formato JSON:
     const matricula = getMatricula();
     if (isInsideTheme) {
       const ids = parseIdsFromUrl(currentUrl);
-      const targetTemaNum = queue.pendingThemes[queue.currentPos];
-      if (onLog) onLog(`[${queue.currentPos + 1}/${queue.pendingThemes.length}] Tema ${targetTemaNum} aberto! (${ids.temaId})`, "info");
-      if (ids.conteudoUuid && ids.temaId && token) {
-        const ok = await postConcluir(ids.turmaId || queue.turmaId, ids.temaId, ids.conteudoUuid, token, matricula);
-        if (ok) {
-          if (onLog) onLog(`[${queue.currentPos + 1}/${queue.pendingThemes.length}] Tema ${targetTemaNum} conclu\xEDdo com sucesso! \u2705`, "success");
-        } else {
-          if (onLog) onLog(`[${queue.currentPos + 1}/${queue.pendingThemes.length}] Conclus\xE3o enviada para Tema ${targetTemaNum} (HTTP OK)`, "info");
-        }
+      const targetTemaNum = queue.pendingThemes[queue.currentPos] || ids.temaId || "Atual";
+      if (onLog) onLog(`[${queue.currentPos + 1}/${queue.pendingThemes.length}] Tema ${targetTemaNum} aberto! Buscando todos os sub-itens...`, "info");
+      const allUuids = /* @__PURE__ */ new Set();
+      if (ids.conteudoUuid) allUuids.add(ids.conteudoUuid);
+      harvestInPageContentUuids().forEach((u) => allUuids.add(u));
+      if (ids.turmaId && ids.temaId && token) {
+        const apiUuids = await fetchAllThemeSubContents(ids.turmaId || queue.turmaId, ids.temaId, token);
+        apiUuids.forEach((u) => allUuids.add(u));
       }
-      const delayMs = Math.floor(Math.random() * (5e3 - 3e3 + 1)) + 3e3;
+      const uuidList = Array.from(allUuids);
+      if (onLog) onLog(`[Tema ${targetTemaNum}] Detectados ${uuidList.length} sub-item(ns) neste tema. Concluindo todos...`, "info");
+      for (let idx = 0; idx < uuidList.length; idx++) {
+        const uuid = uuidList[idx];
+        const ok = await postConcluir(ids.turmaId || queue.turmaId, ids.temaId || `tema_${targetTemaNum}`, uuid, token, matricula);
+        if (onLog) onLog(`  \u2514\u2500 [Item ${idx + 1}/${uuidList.length}] UUID: ${uuid.slice(0, 8)}... \u2192 Conclu\xEDdo \u2705`, "success");
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      await tryClickInPageConcludeButton();
+      const delayMs = Math.floor(Math.random() * (4500 - 3e3 + 1)) + 3e3;
       const delaySec = (delayMs / 1e3).toFixed(1);
-      if (onLog) onLog(`Aguardando ${delaySec}s antes de retornar para a lista...`, "info");
+      if (onLog) onLog(`Aguardando ${delaySec}s antes de retornar \xE0 grade de mat\xE9rias...`, "info");
       await new Promise((r) => setTimeout(r, delayMs));
       queue.currentPos += 1;
       if (queue.currentPos >= queue.pendingThemes.length) {
         sessionStorage.removeItem("estacio_catalog_queue");
-        if (onLog) onLog("\u{1F389} Todos os temas foram conclu\xEDdos com 100% de sucesso! \u{1F3C6}", "success");
-        window.location.href = `https://estudante.estacio.br/disciplinas/${queue.turmaId}/conteudos`;
+        if (onLog) onLog("\u{1F389} Todos os temas foram processados! Retornando para verificar grade... \u{1F3C6}", "success");
       } else {
         sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
-        window.location.href = `https://estudante.estacio.br/disciplinas/${queue.turmaId}/conteudos`;
       }
+      window.location.href = `https://estudante.estacio.br/disciplinas/${queue.turmaId}/conteudos`;
       return;
     }
     if (isGridPage) {
-      if (onLog) onLog(`Aguardando carregamento da grade de temas...`, "info");
+      if (onLog) onLog(`Verificando status dos temas na grade...`, "info");
       const cards = await waitForCards(12e3);
       if (cards.length === 0) {
         if (onLog) onLog(`A grade demorou a carregar. D\xEA F5 para continuar.`, "error");
         return;
       }
-      if (queue.currentPos >= queue.pendingThemes.length) {
+      const pendentes = cards.filter((c) => c.isPendente);
+      if (pendentes.length === 0) {
         sessionStorage.removeItem("estacio_catalog_queue");
-        if (onLog) onLog("\u{1F389} Todos os temas foram conclu\xEDdos! \u{1F3C6}", "success");
+        if (onLog) onLog("\u{1F3C6} Todos os temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!", "success");
         return;
       }
-      const nextTemaNum = queue.pendingThemes[queue.currentPos];
-      if (onLog) onLog(`[${queue.currentPos + 1}/${queue.pendingThemes.length}] Abrindo pr\xF3ximo pendente: Tema ${nextTemaNum}...`, "info");
-      const targetCard = cards.find((c) => c.temaNum === nextTemaNum);
-      if (targetCard) {
-        triggerNativeClick(targetCard.actionBtn);
-      } else {
-        if (onLog) onLog(`Tema ${nextTemaNum} n\xE3o encontrado na grade. Pulando...`, "error");
-        queue.currentPos += 1;
-        sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
-        processAutomatorStateMachine(onLog);
-      }
+      if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na grade.`, "info");
+      queue.pendingThemes = pendentes.map((c) => c.temaNum);
+      queue.currentPos = 0;
+      sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
+      const nextTema = pendentes[0];
+      if (onLog) onLog(`[1/${pendentes.length}] Abrindo pr\xF3ximo pendente: Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
+      triggerNativeClick(nextTema.actionBtn);
     }
   }
   async function startThemeCompletion(onLog) {
-    if (onLog) onLog("Iniciando cat\xE1logo dos temas...", "info");
+    if (onLog) onLog("Iniciando cat\xE1logo dos temas da mat\xE9ria...", "info");
     const currentUrl = window.location.href;
     const turmaMatch = currentUrl.match(/\/disciplinas\/(estacio_\d+)/i);
     const turmaId = turmaMatch ? turmaMatch[1] : null;
     if (!turmaId) {
-      if (onLog) onLog("Acesse uma mat\xE9ria (/disciplinas/estacio_...) para concluir.", "error");
+      if (onLog) onLog("Acesse a p\xE1gina de conte\xFAdos da mat\xE9ria (/disciplinas/estacio_...) para concluir.", "error");
       return;
     }
     const token = getBearerToken();
     if (!token) {
-      if (onLog) onLog("Token n\xE3o capturado. Abra um tema manualmente primeiro para salvar o token.", "error");
+      if (onLog) onLog("Token n\xE3o capturado. Abra qualquer tema manualmente primeiro para salvar a sess\xE3o.", "error");
       return;
     }
     const cards = await waitForCards(8e3);
@@ -834,7 +899,7 @@ Responda ESTRITAMENTE em formato JSON:
     };
     sessionStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
     const firstTema = pendentes[0];
-    if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, "info");
+    if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum} (${firstTema.totalItems} itens)...`, "info");
     triggerNativeClick(firstTema.actionBtn);
   }
 
