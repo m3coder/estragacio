@@ -1,7 +1,54 @@
-// Estácio Suite AI - Content Script (Live AI Selector, Multi-Keys, Gabarito & Revisão)
+// Estácio Suite AI - Content Script (Live Dual AI & Model Selector, Multi-Keys, Gabarito & Revisão)
 
 (function () {
   'use strict';
+
+  const PROVIDERS_CONFIG = {
+    groq: {
+      name: "Groq",
+      defaultModel: "llama-3.3-70b-versatile",
+      models: [
+        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Recomendado)" },
+        { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B" },
+        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instantâneo)" }
+      ]
+    },
+    mistral: {
+      name: "Mistral AI",
+      defaultModel: "mistral-large-latest",
+      models: [
+        { id: "mistral-large-latest", name: "Mistral Large (PhD / Mais Preciso)" },
+        { id: "codestral-latest", name: "Codestral (Lógica & Código)" },
+        { id: "mistral-small-latest", name: "Mistral Small" }
+      ]
+    },
+    gemini: {
+      name: "Google Gemini",
+      defaultModel: "gemini-flash-latest",
+      models: [
+        { id: "gemini-flash-latest", name: "Gemini Flash Latest (Grátis)" },
+        { id: "gemini-pro-latest", name: "Gemini Pro Latest (Alta Precisão)" },
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
+      ]
+    },
+    openai: {
+      name: "OpenAI",
+      defaultModel: "gpt-4o",
+      models: [
+        { id: "gpt-4o", name: "GPT-4o (Precisão Máxima)" },
+        { id: "gpt-4o-mini", name: "GPT-4o Mini (Econômico)" },
+        { id: "o3-mini", name: "o3-mini (Raciocínio)" }
+      ]
+    },
+    deepseek: {
+      name: "DeepSeek",
+      defaultModel: "deepseek-chat",
+      models: [
+        { id: "deepseek-chat", name: "DeepSeek V3" },
+        { id: "deepseek-reasoner", name: "DeepSeek R1 (Raciocínio Puro)" }
+      ]
+    }
+  };
 
   let widgetElement = null;
   let toggleBtn = null;
@@ -211,6 +258,23 @@
     }
   }
 
+  function renderModelOptions(providerKey, selectedModelId) {
+    const modelSelect = document.getElementById('solver-model-select');
+    if (!modelSelect) return;
+    modelSelect.innerHTML = '';
+
+    const p = PROVIDERS_CONFIG[providerKey];
+    if (!p) return;
+
+    p.models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      if (m.id === selectedModelId) opt.selected = true;
+      modelSelect.appendChild(opt);
+    });
+  }
+
   function init() {
     createOrUpdateWidget();
     setInterval(() => {
@@ -249,11 +313,8 @@
     }
 
     const settings = await window.EstacioSolver.getSettings();
-    const providerName = settings.provider === 'groq' ? 'Groq (Llama 3.3 70B)' :
-                         settings.provider === 'mistral' ? 'Mistral AI (Large)' :
-                         settings.provider === 'gemini' ? 'Google Gemini' :
-                         settings.provider === 'openai' ? 'ChatGPT (GPT-4o)' :
-                         settings.provider === 'deepseek' ? 'DeepSeek V3' : 'Custom AI';
+    let currentProvider = settings.provider || 'groq';
+    let currentModel = settings.model || PROVIDERS_CONFIG[currentProvider]?.defaultModel;
 
     widgetElement.innerHTML = `
       <div class="widget-header" id="widget-drag-handle">
@@ -268,9 +329,29 @@
         </div>
       </div>
       <div class="widget-body">
-        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.35); padding:6px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); font-size:11px;">
-          <span style="color:#94a3b8;">🤖 IA em Uso:</span>
-          <span style="color:#38bdf8; font-weight:700;">${providerName}</span>
+        <!-- Seletor Duplo de Provedor e Modelo -->
+        <div style="display:flex; flex-direction:column; gap:5px; background:rgba(0,0,0,0.35); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); font-size:11px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#94a3b8; font-weight:700;">🤖 IA:</span>
+            <select id="solver-provider-select" style="background:#1e293b; color:#38bdf8; border:1px solid #475569; border-radius:4px; font-size:11px; font-weight:600; padding:2px 6px; flex:1; max-width:210px;">
+              <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Ultra Rápido)</option>
+              <option value="mistral" ${currentProvider === 'mistral' ? 'selected' : ''}>Mistral AI (PhD)</option>
+              <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+              <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>ChatGPT (OpenAI)</option>
+              <option value="deepseek" ${currentProvider === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+            </select>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
+            <select id="solver-model-select" style="background:#1e293b; color:#38bdf8; border:1px solid #475569; border-radius:4px; font-size:11px; font-weight:600; padding:2px 6px; flex:1; max-width:210px;"></select>
+          </div>
+        </div>
+
+        <!-- Campo de Chave de API -->
+        <div style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.25); padding:5px 8px; border-radius:6px; font-size:11px;">
+          <span style="color:#94a3b8; font-size:10px; font-weight:700;">🔑 Chave:</span>
+          <input type="password" id="solver-key-input" style="flex:1; background:#1e293b; border:1px solid #475569; border-radius:4px; color:#fff; padding:3px 6px; font-size:11px; font-family:monospace;" placeholder="Cole sua chave aqui...">
+          <button id="solver-btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:3px 8px; font-size:11px; font-weight:700; cursor:pointer;">Salvar</button>
         </div>
 
         ${examMode ? `
@@ -280,7 +361,7 @@
           </div>
           <div class="widget-actions">
             <button id="solver-btn-action" class="widget-btn widget-btn-primary">
-              <span>🎯</span> Resolver e Marcar Todas
+              <span>🎯</span> Resolver e Marcar Prova
             </button>
           </div>
 
@@ -289,10 +370,11 @@
             <span style="color:#c084fc; font-weight:700;">🔍 Revisar Q:</span>
             <input type="number" id="review-q-num" style="width:40px; background:#1e293b; border:1px solid #475569; border-radius:4px; color:#fff; padding:2px 4px; text-align:center; font-size:11px; font-weight:700;" value="1" min="1" max="50">
             <select id="review-ai-select" style="background:#1e293b; color:#38bdf8; border:1px solid #475569; border-radius:4px; font-size:10px; padding:2px 4px; flex:1;">
-              <option value="mistral">Mistral (PhD)</option>
+              <option value="mistral">Mistral Large (PhD)</option>
               <option value="groq">Groq (Llama 70B)</option>
               <option value="gemini">Gemini Flash</option>
-              <option value="openai">ChatGPT 4o</option>
+              <option value="openai">ChatGPT (4o)</option>
+              <option value="deepseek">DeepSeek R1</option>
             </select>
             <button id="btn-review-action" style="background:linear-gradient(135deg, #8b5cf6, #d946ef); color:#fff; border:none; border-radius:4px; padding:3px 8px; font-size:11px; font-weight:600; cursor:pointer;">Reavaliar</button>
           </div>
@@ -320,11 +402,11 @@
         </div>
 
         <div class="widget-log" id="solver-log">
-          <div class="widget-log-item info">Pronto. IA: ${providerName} ativa.</div>
+          <div class="widget-log-item info">Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.</div>
         </div>
       </div>
       <div class="widget-footer">
-        <span style="color:#38bdf8; font-weight:600;">${providerName}</span>
+        <span id="solver-footer-model" style="color:#38bdf8; font-weight:600;">${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})</span>
         <button id="solver-btn-copy-ftr" style="background:none; border:none; color:#60a5fa; cursor:pointer; font-size:11px; display:flex; align-items:center; gap:4px;">
           <span>📋</span> Copiar Logs
         </button>
@@ -332,6 +414,62 @@
     `;
 
     setupUniversalDraggable(widgetElement, document.getElementById('widget-drag-handle'));
+
+    const providerSelect = document.getElementById('solver-provider-select');
+    const modelSelect = document.getElementById('solver-model-select');
+    const keyInput = document.getElementById('solver-key-input');
+    const footerModel = document.getElementById('solver-footer-model');
+
+    renderModelOptions(currentProvider, currentModel);
+    keyInput.value = settings.apiKeys?.[currentProvider] || settings.apiKey || '';
+
+    providerSelect.addEventListener('change', async () => {
+      currentProvider = providerSelect.value;
+      currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
+      renderModelOptions(currentProvider, currentModel);
+
+      const updatedSettings = await window.EstacioSolver.getSettings();
+      const currentKey = updatedSettings.apiKeys?.[currentProvider] || '';
+      keyInput.value = currentKey;
+
+      await window.EstacioSolver.saveSettings({
+        provider: currentProvider,
+        model: currentModel,
+        apiKey: currentKey
+      });
+
+      footerModel.textContent = `${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`;
+      log(`IA alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, 'success');
+
+      if (!currentKey) {
+        log(`⚠️ Nenhuma chave salva para ${PROVIDERS_CONFIG[currentProvider]?.name}. Cole sua chave e clique em Salvar.`, 'warning');
+      }
+    });
+
+    modelSelect.addEventListener('change', async () => {
+      currentModel = modelSelect.value;
+      await window.EstacioSolver.saveSettings({ model: currentModel });
+      footerModel.textContent = `${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`;
+      log(`Modelo alterado para: ${currentModel}`, 'info');
+    });
+
+    document.getElementById('solver-btn-save-key').addEventListener('click', async () => {
+      const val = keyInput.value.trim();
+      const st = await window.EstacioSolver.getSettings();
+      const apiKeys = st.apiKeys || {};
+      apiKeys[currentProvider] = val;
+
+      await window.EstacioSolver.saveSettings({
+        apiKeys: apiKeys,
+        apiKey: val
+      });
+
+      if (val) {
+        log(`✅ Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} salva com sucesso!`, 'success');
+      } else {
+        log(`⚠️ Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} removida.`, 'warning');
+      }
+    });
 
     document.getElementById('solver-btn-copy-hdr').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -770,7 +908,7 @@
       return;
     }
 
-    log(`[Revisão Q${qNum}] Analisando com ${targetProvider}...`, 'info');
+    log(`[Revisão Q${qNum}] Analisando com ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
     q.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     const statement = extractStatement(q.element, qNum);
@@ -784,14 +922,20 @@
     try {
       const settings = await window.EstacioSolver.getSettings();
       const prompt = window.EstacioSolver.formatPrompt(statement, alternatives);
+      const targetKey = settings.apiKeys?.[targetProvider] || settings.apiKey;
+
+      if (!targetKey) {
+        log(`[Revisão Q${qNum}] Chave para ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider} não salva.`, 'error');
+        return;
+      }
 
       const result = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
           type: 'CALL_AI',
           payload: {
             provider: targetProvider,
-            apiKey: settings.apiKeys?.[targetProvider] || settings.apiKey,
-            model: targetProvider === 'groq' ? 'llama-3.3-70b-versatile' : 'mistral-large-latest',
+            apiKey: targetKey,
+            model: PROVIDERS_CONFIG[targetProvider]?.defaultModel || 'mistral-large-latest',
             prompt: prompt
           }
         }, (response) => {
@@ -801,7 +945,7 @@
       });
 
       const chosenLetter = result.letra?.toUpperCase() || 'A';
-      log(`[Revisão Q${qNum}] ${targetProvider} sugere: ${chosenLetter} (${result.explicacao || ''})`, 'success');
+      log(`[Revisão Q${qNum}] ${PROVIDERS_CONFIG[targetProvider]?.name} sugere: ${chosenLetter} (${result.explicacao || ''})`, 'success');
 
       const target = alternatives.find(o => o.letter === chosenLetter);
       if (target && target.element) {
@@ -817,7 +961,7 @@
       const existingIdx = gabData.answers.findIndex(a => a.q === qNum);
       if (existingIdx >= 0) {
         gabData.answers[existingIdx].letter = chosenLetter;
-        gabData.answers[existingIdx].explanation = `[Revisado por ${targetProvider}] ${result.explicacao || ''}`;
+        gabData.answers[existingIdx].explanation = `[Revisado por ${PROVIDERS_CONFIG[targetProvider]?.name}] ${result.explicacao || ''}`;
       } else {
         gabData.answers.push({ q: qNum, letter: chosenLetter, explanation: result.explicacao || '' });
         gabData.answers.sort((a, b) => a.q - b.q);
@@ -843,7 +987,7 @@
       const settings = await window.EstacioSolver.getSettings();
       const cards = getQuestionCards();
       const total = cards.length;
-      log(`Iniciando resolução com ${settings.provider} (${total} questões)...`, 'info');
+      log(`Iniciando resolução com ${PROVIDERS_CONFIG[settings.provider]?.name} (${settings.model}) [${total} questões]...`, 'info');
 
       if (total === 0) {
         log('Nenhuma questão encontrada.', 'error');
@@ -868,7 +1012,7 @@
         }
 
         try {
-          log(`[${i + 1}/${total}] Consultando IA...`, 'info');
+          log(`[${i + 1}/${total}] Consultando IA (${PROVIDERS_CONFIG[settings.provider]?.name})...`, 'info');
           const result = await window.EstacioSolver.solveQuestion({
             statement: statement,
             alternatives: alternatives.map(o => ({ letter: o.letter, text: o.text }))
@@ -885,7 +1029,7 @@
 
           localStorage.setItem('estacio_last_gabarito', JSON.stringify({
             timestamp: new Date().toLocaleString(),
-            provider: settings.provider,
+            provider: `${PROVIDERS_CONFIG[settings.provider]?.name} (${settings.model})`,
             answers: gabaritoList
           }));
           renderSavedGabarito();

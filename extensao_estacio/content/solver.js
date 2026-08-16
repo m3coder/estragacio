@@ -4,11 +4,10 @@ window.EstacioSolver = {
   async getSettings() {
     return new Promise((resolve) => {
       chrome.storage.sync.get(['provider', 'model', 'apiKey', 'endpoint', 'apiKeys'], (items) => {
-        let provider = items.provider || 'gemini';
-        let model = items.model || 'gemini-flash-latest';
+        let provider = items.provider || 'groq';
+        let model = items.model || 'llama-3.3-70b-versatile';
 
-        // Auto-migração de modelos legados descontinuados pelo Google
-        if (provider === 'gemini' && (model.includes('1.5') || model.includes('2.0'))) {
+        if (provider === 'gemini' && (model.includes('1.5') || model.includes('2.0') || !model)) {
           model = 'gemini-flash-latest';
         }
 
@@ -19,9 +18,16 @@ window.EstacioSolver = {
           provider: provider,
           model: model,
           apiKey: apiKey,
+          apiKeys: apiKeys,
           endpoint: items.endpoint || ''
         });
       });
+    });
+  },
+
+  async saveSettings(newSettings) {
+    return new Promise((resolve) => {
+      chrome.storage.sync.set(newSettings, resolve);
     });
   },
 
@@ -49,24 +55,29 @@ ALTERNATIVAS:
   async solveQuestion(data) {
     const settings = await this.getSettings();
     const prompt = this.formatPrompt(data.statement, data.alternatives);
+    const key = settings.apiKeys?.[settings.provider] || settings.apiKey;
+
+    if (!key) {
+      throw new Error(`Chave para ${settings.provider} não configurada. Insira a chave no widget ou popup.`);
+    }
 
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         type: 'CALL_AI',
         payload: {
           provider: settings.provider,
-          apiKey: settings.apiKey,
+          apiKey: key,
           model: settings.model,
           endpoint: settings.endpoint,
           prompt: prompt
         }
       }, (response) => {
         if (!response) {
-          reject(new Error('Erro de comunicação com a extensão.'));
+          reject(new Error('Erro de comunicação com o Service Worker da extensão.'));
           return;
         }
         if (!response.success) {
-          reject(new Error(response.error || 'Falha ao resolver questão'));
+          reject(new Error(response.error || 'Falha ao consultar IA'));
           return;
         }
         resolve(response.data);

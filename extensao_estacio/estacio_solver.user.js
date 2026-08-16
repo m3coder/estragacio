@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Estácio Suite AI (Solver, Gabarito & Revisão Multi-IA)
 // @namespace    https://github.com/estacio-solver
-// @version      10.0.0
-// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor 2) Revisão Individual com Segunda Opinião 3) Auto-Conclusão de Temas com Undo.
+// @version      10.5.0
+// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor 2) Troca Rápida de Modelo e Provedor 3) Revisão com Segunda Opinião 4) Auto-Conclusão de Temas.
 // @author       Estácio Suite
 // @match        https://estacio.saladeavaliacoes.com.br/*
 // @match        https://estudante.estacio.br/*
@@ -23,30 +23,61 @@
 (function () {
   'use strict';
 
-  const DEFAULT_KEYS = {
-    groq: "",
-    mistral: "",
-    gemini: "",
-    openai: "",
-    deepseek: ""
-  };
-
-  const AI_MODELS = {
-    groq: { name: "Groq", defaultModel: "llama-3.3-70b-versatile", label: "Groq (Llama 3.3 70B - Ultra Rápido)" },
-    mistral: { name: "Mistral AI", defaultModel: "mistral-large-latest", label: "Mistral (Large - PhD)" },
-    gemini: { name: "Google Gemini", defaultModel: "gemini-flash-latest", label: "Gemini Flash Latest" },
-    openai: { name: "OpenAI", defaultModel: "gpt-4o", label: "GPT-4o" },
-    deepseek: { name: "DeepSeek", defaultModel: "deepseek-chat", label: "DeepSeek V3" }
+  const PROVIDERS_CONFIG = {
+    groq: {
+      name: "Groq",
+      defaultModel: "llama-3.3-70b-versatile",
+      models: [
+        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Recomendado)" },
+        { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B" },
+        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instantâneo)" }
+      ]
+    },
+    mistral: {
+      name: "Mistral AI",
+      defaultModel: "mistral-large-latest",
+      models: [
+        { id: "mistral-large-latest", name: "Mistral Large (PhD / Mais Preciso)" },
+        { id: "codestral-latest", name: "Codestral (Lógica & Código)" },
+        { id: "mistral-small-latest", name: "Mistral Small" }
+      ]
+    },
+    gemini: {
+      name: "Google Gemini",
+      defaultModel: "gemini-flash-latest",
+      models: [
+        { id: "gemini-flash-latest", name: "Gemini Flash Latest (Grátis)" },
+        { id: "gemini-pro-latest", name: "Gemini Pro Latest (Alta Precisão)" },
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }
+      ]
+    },
+    openai: {
+      name: "OpenAI",
+      defaultModel: "gpt-4o",
+      models: [
+        { id: "gpt-4o", name: "GPT-4o (Precisão Máxima)" },
+        { id: "gpt-4o-mini", name: "GPT-4o Mini (Econômico)" },
+        { id: "o3-mini", name: "o3-mini (Raciocínio)" }
+      ]
+    },
+    deepseek: {
+      name: "DeepSeek",
+      defaultModel: "deepseek-chat",
+      models: [
+        { id: "deepseek-chat", name: "DeepSeek V3" },
+        { id: "deepseek-reasoner", name: "DeepSeek R1 (Raciocínio Puro)" }
+      ]
+    }
   };
 
   const getSaved = (k, def) => (typeof GM_getValue !== 'undefined' ? GM_getValue(k, def) : localStorage.getItem('estacio_' + k) || def);
   const setSaved = (k, v) => (typeof GM_setValue !== 'undefined' ? GM_setValue(k, v) : localStorage.setItem('estacio_' + k, v));
 
   let currentProvider = getSaved('active_provider', 'groq');
-  let currentModel = getSaved('active_model', AI_MODELS[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
+  let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
 
   function getApiKeyFor(provider) {
-    return getSaved(`key_${provider}`, DEFAULT_KEYS[provider] || '');
+    return getSaved(`key_${provider}`, '');
   }
 
   function setApiKeyFor(provider, key) {
@@ -57,7 +88,6 @@
     let matricula = getSaved('matricula', '');
     if (matricula) return matricula;
 
-    // Tenta extrair do token JWT ativo se disponível
     const token = getBearerToken();
     if (token) {
       try {
@@ -104,7 +134,7 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      width: 360px;
+      width: 370px;
       background: rgba(15, 23, 42, 0.97);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -201,17 +231,24 @@
       padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
 
-    .ai-selector-bar {
+    /* Seletor Duplo: Provedor + Modelo */
+    .ai-selector-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ai-selector-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 8px;
       font-size: 11px;
     }
     .ai-selector-select {
@@ -221,17 +258,19 @@
       border-radius: 4px;
       font-size: 11px;
       font-weight: 600;
-      padding: 2px 6px;
+      padding: 3px 6px;
       cursor: pointer;
       outline: none;
+      flex: 1;
+      max-width: 230px;
     }
 
     .key-config-row {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 5px 8px;
       border-radius: 6px;
       font-size: 11px;
     }
@@ -241,8 +280,9 @@
       border: 1px solid #475569;
       border-radius: 4px;
       color: #fff;
-      padding: 3px 6px;
+      padding: 4px 6px;
       font-size: 11px;
+      font-family: monospace;
     }
 
     .box-btn {
@@ -376,6 +416,7 @@
     .log-item.success { color: #34d399; }
     .log-item.error { color: #f87171; }
     .log-item.info { color: #60a5fa; }
+    .log-item.warning { color: #fbbf24; }
     
     .box-footer {
       padding: 6px 14px;
@@ -579,6 +620,30 @@
     }
   }
 
+  function renderModelOptions(providerKey, selectedModelId) {
+    const modelSelect = document.getElementById('box-model-select');
+    if (!modelSelect) return;
+    modelSelect.innerHTML = '';
+
+    const p = PROVIDERS_CONFIG[providerKey];
+    if (!p) return;
+
+    p.models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      if (m.id === selectedModelId) opt.selected = true;
+      modelSelect.appendChild(opt);
+    });
+  }
+
+  function updateActiveFooterLabel() {
+    const footerEl = document.getElementById('box-footer-model');
+    if (!footerEl) return;
+    const pName = PROVIDERS_CONFIG[currentProvider]?.name || currentProvider;
+    footerEl.textContent = `${pName} (${currentModel})`;
+  }
+
   function createBox() {
     if (document.getElementById('estacio-suite-box')) return;
 
@@ -599,21 +664,29 @@
         </div>
 
         <div class="box-body">
-          <div class="ai-selector-bar">
-            <span style="color:#94a3b8; font-weight:600;">🤖 IA Principal:</span>
-            <select id="box-ai-select" class="ai-selector-select">
-              <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Llama 3.3 70B)</option>
-              <option value="mistral" ${currentProvider === 'mistral' ? 'selected' : ''}>Mistral AI (Large)</option>
-              <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Gemini Flash Latest</option>
-              <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>ChatGPT (GPT-4o)</option>
-              <option value="deepseek" ${currentProvider === 'deepseek' ? 'selected' : ''}>DeepSeek V3</option>
-            </select>
+          <!-- Seletor Duplo de Provedor e Modelo -->
+          <div class="ai-selector-container">
+            <div class="ai-selector-row">
+              <span style="color:#94a3b8; font-weight:700;">🤖 IA:</span>
+              <select id="box-ai-select" class="ai-selector-select">
+                <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Ultra Rápido)</option>
+                <option value="mistral" ${currentProvider === 'mistral' ? 'selected' : ''}>Mistral AI (PhD)</option>
+                <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+                <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>ChatGPT (OpenAI)</option>
+                <option value="deepseek" ${currentProvider === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+              </select>
+            </div>
+            <div class="ai-selector-row">
+              <span style="color:#94a3b8; font-weight:700;">🧠 Modelo:</span>
+              <select id="box-model-select" class="ai-selector-select"></select>
+            </div>
           </div>
 
+          <!-- Campo de Chave de API com Status -->
           <div class="key-config-row">
-            <span style="color:#94a3b8; font-size:10px;">🔑 Chave:</span>
-            <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole a chave da IA aqui...">
-            <button id="btn-save-key" style="background:#334155; border:none; color:#38bdf8; border-radius:4px; padding:3px 6px; font-size:10px; cursor:pointer; font-weight:600;">Salvar</button>
+            <span style="color:#94a3b8; font-size:10px; font-weight:700;">🔑 Chave:</span>
+            <input type="password" id="box-key-input" class="key-config-input" placeholder="Cole sua chave aqui...">
+            <button id="btn-save-key" style="background:#2563eb; border:none; color:#fff; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer; font-weight:700;">Salvar</button>
           </div>
 
           ${isExamPage ? `
@@ -629,11 +702,12 @@
             <div class="review-bar">
               <span style="color:#c084fc; font-weight:700;">🔍 Revisar Q:</span>
               <input type="number" id="review-q-num" class="review-input" value="1" min="1" max="50">
-              <select id="review-ai-select" class="ai-selector-select" style="font-size:10px;">
-                <option value="mistral">com Mistral (PhD)</option>
-                <option value="groq">com Groq (Llama 70B)</option>
-                <option value="gemini">com Gemini Flash</option>
-                <option value="openai">com ChatGPT 4o</option>
+              <select id="review-ai-select" class="ai-selector-select" style="font-size:10px; max-width:140px;">
+                <option value="mistral">Mistral Large (PhD)</option>
+                <option value="groq">Groq (Llama 70B)</option>
+                <option value="gemini">Gemini Flash</option>
+                <option value="openai">ChatGPT (4o)</option>
+                <option value="deepseek">DeepSeek R1</option>
               </select>
               <button id="btn-review-action" class="review-btn" title="Reavaliar esta questão com outra IA">Reavaliar</button>
             </div>
@@ -659,12 +733,12 @@
           </div>
 
           <div class="box-log" id="box-log">
-            <div class="log-item info">Pronto. IA: ${AI_MODELS[currentProvider]?.label} ativa.</div>
+            <div class="log-item info">Pronto. IA: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) ativa.</div>
           </div>
         </div>
 
         <div class="box-footer">
-          <span id="box-footer-model" style="color:#38bdf8; font-weight:600;">${AI_MODELS[currentProvider]?.label}</span>
+          <span id="box-footer-model" style="color:#38bdf8; font-weight:600;">${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})</span>
           <div style="display:flex; align-items:center; gap:8px;">
             <button id="btn-copy-footer" class="footer-btn" title="Copiar todos os logs">
               <span>📋</span> Copiar Logs
@@ -697,22 +771,40 @@
     });
 
     const keyInput = document.getElementById('box-key-input');
-    keyInput.value = getApiKeyFor(currentProvider);
+    const aiSelect = document.getElementById('box-ai-select');
+    const modelSelect = document.getElementById('box-model-select');
 
-    document.getElementById('box-ai-select').addEventListener('change', (e) => {
+    renderModelOptions(currentProvider, currentModel);
+    keyInput.value = getApiKeyFor(currentProvider);
+    checkKeyStatus(currentProvider);
+
+    aiSelect.addEventListener('change', (e) => {
       currentProvider = e.target.value;
-      currentModel = AI_MODELS[currentProvider]?.defaultModel;
+      currentModel = PROVIDERS_CONFIG[currentProvider]?.defaultModel;
       setSaved('active_provider', currentProvider);
       setSaved('active_model', currentModel);
+      renderModelOptions(currentProvider, currentModel);
       keyInput.value = getApiKeyFor(currentProvider);
-      document.getElementById('box-footer-model').textContent = AI_MODELS[currentProvider]?.label;
-      log(`IA alterada para: ${AI_MODELS[currentProvider]?.label}`, 'success');
+      updateActiveFooterLabel();
+      checkKeyStatus(currentProvider);
+      log(`IA alterada para: ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`, 'success');
+    });
+
+    modelSelect.addEventListener('change', (e) => {
+      currentModel = e.target.value;
+      setSaved('active_model', currentModel);
+      updateActiveFooterLabel();
+      log(`Modelo alterado para: ${currentModel}`, 'info');
     });
 
     document.getElementById('btn-save-key').addEventListener('click', () => {
       const val = keyInput.value.trim();
       setApiKeyFor(currentProvider, val);
-      log(`Chave para ${AI_MODELS[currentProvider]?.name} salva com sucesso!`, 'success');
+      if (val) {
+        log(`✅ Chave para ${PROVIDERS_CONFIG[currentProvider]?.name} salva com sucesso!`, 'success');
+      } else {
+        log(`⚠️ Chave removida para ${PROVIDERS_CONFIG[currentProvider]?.name}.`, 'warning');
+      }
     });
 
     document.getElementById('btn-copy-header').addEventListener('click', (e) => {
@@ -757,6 +849,13 @@
     processAutomatorStateMachine();
   }
 
+  function checkKeyStatus(provider) {
+    const key = getApiKeyFor(provider);
+    if (!key) {
+      log(`⚠️ Nenhuma chave salva para ${PROVIDERS_CONFIG[provider]?.name}. Cole a chave no campo e clique em Salvar.`, 'warning');
+    }
+  }
+
   function log(msg, type = 'info') {
     const logBox = document.getElementById('box-log');
     if (!logBox) return;
@@ -777,7 +876,7 @@
       return;
     }
 
-    log(`[Revisão Q${qNum}] Analisando com ${AI_MODELS[targetProvider]?.name || targetProvider}...`, 'info');
+    log(`[Revisão Q${qNum}] Analisando com ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
     q.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     const statement = extractStatement(q.element, qNum);
@@ -789,11 +888,11 @@
     }
 
     try {
-      const model = AI_MODELS[targetProvider]?.defaultModel;
+      const model = PROVIDERS_CONFIG[targetProvider]?.defaultModel;
       const ans = await executeAICall(targetProvider, model, statement, alternatives);
       const chosenLetter = ans.letra?.toUpperCase() || 'A';
 
-      log(`[Revisão Q${qNum}] ${AI_MODELS[targetProvider]?.name} sugere: ${chosenLetter} (${ans.explicacao || ''})`, 'success');
+      log(`[Revisão Q${qNum}] ${PROVIDERS_CONFIG[targetProvider]?.name} sugere: ${chosenLetter} (${ans.explicacao || ''})`, 'success');
 
       const target = alternatives.find(o => o.letter === chosenLetter);
       if (target && target.element) {
@@ -809,7 +908,7 @@
       const existingIdx = gabData.answers.findIndex(a => a.q === qNum);
       if (existingIdx >= 0) {
         gabData.answers[existingIdx].letter = chosenLetter;
-        gabData.answers[existingIdx].explanation = `[Revisado por ${AI_MODELS[targetProvider]?.name}] ${ans.explicacao || ''}`;
+        gabData.answers[existingIdx].explanation = `[Revisado por ${PROVIDERS_CONFIG[targetProvider]?.name}] ${ans.explicacao || ''}`;
       } else {
         gabData.answers.push({ q: qNum, letter: chosenLetter, explanation: ans.explicacao || '' });
         gabData.answers.sort((a, b) => a.q - b.q);
@@ -827,19 +926,33 @@
     try {
       return await executeAICall(currentProvider, currentModel, statement, alternatives);
     } catch (err) {
-      log(`[Aviso] ${currentProvider} falhou (${err.message}). Tentando fallback...`, 'error');
-      try {
-        return await executeAICall('groq', 'llama-3.3-70b-versatile', statement, alternatives);
-      } catch (err2) {
-        return await executeAICall('mistral', 'mistral-large-latest', statement, alternatives);
+      log(`[Aviso] ${currentProvider} falhou (${err.message}). Tentando fallback automático...`, 'error');
+      // Fallback para Groq se houver chave salva
+      const groqKey = getApiKeyFor('groq');
+      if (groqKey && currentProvider !== 'groq') {
+        try {
+          log('Fallback ativado: Consultando Groq Llama 3.3 70B...', 'info');
+          return await executeAICall('groq', 'llama-3.3-70b-versatile', statement, alternatives);
+        } catch (groqErr) {}
       }
+
+      // Fallback para Mistral se houver chave salva
+      const mistralKey = getApiKeyFor('mistral');
+      if (mistralKey && currentProvider !== 'mistral') {
+        try {
+          log('Fallback ativado: Consultando Mistral Large...', 'info');
+          return await executeAICall('mistral', 'mistral-large-latest', statement, alternatives);
+        } catch (mistralErr) {}
+      }
+
+      throw err;
     }
   }
 
   async function executeAICall(provider, model, statement, alternatives) {
     const apiKey = getApiKeyFor(provider);
     if (!apiKey) {
-      throw new Error(`Chave de API do ${provider} não configurada. Insira sua chave no campo acima.`);
+      throw new Error(`Chave de API do ${PROVIDERS_CONFIG[provider]?.name || provider} não configurada. Cole no campo de chave e clique em Salvar.`);
     }
 
     let prompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato.
@@ -1292,7 +1405,7 @@ ALTERNATIVAS:
     try {
       const cards = getQuestionCards();
       const total = cards.length;
-      log(`Iniciando resolução com ${AI_MODELS[currentProvider]?.label} (${total} questões)...`, 'info');
+      log(`Iniciando resolução com ${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel}) [${total} questões]...`, 'info');
 
       if (total === 0) {
         log('Nenhuma questão encontrada.', 'error');
@@ -1317,7 +1430,7 @@ ALTERNATIVAS:
         }
 
         try {
-          log(`[${i + 1}/${total}] Consultando IA...`, 'info');
+          log(`[${i + 1}/${total}] Consultando IA (${PROVIDERS_CONFIG[currentProvider]?.name})...`, 'info');
           const ans = await callAI(statement, alternatives);
           const chosenLetter = ans.letra?.toUpperCase() || 'A';
           log(`[${i + 1}/${total}] -> Resposta: ${chosenLetter} (${ans.explicacao || ''})`, 'success');
@@ -1330,7 +1443,7 @@ ALTERNATIVAS:
 
           localStorage.setItem('estacio_last_gabarito', JSON.stringify({
             timestamp: new Date().toLocaleString(),
-            provider: AI_MODELS[currentProvider]?.label || currentProvider,
+            provider: `${PROVIDERS_CONFIG[currentProvider]?.name} (${currentModel})`,
             answers: gabaritoList
           }));
           renderSavedGabarito();
