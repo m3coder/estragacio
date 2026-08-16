@@ -768,7 +768,7 @@ Responda ESTRITAMENTE em formato JSON:
     }
     return Array.from(discoveredUuids);
   }
-  async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula) {
+  async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula, onLog = null) {
     const matriculaParam = matricula ? `?matricula=${matricula}` : "";
     const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
     const endpointNovo = `https://apis.estudante.estacio.br/rest/me/conteudos/${conteudoUuid}/concluir`;
@@ -776,14 +776,19 @@ Responda ESTRITAMENTE em formato JSON:
       "Authorization": `Bearer ${token}`,
       "Accept": "application/json, text/plain, */*"
     };
-    let success = false;
+    let statusInfo = "";
     try {
       const res = await fetch(endpointLegado, {
         method: "POST",
         headers: headersBase
       });
-      if (res.status >= 200 && res.status < 300) success = true;
+      statusInfo += `Legado: HTTP ${res.status} `;
+      if (res.status >= 200 && res.status < 300) {
+        if (onLog) onLog(`[POST Conclus\xF5es] /temas/${temaId}/conteudos/${conteudoUuid.slice(0, 8)}... \u2192 HTTP ${res.status} OK \u2705`, "success");
+        return true;
+      }
     } catch (e) {
+      statusInfo += `Legado: ${e.message} `;
     }
     try {
       const res = await fetch(endpointNovo, {
@@ -798,10 +803,18 @@ Responda ESTRITAMENTE em formato JSON:
           idConteudo: conteudoUuid
         })
       });
-      if (res.status >= 200 && res.status < 300) success = true;
+      statusInfo += `Novo: HTTP ${res.status}`;
+      if (res.status >= 200 && res.status < 300) {
+        if (onLog) onLog(`[POST Concluir] /me/conteudos/${conteudoUuid.slice(0, 8)}... \u2192 HTTP ${res.status} OK \u2705`, "success");
+        return true;
+      }
     } catch (e) {
+      statusInfo += `Novo: ${e.message}`;
     }
-    return success;
+    if (onLog) {
+      onLog(`[Aviso POST] Resposta da API: ${statusInfo}`, "warning");
+    }
+    return false;
   }
   async function tryClickInPageConcludeButton() {
     const buttons = Array.from(document.querySelectorAll("button, a"));
@@ -851,16 +864,15 @@ Responda ESTRITAMENTE em formato JSON:
           apiUuids.forEach((u) => allUuids.add(u));
         }
         const uuidList = Array.from(allUuids);
-        if (onLog) onLog(`[Tema ${temaNum}] Concluindo ${uuidList.length || 1} sub-item(ns)...`, "info");
+        if (onLog) onLog(`[Tema ${temaNum}] Disparando requisi\xE7\xE3o de conclus\xE3o para ${uuidList.length || 1} sub-item(ns)...`, "info");
         if (uuidList.length > 0) {
           for (let idx = 0; idx < uuidList.length; idx++) {
             const uuid = uuidList[idx];
-            await postConcluir(turmaId, temaId, uuid, token, matricula);
-            if (onLog) onLog(`  \u2514\u2500 [Sub-Item ${idx + 1}/${uuidList.length}] Conclu\xEDdo com sucesso! \u2705`, "success");
+            await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
             await new Promise((r) => setTimeout(r, 350));
           }
         } else if (ids.conteudoUuid) {
-          await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
+          await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
         }
         await tryClickInPageConcludeButton();
         const delayMs = Math.floor(Math.random() * (2500 - 1500 + 1)) + 1500;

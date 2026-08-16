@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Persistência em localStorage)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Logs Detalhados de Requisição HTTP)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -96,7 +96,7 @@ export async function fetchAllThemeSubContents(turmaId, temaId, token) {
   return Array.from(discoveredUuids);
 }
 
-export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula) {
+export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricula, onLog = null) {
   const matriculaParam = matricula ? `?matricula=${matricula}` : '';
   const endpointLegado = `https://apis.estudante.estacio.br/rest/turmas/${turmaId}/temas/${temaId}/conteudos/${conteudoUuid}/conclusoes${matriculaParam}`;
   const endpointNovo = `https://apis.estudante.estacio.br/rest/me/conteudos/${conteudoUuid}/concluir`;
@@ -106,16 +106,24 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
     'Accept': 'application/json, text/plain, */*'
   };
 
-  let success = false;
+  let statusInfo = '';
 
+  // 1. Tenta Endpoint Principal de Conclusões da Turma
   try {
     const res = await fetch(endpointLegado, {
       method: 'POST',
       headers: headersBase
     });
-    if (res.status >= 200 && res.status < 300) success = true;
-  } catch (e) {}
+    statusInfo += `Legado: HTTP ${res.status} `;
+    if (res.status >= 200 && res.status < 300) {
+      if (onLog) onLog(`[POST Conclusões] /temas/${temaId}/conteudos/${conteudoUuid.slice(0, 8)}... → HTTP ${res.status} OK ✅`, 'success');
+      return true;
+    }
+  } catch (e) {
+    statusInfo += `Legado: ${e.message} `;
+  }
 
+  // 2. Tenta Endpoint Secundário /me/conteudos/concluir
   try {
     const res = await fetch(endpointNovo, {
       method: 'POST',
@@ -129,10 +137,20 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
         idConteudo: conteudoUuid
       })
     });
-    if (res.status >= 200 && res.status < 300) success = true;
-  } catch (e) {}
+    statusInfo += `Novo: HTTP ${res.status}`;
+    if (res.status >= 200 && res.status < 300) {
+      if (onLog) onLog(`[POST Concluir] /me/conteudos/${conteudoUuid.slice(0, 8)}... → HTTP ${res.status} OK ✅`, 'success');
+      return true;
+    }
+  } catch (e) {
+    statusInfo += `Novo: ${e.message}`;
+  }
 
-  return success;
+  if (onLog) {
+    onLog(`[Aviso POST] Resposta da API: ${statusInfo}`, 'warning');
+  }
+
+  return false;
 }
 
 export async function tryClickInPageConcludeButton() {
@@ -152,7 +170,6 @@ export async function tryClickInPageConcludeButton() {
 export async function processAutomatorStateMachine(onLog) {
   if (isStateMachineRunning) return;
 
-  // Usa localStorage para nunca perder o estado entre reloads e trocas de rota
   const queueRaw = localStorage.getItem('estacio_catalog_queue');
   if (!queueRaw) return;
 
@@ -196,18 +213,17 @@ export async function processAutomatorStateMachine(onLog) {
       }
 
       const uuidList = Array.from(allUuids);
-      if (onLog) onLog(`[Tema ${temaNum}] Concluindo ${uuidList.length || 1} sub-item(ns)...`, 'info');
+      if (onLog) onLog(`[Tema ${temaNum}] Disparando requisição de conclusão para ${uuidList.length || 1} sub-item(ns)...`, 'info');
 
-      // Envia conclusões para todos os UUIDs encontrados
+      // Envia conclusões com log explícito de cada chamada
       if (uuidList.length > 0) {
         for (let idx = 0; idx < uuidList.length; idx++) {
           const uuid = uuidList[idx];
-          await postConcluir(turmaId, temaId, uuid, token, matricula);
-          if (onLog) onLog(`  └─ [Sub-Item ${idx + 1}/${uuidList.length}] Concluído com sucesso! ✅`, 'success');
+          await postConcluir(turmaId, temaId, uuid, token, matricula, onLog);
           await new Promise(r => setTimeout(r, 350));
         }
       } else if (ids.conteudoUuid) {
-        await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula);
+        await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
       }
 
       // Tenta clicar no botão nativo "Marcar como concluído"
