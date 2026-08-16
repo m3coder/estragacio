@@ -839,6 +839,10 @@ Responda ESTRITAMENTE em formato JSON:
     return false;
   }
   async function tryClickInPageConcludeButton() {
+    try {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    } catch (e) {
+    }
     const buttons = Array.from(document.querySelectorAll("button, a"));
     const concludeBtn = buttons.find((b) => {
       const txt = b.innerText.toLowerCase();
@@ -846,6 +850,8 @@ Responda ESTRITAMENTE em formato JSON:
     });
     if (concludeBtn) {
       try {
+        concludeBtn.removeAttribute("disabled");
+        concludeBtn.setAttribute("aria-disabled", "false");
         triggerNativeClick(concludeBtn);
       } catch (e) {
       }
@@ -897,10 +903,14 @@ Responda ESTRITAMENTE em formato JSON:
           await postConcluir(turmaId, temaId, ids.conteudoUuid, token, matricula, onLog);
         }
         await tryClickInPageConcludeButton();
-        const delayMs = Math.floor(Math.random() * (2500 - 1500 + 1)) + 1500;
+        const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
         const delaySec = (delayMs / 1e3).toFixed(1);
-        if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da mat\xE9ria...`, "info");
+        if (onLog) onLog(`[Tema ${temaNum}] Conclu\xEDdo com sucesso! Aguardando ${delaySec}s e voltando para a grade...`, "success");
         await new Promise((r) => setTimeout(r, delayMs));
+        queue.completedThemes = queue.completedThemes || [];
+        if (!queue.completedThemes.includes(temaNum)) {
+          queue.completedThemes.push(temaNum);
+        }
         queue.currentPos += 1;
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         if (onLog) onLog(`Voltando para: /disciplinas/${turmaId}/conteudos \u21A9\uFE0F`, "info");
@@ -910,11 +920,15 @@ Responda ESTRITAMENTE em formato JSON:
       }
       return;
     }
-    const gridCards = getThemeCardsFromDom();
-    if (gridCards.length > 0) {
+    if (!insideTheme) {
       isStateMachineRunning = true;
       try {
-        const pendentes = gridCards.filter((c) => c.isPendente);
+        const gridCards = await waitForCards(12e3);
+        if (gridCards.length === 0) {
+          return;
+        }
+        const completedSet = new Set(queue.completedThemes || []);
+        const pendentes = gridCards.filter((c) => !c.isConcluido && !completedSet.has(c.temaNum));
         if (pendentes.length === 0) {
           localStorage.removeItem("estacio_catalog_queue");
           if (onLog) onLog("\u{1F3C6} Todos os temas desta mat\xE9ria est\xE3o 100% CONCLU\xCDDOS! Parab\xE9ns!", "success");
@@ -922,7 +936,6 @@ Responda ESTRITAMENTE em formato JSON:
         }
         if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na mat\xE9ria.`, "info");
         queue.pendingThemes = pendentes.map((c) => c.temaNum);
-        queue.currentPos = 0;
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         const nextTema = pendentes[0];
         if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
@@ -953,6 +966,7 @@ Responda ESTRITAMENTE em formato JSON:
         turmaId,
         conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: [1],
+        completedThemes: [],
         currentPos: 0
       };
       localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
@@ -973,6 +987,7 @@ Responda ESTRITAMENTE em formato JSON:
         turmaId,
         conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
         pendingThemes: pendingNumbers,
+        completedThemes: [],
         currentPos: 0
       };
       localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));

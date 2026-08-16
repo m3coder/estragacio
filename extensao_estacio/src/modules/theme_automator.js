@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Logs Detalhados de Requisição HTTP)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com waitForCards e Fila de Concluídos)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -154,6 +154,10 @@ export async function postConcluir(turmaId, temaId, conteudoUuid, token, matricu
 }
 
 export async function tryClickInPageConcludeButton() {
+  try {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  } catch (e) {}
+
   const buttons = Array.from(document.querySelectorAll('button, a'));
   const concludeBtn = buttons.find(b => {
     const txt = b.innerText.toLowerCase();
@@ -162,6 +166,8 @@ export async function tryClickInPageConcludeButton() {
 
   if (concludeBtn) {
     try {
+      concludeBtn.removeAttribute('disabled');
+      concludeBtn.setAttribute('aria-disabled', 'false');
       triggerNativeClick(concludeBtn);
     } catch (e) {}
   }
@@ -229,11 +235,16 @@ export async function processAutomatorStateMachine(onLog) {
       // Tenta clicar no botão nativo "Marcar como concluído"
       await tryClickInPageConcludeButton();
 
-      const delayMs = Math.floor(Math.random() * (2500 - 1500 + 1)) + 1500;
+      const delayMs = Math.floor(Math.random() * (2200 - 1500 + 1)) + 1500;
       const delaySec = (delayMs / 1000).toFixed(1);
-      if (onLog) onLog(`Aguardando ${delaySec}s e voltando para a grade da matéria...`, 'info');
+      if (onLog) onLog(`[Tema ${temaNum}] Concluído com sucesso! Aguardando ${delaySec}s e voltando para a grade...`, 'success');
       await new Promise(r => setTimeout(r, delayMs));
 
+      // REGISTRA O TEMA ATUAL COMO CONCLUÍDO NA FILA PERSISTENTE
+      queue.completedThemes = queue.completedThemes || [];
+      if (!queue.completedThemes.includes(temaNum)) {
+        queue.completedThemes.push(temaNum);
+      }
       queue.currentPos += 1;
       localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
@@ -250,11 +261,19 @@ export async function processAutomatorStateMachine(onLog) {
   // =========================================================================
   // CENÁRIO 2: ESTAMOS NA GRADE DE TEMAS DA MATÉRIA (/disciplinas/.../conteudos)
   // =========================================================================
-  const gridCards = getThemeCardsFromDom();
-  if (gridCards.length > 0) {
+  if (!insideTheme) {
     isStateMachineRunning = true;
     try {
-      const pendentes = gridCards.filter(c => c.isPendente);
+      // Espera assincronamente os cards serem renderizados pelo React na tela
+      const gridCards = await waitForCards(12000);
+      if (gridCards.length === 0) {
+        return;
+      }
+
+      const completedSet = new Set(queue.completedThemes || []);
+
+      // Filtra os temas pendentes considerando os que já foram marcados nesta sessão
+      const pendentes = gridCards.filter(c => !c.isConcluido && !completedSet.has(c.temaNum));
 
       if (pendentes.length === 0) {
         localStorage.removeItem('estacio_catalog_queue');
@@ -265,7 +284,6 @@ export async function processAutomatorStateMachine(onLog) {
       if (onLog) onLog(`Restam ${pendentes.length} tema(s) pendente(s) na matéria.`, 'info');
 
       queue.pendingThemes = pendentes.map(c => c.temaNum);
-      queue.currentPos = 0;
       localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
 
       const nextTema = pendentes[0];
@@ -305,6 +323,7 @@ export function startThemeCompletion(onLog) {
       turmaId: turmaId,
       conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: [1],
+      completedThemes: [],
       currentPos: 0
     };
     localStorage.setItem('estacio_catalog_queue', JSON.stringify(queue));
@@ -329,6 +348,7 @@ export function startThemeCompletion(onLog) {
       turmaId: turmaId,
       conteudosUrl: `https://estudante.estacio.br/disciplinas/${turmaId}/conteudos`,
       pendingThemes: pendingNumbers,
+      completedThemes: [],
       currentPos: 0
     };
 
