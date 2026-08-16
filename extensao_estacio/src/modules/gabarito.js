@@ -24,7 +24,10 @@ export function saveGabarito(providerLabel, answersList) {
 
 export function initGabaritoStructure(totalQuestions = 10, providerLabel = 'AI') {
   let existing = getSavedGabarito();
-  const answers = existing?.answers ? [...existing.answers] : [];
+  let answers = existing?.answers ? [...existing.answers] : [];
+
+  // Remove qualquer resquício de questões que excedam o total real (ex: Q11-Q15 antigas)
+  answers = answers.filter(a => a.q <= totalQuestions);
 
   for (let q = 1; q <= totalQuestions; q++) {
     if (!answers.some(a => a.q === q)) {
@@ -142,6 +145,12 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
     return;
   }
 
+  // Atualiza título do cabeçalho com o total real de questões
+  const headerSpan = containerEl.querySelector('.gabarito-header > span:first-child');
+  if (headerSpan) {
+    headerSpan.textContent = `📝 Gabarito (${currentData.answers.length} Questões)`;
+  }
+
   containerEl.style.display = 'flex';
   badgesEl.innerHTML = '';
 
@@ -156,11 +165,11 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
     if (status === 'done' || (a.letter && status !== 'failed')) {
       span.className = 'gabarito-badge badge-done';
       span.title = `Questão ${a.q}: [ ${a.letter} ] - ${a.explanation || 'Concluída'}\n👉 Clique para REVISAR (2ª Opinião com ${pName})!`;
-      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-letter">${a.letter}</b> <span class="badge-icon">✅ 🔍</span>`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-letter">${a.letter}</b>`;
     } else if (status === 'failed') {
       span.className = 'gabarito-badge badge-failed';
       span.title = `Questão ${a.q} falhou: ${a.error || 'Erro'}\n👉 Clique para RETRY / TENTAR NOVAMENTE!`;
-      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-fail">❌</b> <span class="badge-icon">Retry</span>`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-fail">❌</b>`;
     } else if (status === 'processing') {
       span.className = 'gabarito-badge badge-processing';
       span.title = `Questão ${a.q} sendo processada pela IA...`;
@@ -169,7 +178,7 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
       // Pending
       span.className = 'gabarito-badge badge-pending';
       span.title = `Questão ${a.q} pendente.\n👉 Clique para RESOLVER AGORA com a IA ativa!`;
-      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-pend">-</b> <span class="badge-icon">⏳</span>`;
+      span.innerHTML = `<span class="badge-q">Q${a.q}:</span> <b class="badge-pend">-</b>`;
     }
 
     span.addEventListener('click', () => {

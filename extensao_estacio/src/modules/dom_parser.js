@@ -24,16 +24,24 @@ export function getQuestionCards() {
 export function getTotalExamQuestionsCount() {
   const cards = getQuestionCards();
   if (cards.length > 0) {
-    return Math.max(...cards.map(c => c.index), cards.length);
+    const validIndices = cards.map(c => c.index).filter(n => n >= 1 && n <= 30);
+    if (validIndices.length > 0) {
+      return Math.max(...validIndices, cards.length);
+    }
+    return cards.length;
   }
 
-  const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
-  const numButtons = buttons
-    .map(b => parseInt(b.innerText?.trim() || '0'))
-    .filter(n => !isNaN(n) && n >= 1 && n <= 30);
-
-  if (numButtons.length > 0) {
-    return Math.max(...numButtons);
+  // Tenta encontrar botões específicos de navegação de questão (ex: data-testid="question-nav-1" ou aria-label="Questão 1")
+  const specificNav = Array.from(document.querySelectorAll('[data-testid*="question-nav-"], [aria-label*="Questão "]'));
+  if (specificNav.length > 0) {
+    const navIndices = specificNav.map(el => {
+      const match = (el.getAttribute('data-testid') || '').match(/question-nav-(\d+)/) ||
+                    (el.getAttribute('aria-label') || '').match(/Quest[aã]o\s*(\d+)/i);
+      return match ? parseInt(match[1], 10) : 0;
+    }).filter(n => n >= 1 && n <= 30);
+    if (navIndices.length > 0) {
+      return Math.max(...navIndices);
+    }
   }
 
   return 10;
