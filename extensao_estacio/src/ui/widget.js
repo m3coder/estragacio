@@ -137,8 +137,15 @@ export function createSuiteWidget() {
       </div>
 
       <div class="box-footer">
-        <span id="box-footer-model" style="color:#38bdf8; font-weight:600; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px;"></span>
-        <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+          <span id="box-footer-model" style="color:#38bdf8; font-weight:600; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;"></span>
+          <div class="opacity-control-bar" title="Transparência quando o mouse estiver fora (Passe o mouse por cima para 100%)">
+            <span style="font-size:10px; opacity:0.85;">👁️</span>
+            <input type="range" id="box-opacity-slider" min="15" max="100" value="45" class="opacity-slider">
+            <span id="box-opacity-val" class="opacity-val-badge">45%</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
           <button id="btn-clear-footer" class="footer-btn" title="Limpar logs e dados acumulados">
             <span>🧹</span> Limpar
           </button>
@@ -371,6 +378,25 @@ export function createSuiteWidget() {
 
   targetSelect.value = configTargetProvider;
   keyInput.value = getApiKeyFor(configTargetProvider);
+
+  // Transparência Ociosa Customizável (Idle Opacity)
+  const savedIdleOpacity = localStorage.getItem('estacio_idle_opacity') || '45';
+  box.style.setProperty('--widget-idle-opacity', `${parseInt(savedIdleOpacity, 10) / 100}`);
+
+  const opacitySlider = document.getElementById('box-opacity-slider');
+  const opacityValBadge = document.getElementById('box-opacity-val');
+
+  if (opacitySlider && opacityValBadge) {
+    opacitySlider.value = savedIdleOpacity;
+    opacityValBadge.textContent = `${savedIdleOpacity}%`;
+
+    opacitySlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      opacityValBadge.textContent = `${val}%`;
+      box.style.setProperty('--widget-idle-opacity', `${parseInt(val, 10) / 100}`);
+      localStorage.setItem('estacio_idle_opacity', val);
+    });
+  }
 
   updateToggleBtnState();
   renderProviderOptions();

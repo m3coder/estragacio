@@ -32,7 +32,10 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
       const dy = moveEvent.clientY - startY;
 
       if (Math.hypot(dx, dy) > 4) {
-        isDragging = true;
+        if (!isDragging) {
+          isDragging = true;
+          targetElement.classList.add('is-dragging');
+        }
         const newLeft = `${initialLeft + dx}px`;
         const newTop = `${initialTop + dy}px`;
         targetElement.style.left = newLeft;
@@ -48,6 +51,7 @@ export function setupUniversalDraggable(targetElement, handleElement = null, onC
     function onMouseUp(upEvent) {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      targetElement.classList.remove('is-dragging');
 
       if (!isDragging && onClickCallback) {
         onClickCallback(upEvent);
