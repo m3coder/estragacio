@@ -11,8 +11,8 @@ const __dirname = path.dirname(__filename);
 const USERSCRIPT_BANNER = `// ==UserScript==
 // @name         Estácio Suite AI (Solver, Gabarito & Revisão Multi-IA)
 // @namespace    https://github.com/m3coder/estragacio
-// @version      11.0.0
-// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor 2) Troca Rápida de Modelo e Provedor 3) Revisão com 1-Clique no Gabarito 4) Auto-Conclusão de Temas.
+// @version      11.1.0
+// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek) 2) Troca Rápida de Modelo e Provedor 3) Revisão com 1-Clique no Gabarito 4) Auto-Conclusão de Temas.
 // @author       m3coder
 // @match        https://estacio.saladeavaliacoes.com.br/*
 // @match        https://estudante.estacio.br/*
@@ -21,6 +21,7 @@ const USERSCRIPT_BANNER = `// ==UserScript==
 // @grant        GM_getValue
 // @grant        GM_addStyle
 // @connect      apis.estudante.estacio.br
+// @connect      api.anthropic.com
 // @connect      generativelanguage.googleapis.com
 // @connect      api.openai.com
 // @connect      api.deepseek.com
@@ -31,7 +32,7 @@ const USERSCRIPT_BANNER = `// ==UserScript==
 // ==/UserScript==
 `;
 
-// Plugin simples do esbuild para embutir CSS diretamente no bundle JS
+// Plugin do esbuild para embutir CSS diretamente no bundle JS
 const inlineCssPlugin = {
   name: 'inline-css',
   setup(build) {

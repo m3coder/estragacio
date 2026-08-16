@@ -1,4 +1,4 @@
-// Motor de Execução de IA (Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Fallback
+// Motor de Execução de IA (Anthropic Claude, Google Gemini, Groq, Mistral, OpenAI, DeepSeek) + Fallback
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 import { getApiKeyFor } from '../config/storage.js';
@@ -14,7 +14,47 @@ export async function executeAICall(provider, model, statement, alternatives) {
 
   const prompt = buildPhDExamPrompt(statement, alternatives);
 
-  // 1. Google Gemini Endpoint
+  // 1. Anthropic Claude Messages API
+  if (provider === 'claude') {
+    const selectedModel = model || pConfig.defaultModel;
+    const claudeUrl = 'https://api.anthropic.com/v1/messages';
+
+    const systemPrompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato. Responda ESTRITAMENTE em formato JSON no formato: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
+
+    const res = await fetch(claudeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const content = data.content?.[0]?.text || '';
+    const match = content.match(/"letra"\s*:\s*"([A-E])"/i) || content.match(/\b([A-E])\b/i);
+    return {
+      letra: match ? match[1].toUpperCase() : 'A',
+      explicacao: content.slice(0, 100)
+    };
+  }
+
+  // 2. Google Gemini Endpoint
   if (provider === 'gemini') {
     const selectedModel = model || pConfig.defaultModel;
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent`;
@@ -45,7 +85,7 @@ export async function executeAICall(provider, model, statement, alternatives) {
     };
   }
 
-  // 2. OpenAI-compatible APIs (Groq, Mistral, OpenAI, DeepSeek)
+  // 3. OpenAI-compatible APIs (Groq, Mistral, OpenAI, DeepSeek)
   const endpoint = pConfig?.endpoint || 'https://api.groq.com/openai/v1/chat/completions';
   const selectedModel = model || pConfig?.defaultModel;
 
@@ -105,6 +145,15 @@ export async function callAIWithFallback(provider, model, statement, alternative
       try {
         if (onFallbackLog) onFallbackLog('Fallback ativado: Consultando Mistral Large...');
         return await executeAICall('mistral', 'mistral-large-latest', statement, alternatives);
+      } catch (e) {}
+    }
+
+    // 3. Tenta Claude se houver chave
+    const claudeKey = getApiKeyFor('claude');
+    if (claudeKey && provider !== 'claude') {
+      try {
+        if (onFallbackLog) onFallbackLog('Fallback ativado: Consultando Claude 3.7 Sonnet...');
+        return await executeAICall('claude', 'claude-3-7-sonnet-20250219', statement, alternatives);
       } catch (e) {}
     }
 

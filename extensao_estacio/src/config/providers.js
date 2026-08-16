@@ -1,4 +1,4 @@
-// Configuração de Modelos e Provedores de IA
+// Configuração de Modelos e Provedores de IA (Groq, Mistral, Gemini, Claude, OpenAI, DeepSeek)
 
 export const PROVIDERS_CONFIG = {
   groq: {
@@ -9,6 +9,16 @@ export const PROVIDERS_CONFIG = {
       { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Recomendado)" },
       { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B" },
       { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instantâneo)" }
+    ]
+  },
+  claude: {
+    name: "Anthropic Claude",
+    defaultModel: "claude-3-7-sonnet-20250219",
+    endpoint: "https://api.anthropic.com/v1/messages",
+    models: [
+      { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (Raciocínio Híbrido)" },
+      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (Alta Precisão)" },
+      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (Ultra Rápido)" }
     ]
   },
   mistral: {

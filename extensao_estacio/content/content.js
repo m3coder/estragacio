@@ -21,6 +21,16 @@
         { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instant\xE2neo)" }
       ]
     },
+    claude: {
+      name: "Anthropic Claude",
+      defaultModel: "claude-3-7-sonnet-20250219",
+      endpoint: "https://api.anthropic.com/v1/messages",
+      models: [
+        { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (Racioc\xEDnio H\xEDbrido)" },
+        { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (Alta Precis\xE3o)" },
+        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (Ultra R\xE1pido)" }
+      ]
+    },
     mistral: {
       name: "Mistral AI",
       defaultModel: "mistral-large-latest",
@@ -293,6 +303,40 @@ Responda ESTRITAMENTE em formato JSON:
       throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Salvar.`);
     }
     const prompt = buildPhDExamPrompt(statement, alternatives);
+    if (provider === "claude") {
+      const selectedModel2 = model || pConfig.defaultModel;
+      const claudeUrl = "https://api.anthropic.com/v1/messages";
+      const systemPrompt2 = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON no formato: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
+      const res2 = await fetch(claudeUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: selectedModel2,
+          max_tokens: 1e3,
+          system: systemPrompt2,
+          messages: [
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.1
+        })
+      });
+      if (!res2.ok) {
+        const err = await res2.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${res2.status}`);
+      }
+      const data2 = await res2.json();
+      const content2 = data2.content?.[0]?.text || "";
+      const match2 = content2.match(/"letra"\s*:\s*"([A-E])"/i) || content2.match(/\b([A-E])\b/i);
+      return {
+        letra: match2 ? match2[1].toUpperCase() : "A",
+        explicacao: content2.slice(0, 100)
+      };
+    }
     if (provider === "gemini") {
       const selectedModel2 = model || pConfig.defaultModel;
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel2}:generateContent`;
@@ -369,6 +413,14 @@ Responda ESTRITAMENTE em formato JSON:
         try {
           if (onFallbackLog) onFallbackLog("Fallback ativado: Consultando Mistral Large...");
           return await executeAICall("mistral", "mistral-large-latest", statement, alternatives);
+        } catch (e) {
+        }
+      }
+      const claudeKey = getApiKeyFor("claude");
+      if (claudeKey && provider !== "claude") {
+        try {
+          if (onFallbackLog) onFallbackLog("Fallback ativado: Consultando Claude 3.7 Sonnet...");
+          return await executeAICall("claude", "claude-3-7-sonnet-20250219", statement, alternatives);
         } catch (e) {
         }
       }
@@ -792,7 +844,7 @@ Responda ESTRITAMENTE em formato JSON:
     const isExam = window.location.hostname.includes("saladeavaliacoes.com.br");
     let currentProvider = getSaved("active_provider", "groq");
     let currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel || "llama-3.3-70b-versatile");
-    let reviewProvider = getSaved("review_provider", "mistral");
+    let reviewProvider = getSaved("review_provider", "claude");
     let isBusy = false;
     const box = document.createElement("div");
     box.id = "estacio-suite-box";
@@ -817,6 +869,7 @@ Responda ESTRITAMENTE em formato JSON:
             <span style="color:#94a3b8; font-weight:700;">\u{1F916} IA:</span>
             <select id="box-ai-select" class="ai-selector-select">
               <option value="groq" ${currentProvider === "groq" ? "selected" : ""}>Groq (Ultra R\xE1pido)</option>
+              <option value="claude" ${currentProvider === "claude" ? "selected" : ""}>Anthropic Claude (3.7 / 3.5)</option>
               <option value="mistral" ${currentProvider === "mistral" ? "selected" : ""}>Mistral AI (PhD)</option>
               <option value="gemini" ${currentProvider === "gemini" ? "selected" : ""}>Google Gemini</option>
               <option value="openai" ${currentProvider === "openai" ? "selected" : ""}>ChatGPT (OpenAI)</option>
@@ -849,6 +902,7 @@ Responda ESTRITAMENTE em formato JSON:
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">\u{1F50D} 2\xAA Opini\xE3o com:</span>
             <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;">
+              <option value="claude" ${reviewProvider === "claude" ? "selected" : ""}>Claude 3.7 Sonnet</option>
               <option value="mistral" ${reviewProvider === "mistral" ? "selected" : ""}>Mistral Large (PhD)</option>
               <option value="groq" ${reviewProvider === "groq" ? "selected" : ""}>Groq Llama 70B</option>
               <option value="gemini" ${reviewProvider === "gemini" ? "selected" : ""}>Gemini Flash</option>

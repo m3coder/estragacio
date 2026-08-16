@@ -5,7 +5,7 @@
 <h1 align="center">⚡ Estácio Suite AI</h1>
 
 <p align="center">
-  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Solver com Multi-Provedores, Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias</b>
+  <b>A suíte definitiva de IA & automação para estudantes da Estácio: Solver com Multi-Provedores (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek), Gabarito Persistente com Revisão de 1-Clique e Auto-Conclusão de Matérias</b>
 </p>
 
 <p align="center">
@@ -25,11 +25,11 @@
 ## 🌟 Funcionalidades Principais
 
 ### 1. 🎯 Resolução Inteligente de Provas & Simulados (`saladeavaliacoes.com.br`)
-- 🤖 **Seleção Dinâmica de Provedor & Modelo**: Alterne na hora entre **Groq** (`llama-3.3-70b-versatile`, `deepseek-r1-distill`), **Mistral AI** (`mistral-large-latest`, `codestral-latest`), **Google Gemini** (`gemini-flash-latest`), **OpenAI** (`gpt-4o`, `o3-mini`) e **DeepSeek** (`deepseek-chat`, `deepseek-reasoner`).
-- ⚡ **Auto-Fallback Inteligente**: Se a IA principal atingir limite de cota ou instabilidade, o sistema recorre em milissegundos a outra IA salva sem interromper sua prova.
+- 🤖 **Seleção Dinâmica de Provedor & Modelo**: Alterne na hora entre **Anthropic Claude** (`claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`), **Mistral AI** (`mistral-large-latest`, `codestral-latest`), **Groq** (`llama-3.3-70b-versatile`, `deepseek-r1-distill`), **Google Gemini** (`gemini-flash-latest`), **OpenAI** (`gpt-4o`, `o3-mini`) e **DeepSeek** (`deepseek-chat`, `deepseek-reasoner`).
+- ⚡ **Auto-Fallback Inteligente**: Se a IA principal atingir limite de cota ou instabilidade, o sistema recorre em milissegundos a outra IA salva (Groq, Mistral ou Claude) sem interromper sua prova.
 - 📝 **Gabarito Visual Persistente**: Exibe badges com o gabarito completo na interface (`[Q1: B 🔍] [Q2: D 🔍]...`). Persiste contra `F5` / recarregamento de página.
 - 📋 **Cópia Instantânea de Gabarito**: Botão de 1-clique para copiar o gabarito formatado e detalhado para a área de transferência.
-- 🔍 **Revisão com 1-Clique Direto no Gabarito (Segunda Opinião)**: Dê 1 clique em qualquer badge do gabarito para reavaliar a questão instantaneamente com uma segunda IA (ex: reavaliar questão de cálculo com *Mistral Large PhD*).
+- 🔍 **Revisão com 1-Clique Direto no Gabarito (Segunda Opinião)**: Dê 1 clique em qualquer badge do gabarito para reavaliar a questão instantaneamente com uma segunda IA (ex: reavaliar questão de raciocínio com *Claude 3.7 Sonnet* ou *Mistral Large*).
 - 🖱️ **Clique Nativo React Fiber**: Dispara o `setState` real do React para registrar as marcações de forma 100% persistente no banco da Estácio.
 
 ---
@@ -64,7 +64,7 @@ flowchart TD
     
     E -- Sucesso --> F[Recebe Letra e Justificativa]
     E -- Erro / 429 / 503 --> G{Existe Fallback Ativo?}
-    G -- Sim: Groq / Mistral --> H[Chama Provedor Secundário]
+    G -- Sim: Claude / Groq / Mistral --> H[Chama Provedor Secundário]
     H --> F
     G -- Não --> I[Registra Erro no Log]
     
@@ -92,12 +92,12 @@ sequenceDiagram
     actor Aluno as 👤 Aluno
     participant Widget as ⚡ Gabarito Widget
     participant DOM as 🖥️ DOM / React Fiber
-    participant AI2 as 🧠 2ª IA (ex: Mistral Large)
+    participant AI2 as 🧠 2ª IA (ex: Claude 3.7 Sonnet / Mistral)
 
     Aluno->>Widget: Clica na Badge [Q3: B 🔍]
     Widget->>Widget: Inicia Animação de Análise (Badge Dourada ⏳)
     Widget->>DOM: Rola suavemente até a Questão 3
-    Widget->>AI2: Envia Enunciado + Alternativas
+    Widget->>AI2: Envia Enunciado + Alternativas (Messages API)
     AI2-->>Widget: Retorna {"letra": "D", "explicacao": "Cálculo corrigido..."}
     Widget->>DOM: Remarca Alternativa [D] via React Fiber
     Widget->>Widget: Atualiza Gabarito no localStorage
@@ -193,7 +193,7 @@ graph TD
 extensao_estacio/
 ├── src/
 │   ├── config/
-│   │   ├── providers.js       # Registro de IAs, modelos e endpoints
+│   │   ├── providers.js       # Registro de IAs (Claude, Mistral, Groq, Gemini, OpenAI, DeepSeek)
 │   │   ├── storage.js         # Camada de armazenamento e tokens de sessão
 │   │   └── mascot.js          # Mascote anime embutido em Base64
 │   │
@@ -260,13 +260,14 @@ O comando `npm run build` compila tudo em milissegundos e atualiza simultaneamen
 
 Você pode salvar as chaves de todos os seus provedores diretamente no campo do Widget:
 
-| Provedor | Modelo Padrão | Onde Obter Chave Gratuita |
-| :--- | :--- | :--- |
-| **Groq** *(Ultra Rápido)* | `llama-3.3-70b-versatile` | [console.groq.com/keys](https://console.groq.com/keys) |
-| **Mistral AI** *(PhD / Raciocínio)* | `mistral-large-latest` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
-| **Google Gemini** | `gemini-flash-latest` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
-| **OpenAI** | `gpt-4o` / `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| **DeepSeek** | `deepseek-chat` / `deepseek-reasoner` | [platform.deepseek.com](https://platform.deepseek.com) |
+| Provedor | Modelo Padrão | Modelos Disponíveis | Onde Obter Chave |
+| :--- | :--- | :--- | :--- |
+| **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
+| **Mistral AI** *(PhD / Raciocínio)* | `mistral-large-latest` | `Mistral Large`, `Codestral`, `Mistral Small` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
+| **Groq** *(Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
+| **Google Gemini** | `gemini-flash-latest` | `Gemini Flash Latest`, `Gemini Pro Latest`, `Gemini 2.5 Flash` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| **OpenAI** | `gpt-4o` | `GPT-4o`, `GPT-4o Mini`, `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **DeepSeek** | `deepseek-chat` | `DeepSeek V3`, `DeepSeek R1` | [platform.deepseek.com](https://platform.deepseek.com) |
 
 > 🔒 **Segurança & Privacidade**: Suas chaves de API ficam salvas **exclusivamente no armazenamento local do seu próprio navegador** (`chrome.storage` / `localStorage`). Nenhuma chave ou dado sensível é enviado para servidores de terceiros.
 
@@ -277,7 +278,7 @@ Você pode salvar as chaves de todos os seus provedores diretamente no campo do 
 ### 📝 Resolvendo Provas e Simulados:
 1. Acesse a Sala de Avaliações (`https://estacio.saladeavaliacoes.com.br/`).
 2. Abra a prova ou simulado desejado.
-3. No widget flutuante, selecione sua IA e modelo desejado (ex: **Mistral AI** $\rightarrow$ `Mistral Large (PhD)`).
+3. No widget flutuante, selecione sua IA e modelo desejado (ex: **Anthropic Claude** $\rightarrow$ `Claude 3.7 Sonnet` ou **Mistral AI** $\rightarrow$ `Mistral Large`).
 4. Clique em **`[🎯 Resolver e Marcar Prova]`**.
 5. Ao terminar, o **Gabarito** será exibido na tela.
 6. Para revisar qualquer questão individual, basta dar **1 clique na badge da questão no gabarito** (ex: `[Q3: B 🔍]`) e a 2ª IA reavaliará a questão na hora!

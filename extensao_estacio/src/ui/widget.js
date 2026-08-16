@@ -15,7 +15,7 @@ export function createSuiteWidget() {
   const isExam = window.location.hostname.includes('saladeavaliacoes.com.br');
   let currentProvider = getSaved('active_provider', 'groq');
   let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
-  let reviewProvider = getSaved('review_provider', 'mistral');
+  let reviewProvider = getSaved('review_provider', 'claude');
   let isBusy = false;
 
   const box = document.createElement('div');
@@ -41,6 +41,7 @@ export function createSuiteWidget() {
             <span style="color:#94a3b8; font-weight:700;">🤖 IA:</span>
             <select id="box-ai-select" class="ai-selector-select">
               <option value="groq" ${currentProvider === 'groq' ? 'selected' : ''}>Groq (Ultra Rápido)</option>
+              <option value="claude" ${currentProvider === 'claude' ? 'selected' : ''}>Anthropic Claude (3.7 / 3.5)</option>
               <option value="mistral" ${currentProvider === 'mistral' ? 'selected' : ''}>Mistral AI (PhD)</option>
               <option value="gemini" ${currentProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
               <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>ChatGPT (OpenAI)</option>
@@ -73,6 +74,7 @@ export function createSuiteWidget() {
           <div class="review-config-bar">
             <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
             <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;">
+              <option value="claude" ${reviewProvider === 'claude' ? 'selected' : ''}>Claude 3.7 Sonnet</option>
               <option value="mistral" ${reviewProvider === 'mistral' ? 'selected' : ''}>Mistral Large (PhD)</option>
               <option value="groq" ${reviewProvider === 'groq' ? 'selected' : ''}>Groq Llama 70B</option>
               <option value="gemini" ${reviewProvider === 'gemini' ? 'selected' : ''}>Gemini Flash</option>
