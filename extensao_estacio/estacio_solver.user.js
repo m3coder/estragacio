@@ -572,26 +572,26 @@ Responda ESTRITAMENTE em formato JSON:
     return sorted.length >= 2 ? sorted : options;
   }
   function getThemeCardsFromDom() {
-    const grid = document.querySelector('[data-testid="grid-conteudos"]') || document.querySelector(".eap9uh52") || document.body;
-    const cards = [];
-    const seen = /* @__PURE__ */ new Set();
-    const allContainers = Array.from(grid.querySelectorAll('section, article, [class*="card"], div[class*="css-"], div'));
-    allContainers.forEach((card) => {
-      if (seen.has(card) || card === grid) return;
+    const cardsMap = /* @__PURE__ */ new Map();
+    const candidates = Array.from(document.querySelectorAll('button, a[href*="/conteudos/"], [role="button"], article, section, [class*="card"], div'));
+    candidates.forEach((el) => {
+      let card = el.closest('article, section, [class*="card"], div');
+      if (!card) return;
       const text = (card.innerText || "").replace(/\s+/g, " ").trim();
-      const match = text.match(/^Tema\s*(\d+)/i) || text.includes("Tema ") && text.match(/Tema\s*(\d+)/i);
-      if (match && text.length < 350) {
-        const hasNestedThemeCard = Array.from(card.children).some((child) => (child.innerText || "").includes("Tema "));
-        if (!hasNestedThemeCard || card.tagName === "ARTICLE" || card.tagName === "SECTION") {
-          seen.add(card);
+      if (text.toLowerCase().includes("continue de onde parou") && !text.match(/Tema\s*1\s*\|/i)) {
+        return;
+      }
+      const match = text.match(/Tema\s*(\d+)/i);
+      if (match && text.length < 400) {
+        const temaNum = parseInt(match[1]);
+        if (!cardsMap.has(temaNum)) {
           const isConcluido = /conclu[ií]do/i.test(text);
-          const temaNum = parseInt(match[1]);
           const itemsMatch = text.match(/(\d+)\s*Itens?/i);
           const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
           const link = card.querySelector('a[href*="/conteudos/"]');
           const href = link ? link.href : card.getAttribute("href") || "";
           const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
-          cards.push({
+          cardsMap.set(temaNum, {
             temaNum,
             temaName: `Tema ${temaNum}`,
             totalItems,
@@ -604,6 +604,7 @@ Responda ESTRITAMENTE em formato JSON:
         }
       }
     });
+    const cards = Array.from(cardsMap.values());
     cards.sort((a, b) => a.temaNum - b.temaNum);
     return cards;
   }

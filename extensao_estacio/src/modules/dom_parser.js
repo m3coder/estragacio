@@ -1,4 +1,4 @@
-// Extrator do DOM (Questões, Enunciados, Alternativas e Grade de Temas com Botão de Ação Preciso)
+// Extrator do DOM (Deduplicação Precisa por temaNum e Detecção Correta de Concluído/Pendente)
 
 export function getQuestionCards() {
   const allTestIds = Array.from(document.querySelectorAll('[data-testid]'));
@@ -68,36 +68,40 @@ export function extractAlternatives(cardEl) {
 }
 
 export function getThemeCardsFromDom() {
-  const grid = document.querySelector('[data-testid="grid-conteudos"]') || document.querySelector('.eap9uh52') || document.body;
-  const cards = [];
-  const seen = new Set();
-  
-  // Localiza todos os containers de cards que mencionam "Tema X"
-  const allContainers = Array.from(grid.querySelectorAll('section, article, [class*="card"], div[class*="css-"], div'));
+  const cardsMap = new Map();
 
-  allContainers.forEach((card) => {
-    if (seen.has(card) || card === grid) return;
+  // Localiza todos os botões, links e containers que contêm "Tema X"
+  const candidates = Array.from(document.querySelectorAll('button, a[href*="/conteudos/"], [role="button"], article, section, [class*="card"], div'));
+
+  candidates.forEach((el) => {
+    // Sobe até encontrar o container completo do card
+    let card = el.closest('article, section, [class*="card"], div');
+    if (!card) return;
+
     const text = (card.innerText || '').replace(/\s+/g, ' ').trim();
-    const match = text.match(/^Tema\s*(\d+)/i) || (text.includes('Tema ') && text.match(/Tema\s*(\d+)/i));
+    
+    // Ignora o banner de topo "Continue de onde parou" se não for o card de grade
+    if (text.toLowerCase().includes('continue de onde parou') && !text.match(/Tema\s*1\s*\|/i)) {
+      return;
+    }
 
-    if (match && text.length < 350) {
-      // Verifica se é o container mais específico do card
-      const hasNestedThemeCard = Array.from(card.children).some(child => (child.innerText || '').includes('Tema '));
-      if (!hasNestedThemeCard || card.tagName === 'ARTICLE' || card.tagName === 'SECTION') {
-        seen.add(card);
+    const match = text.match(/Tema\s*(\d+)/i);
+    if (match && text.length < 400) {
+      const temaNum = parseInt(match[1]);
+
+      // Deduplicação estrita: apenas 1 card registrado por temaNum
+      if (!cardsMap.has(temaNum)) {
         const isConcluido = /conclu[ií]do/i.test(text);
-        const temaNum = parseInt(match[1]);
-        
         const itemsMatch = text.match(/(\d+)\s*Itens?/i);
         const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
 
         const link = card.querySelector('a[href*="/conteudos/"]');
         const href = link ? link.href : (card.getAttribute('href') || '');
 
-        // Identifica o botão de ação (seta redonda [ → ] ou link de clique)
+        // Botão de ação: a seta redonda [ → ] ou link
         const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
 
-        cards.push({
+        cardsMap.set(temaNum, {
           temaNum: temaNum,
           temaName: `Tema ${temaNum}`,
           totalItems: totalItems,
@@ -111,6 +115,7 @@ export function getThemeCardsFromDom() {
     }
   });
 
+  const cards = Array.from(cardsMap.values());
   cards.sort((a, b) => a.temaNum - b.temaNum);
   return cards;
 }
