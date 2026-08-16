@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Estácio Suite AI (Solver & Conclusão de Temas)",
+  "version": "3.1.0",
+  "description": "Automação completa da Estácio: Resolução de Provas com IA e Conclusão Automática de Temas e Matérias.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://estacio.saladeavaliacoes.com.br/*",
+    "https://estudante.estacio.br/*",
+    "https://apis.estudante.estacio.br/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.groq.com/*",
+    "https://api.mistral.ai/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Estácio Suite AI"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://estacio.saladeavaliacoes.com.br/*",
+        "https://estudante.estacio.br/*"
+      ],
+      "js": [
+        "content/solver.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/overlay.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
