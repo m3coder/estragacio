@@ -11,6 +11,7 @@ import { testProviderKey } from '../core/ai_engine.js';
 import { fetchLiveModels, getModelsForProvider } from '../modules/model_fetcher.js';
 import { getTotalExamQuestionsCount } from '../modules/dom_parser.js';
 import { isAudioMuted, setAudioMuted, playAttentionSound } from '../modules/audio_alerts.js';
+import { reviewSingleQuestion } from '../modules/reviewer.js';
 
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;

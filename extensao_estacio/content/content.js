@@ -2323,6 +2323,56 @@ Responda ESTRITAMENTE em formato JSON:
     }
   }
 
+  // src/modules/reviewer.js
+  async function reviewSingleQuestion(qNum, targetProvider, onLog, onGabaritoUpdated) {
+    if (!qNum || isNaN(qNum)) return;
+    const pName = PROVIDERS_CONFIG[targetProvider]?.name || targetProvider;
+    updateGabaritoQuestion(qNum, { status: "processing" });
+    if (onGabaritoUpdated) onGabaritoUpdated();
+    if (onLog) onLog(`[Revis\xE3o Q${qNum}] \u{1F50D} Consultando 2\xAA Opini\xE3o com ${pName}...`, "info");
+    const qCard = await navigateToQuestionCard(qNum);
+    if (!qCard || !qCard.element) {
+      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Card da quest\xE3o n\xE3o encontrado na p\xE1gina.`, "error");
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Card n\xE3o localizado" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+      return;
+    }
+    const statement = extractStatement(qCard.element, qNum);
+    const alternatives = extractAlternatives(qCard.element);
+    if (alternatives.length < 2) {
+      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Alternativas n\xE3o encontradas.`, "error");
+      updateGabaritoQuestion(qNum, { status: "failed", error: "Alternativas insuficientes" });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+      return;
+    }
+    try {
+      const model = PROVIDERS_CONFIG[targetProvider]?.defaultModel;
+      const ans = await executeAICall(targetProvider, model, statement, alternatives);
+      const chosenLetter = ans.letra?.toUpperCase() || "A";
+      if (onLog) {
+        onLog(`[Revis\xE3o Q${qNum}] \u2705 ${pName} sugere alternativa: [ ${chosenLetter} ] (${ans.explicacao || ""})`, "success");
+      }
+      const target = alternatives.find((o) => o.letter === chosenLetter);
+      if (target && target.element) {
+        clickOptionReact(target.element);
+      }
+      updateGabaritoQuestion(qNum, {
+        status: "done",
+        letter: chosenLetter,
+        explanation: `[Revisado por ${pName}] ${ans.explicacao || ""}`,
+        error: null
+      });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+    } catch (err) {
+      if (onLog) onLog(`[Revis\xE3o Q${qNum}] Erro: ${err.message}`, "error");
+      updateGabaritoQuestion(qNum, {
+        status: "failed",
+        error: err.message
+      });
+      if (onGabaritoUpdated) onGabaritoUpdated();
+    }
+  }
+
   // src/ui/widget.js
   function createSuiteWidget() {
     if (document.getElementById("estacio-suite-box")) return;
