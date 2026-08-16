@@ -4,7 +4,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 350px;
+  width: 375px;
   background: rgba(15, 23, 42, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -183,8 +183,8 @@
 
 /* Painel do Gabarito Persistente */
 .gabarito-container {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 8px;
   padding: 8px 10px;
   display: flex;
@@ -202,22 +202,39 @@
 .gabarito-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  max-height: 90px;
+  gap: 5px;
+  max-height: 100px;
   overflow-y: auto;
   padding: 2px 0;
 }
 .gabarito-badge {
   background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  padding: 3px 7px;
   font-size: 11px;
   font-weight: 600;
   color: #f1f5f9;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.gabarito-badge:hover {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.2);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
+}
+.gabarito-badge.reviewing {
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.25) !important;
+  animation: pulse 1s infinite alternate;
+}
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 .gabarito-badge .badge-q { color: #94a3b8; }
 .gabarito-badge .badge-a { color: #34d399; font-weight: 700; }
@@ -240,6 +257,7 @@
 .widget-log-item.info { color: #60a5fa; }
 .widget-log-item.success { color: #34d399; }
 .widget-log-item.error { color: #f87171; }
+.widget-log-item.warning { color: #fbbf24; }
 
 .widget-footer {
   padding: 6px 14px;

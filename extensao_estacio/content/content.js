@@ -1,4 +1,4 @@
-// Estácio Suite AI - Content Script (Live Dual AI & Model Selector, Multi-Keys, Gabarito & Revisão)
+// Estácio Suite AI - Content Script (Live Dual AI & Model Selector, Multi-Keys, 1-Click Gabarito Review)
 
 (function () {
   'use strict';
@@ -54,6 +54,7 @@
   let toggleBtn = null;
   let isRunning = false;
   let lastUrl = window.location.href;
+  let reviewProvider = localStorage.getItem('estacio_review_provider') || 'mistral';
 
   function getMatricula() {
     let matricula = localStorage.getItem('estacio_matricula') || '';
@@ -240,17 +241,15 @@
       data.answers.forEach(a => {
         const span = document.createElement('div');
         span.className = 'gabarito-badge';
-        span.title = `Clique para focar na Q${a.q} ou revisar: ${a.explanation || ''}`;
-        span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span>`;
+        span.id = `badge-q-${a.q}`;
+        span.title = `Clique para REVISAR Q${a.q} com ${PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider}! (Atual: ${a.letter})`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span><span style="font-size:10px; color:#c084fc;">🔍</span>`;
+        
+        // 1-Clique Direto para Revisar com a 2ª Opinião!
         span.addEventListener('click', () => {
-          const inp = document.getElementById('review-q-num');
-          if (inp) inp.value = a.q;
-          const cards = getQuestionCards();
-          const target = cards.find(c => c.index === a.q);
-          if (target && target.element) {
-            target.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+          reviewSingleQuestion(a.q, reviewProvider);
         });
+
         badgesEl.appendChild(span);
       });
     } catch (e) {
@@ -365,18 +364,16 @@
             </button>
           </div>
 
-          <!-- Barra de Revisão / Segunda Opinião -->
-          <div style="display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.35); padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:11px;">
-            <span style="color:#c084fc; font-weight:700;">🔍 Revisar Q:</span>
-            <input type="number" id="review-q-num" style="width:40px; background:#1e293b; border:1px solid #475569; border-radius:4px; color:#fff; padding:2px 4px; text-align:center; font-size:11px; font-weight:700;" value="1" min="1" max="50">
-            <select id="review-ai-select" style="background:#1e293b; color:#38bdf8; border:1px solid #475569; border-radius:4px; font-size:10px; padding:2px 4px; flex:1;">
-              <option value="mistral">Mistral Large (PhD)</option>
-              <option value="groq">Groq (Llama 70B)</option>
-              <option value="gemini">Gemini Flash</option>
-              <option value="openai">ChatGPT (4o)</option>
-              <option value="deepseek">DeepSeek R1</option>
+          <!-- Barra de Segunda Opinião / Revisão Direta -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:rgba(168,85,247,0.12); border:1px dashed rgba(168,85,247,0.35); padding:6px 8px; border-radius:6px; font-size:11px;">
+            <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
+            <select id="review-ai-select" style="background:#1e293b; color:#38bdf8; border:1px solid #475569; border-radius:4px; font-size:11px; padding:2px 4px; max-width:170px;">
+              <option value="mistral" ${reviewProvider === 'mistral' ? 'selected' : ''}>Mistral Large (PhD)</option>
+              <option value="groq" ${reviewProvider === 'groq' ? 'selected' : ''}>Groq Llama 70B</option>
+              <option value="gemini" ${reviewProvider === 'gemini' ? 'selected' : ''}>Gemini Flash</option>
+              <option value="openai" ${reviewProvider === 'openai' ? 'selected' : ''}>ChatGPT (4o)</option>
+              <option value="deepseek" ${reviewProvider === 'deepseek' ? 'selected' : ''}>DeepSeek R1</option>
             </select>
-            <button id="btn-review-action" style="background:linear-gradient(135deg, #8b5cf6, #d946ef); color:#fff; border:none; border-radius:4px; padding:3px 8px; font-size:11px; font-weight:600; cursor:pointer;">Reavaliar</button>
           </div>
         ` : `
           <div class="widget-status">
@@ -393,9 +390,9 @@
         <!-- Painel Visual do Gabarito Persistente -->
         <div id="gabarito-panel" class="gabarito-container" style="display:none;">
           <div class="gabarito-header">
-            <span>📝 Gabarito Salvo</span>
+            <span>📝 Gabarito (Clique na questão p/ revisar)</span>
             <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">
-              📋 Copiar Gabarito
+              📋 Copiar
             </button>
           </div>
           <div id="gabarito-badges" class="gabarito-badges"></div>
@@ -471,6 +468,16 @@
       }
     });
 
+    const reviewSelect = document.getElementById('review-ai-select');
+    if (reviewSelect) {
+      reviewSelect.addEventListener('change', () => {
+        reviewProvider = reviewSelect.value;
+        localStorage.setItem('estacio_review_provider', reviewProvider);
+        log(`2ª Opinião configurada para: ${PROVIDERS_CONFIG[reviewProvider]?.name}`, 'info');
+        renderSavedGabarito();
+      });
+    }
+
     document.getElementById('solver-btn-copy-hdr').addEventListener('click', (e) => {
       e.stopPropagation();
       copyAllLogs();
@@ -485,15 +492,6 @@
       gabaritoCopyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         copyGabarito();
-      });
-    }
-
-    const reviewActionBtn = document.getElementById('btn-review-action');
-    if (reviewActionBtn) {
-      reviewActionBtn.addEventListener('click', () => {
-        const qNum = parseInt(document.getElementById('review-q-num').value);
-        const targetProvider = document.getElementById('review-ai-select').value;
-        reviewSingleQuestion(qNum, targetProvider);
       });
     }
 
@@ -904,11 +902,14 @@
     const q = cards.find(c => c.index === qNum);
 
     if (!q || !q.element) {
-      log(`Questão ${qNum} não encontrada.`, 'error');
+      log(`Questão ${qNum} não encontrada na página.`, 'error');
       return;
     }
 
-    log(`[Revisão Q${qNum}] Analisando com ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
+    const badge = document.getElementById(`badge-q-${qNum}`);
+    if (badge) badge.classList.add('reviewing');
+
+    log(`[Revisão Q${qNum}] 🔍 Consultando ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
     q.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     const statement = extractStatement(q.element, qNum);
@@ -916,6 +917,7 @@
 
     if (alternatives.length < 2) {
       log(`[Revisão Q${qNum}] Alternativas não encontradas.`, 'error');
+      if (badge) badge.classList.remove('reviewing');
       return;
     }
 
@@ -926,6 +928,7 @@
 
       if (!targetKey) {
         log(`[Revisão Q${qNum}] Chave para ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider} não salva.`, 'error');
+        if (badge) badge.classList.remove('reviewing');
         return;
       }
 
@@ -945,7 +948,7 @@
       });
 
       const chosenLetter = result.letra?.toUpperCase() || 'A';
-      log(`[Revisão Q${qNum}] ${PROVIDERS_CONFIG[targetProvider]?.name} sugere: ${chosenLetter} (${result.explicacao || ''})`, 'success');
+      log(`[Revisão Q${qNum}] ✅ ${PROVIDERS_CONFIG[targetProvider]?.name} sugere alternativa: [ ${chosenLetter} ] (${result.explicacao || ''})`, 'success');
 
       const target = alternatives.find(o => o.letter === chosenLetter);
       if (target && target.element) {
@@ -972,6 +975,8 @@
 
     } catch (err) {
       log(`[Revisão Q${qNum}] Erro: ${err.message}`, 'error');
+    } finally {
+      if (badge) badge.classList.remove('reviewing');
     }
   }
 

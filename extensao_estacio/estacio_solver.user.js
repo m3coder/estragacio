@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Estácio Suite AI (Solver, Gabarito & Revisão Multi-IA)
 // @namespace    https://github.com/estacio-solver
-// @version      10.5.0
-// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor 2) Troca Rápida de Modelo e Provedor 3) Revisão com Segunda Opinião 4) Auto-Conclusão de Temas.
+// @version      11.0.0
+// @description  Suite All-in-One da Estácio: 1) Resolução e Gabarito com IA Multi-Provedor 2) Troca Rápida de Modelo e Provedor 3) Revisão com 1-Clique no Gabarito 4) Auto-Conclusão de Temas.
 // @author       Estácio Suite
 // @match        https://estacio.saladeavaliacoes.com.br/*
 // @match        https://estudante.estacio.br/*
@@ -75,6 +75,7 @@
 
   let currentProvider = getSaved('active_provider', 'groq');
   let currentModel = getSaved('active_model', PROVIDERS_CONFIG[currentProvider]?.defaultModel || 'llama-3.3-70b-versatile');
+  let reviewProvider = getSaved('review_provider', 'mistral');
 
   function getApiKeyFor(provider) {
     return getSaved(`key_${provider}`, '');
@@ -134,7 +135,7 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      width: 370px;
+      width: 375px;
       background: rgba(15, 23, 42, 0.97);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -234,7 +235,6 @@
       gap: 9px;
     }
 
-    /* Seletor Duplo: Provedor + Modelo */
     .ai-selector-container {
       display: flex;
       flex-direction: column;
@@ -317,9 +317,10 @@
       cursor: not-allowed;
     }
 
+    /* Gabarito Inteligente com 1-Clique para Revisão */
     .gabarito-container {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.35);
       border-radius: 8px;
       padding: 8px 10px;
       display: flex;
@@ -337,67 +338,65 @@
     .gabarito-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
-      max-height: 90px;
+      gap: 5px;
+      max-height: 100px;
       overflow-y: auto;
       padding: 2px 0;
     }
     .gabarito-badge {
       background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 4px;
-      padding: 2px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 5px;
+      padding: 3px 7px;
       font-size: 11px;
       font-weight: 600;
       color: #f1f5f9;
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
+      position: relative;
     }
     .gabarito-badge:hover {
-      border-color: #38bdf8;
-      background: rgba(56, 189, 248, 0.15);
-      transform: scale(1.05);
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.2);
+      transform: translateY(-1px) scale(1.05);
+      box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
+    }
+    .gabarito-badge.reviewing {
+      border-color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.25) !important;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
     .gabarito-badge .badge-q { color: #94a3b8; }
     .gabarito-badge .badge-a { color: #34d399; font-weight: 700; }
+    .gabarito-badge .badge-rev-icon {
+      font-size: 10px;
+      color: #c084fc;
+      opacity: 0.7;
+    }
+    .gabarito-badge:hover .badge-rev-icon {
+      opacity: 1;
+      color: #e879f9;
+    }
 
-    .review-bar {
+    /* Barra de Configuração da Segunda Opinião */
+    .review-config-bar {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 6px;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px dashed rgba(168, 85, 247, 0.35);
       padding: 6px 8px;
       border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
       font-size: 11px;
     }
-    .review-input {
-      width: 42px;
-      background: #1e293b;
-      border: 1px solid #475569;
-      border-radius: 4px;
-      color: #fff;
-      padding: 2px 4px;
-      text-align: center;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .review-btn {
-      background: linear-gradient(135deg, #8b5cf6, #d946ef);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: opacity 0.15s;
-    }
-    .review-btn:hover { opacity: 0.9; }
 
     .box-log {
       max-height: 100px;
@@ -602,17 +601,15 @@
       data.answers.forEach(a => {
         const span = document.createElement('div');
         span.className = 'gabarito-badge';
-        span.title = `Clique para focar na Q${a.q} ou revisar: ${a.explanation || ''}`;
-        span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span>`;
+        span.id = `badge-q-${a.q}`;
+        span.title = `Clique para REVISAR Q${a.q} com ${PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider}! (Atual: ${a.letter})`;
+        span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span><span class="badge-rev-icon">🔍</span>`;
+        
+        // 1-Clique Direto no Badge para Revisar com a Segunda Opinião!
         span.addEventListener('click', () => {
-          const inp = document.getElementById('review-q-num');
-          if (inp) inp.value = a.q;
-          const cards = getQuestionCards();
-          const target = cards.find(c => c.index === a.q);
-          if (target && target.element) {
-            target.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+          reviewSingleQuestion(a.q, reviewProvider);
         });
+
         badgesEl.appendChild(span);
       });
     } catch (e) {
@@ -698,18 +695,16 @@
               <span>🎯</span> Resolver e Marcar Prova
             </button>
 
-            <!-- Barra de Segunda Opinião / Revisão com outra IA -->
-            <div class="review-bar">
-              <span style="color:#c084fc; font-weight:700;">🔍 Revisar Q:</span>
-              <input type="number" id="review-q-num" class="review-input" value="1" min="1" max="50">
-              <select id="review-ai-select" class="ai-selector-select" style="font-size:10px; max-width:140px;">
-                <option value="mistral">Mistral Large (PhD)</option>
-                <option value="groq">Groq (Llama 70B)</option>
-                <option value="gemini">Gemini Flash</option>
-                <option value="openai">ChatGPT (4o)</option>
-                <option value="deepseek">DeepSeek R1</option>
+            <!-- Barra de Segunda Opinião / Revisão Direta -->
+            <div class="review-config-bar">
+              <span style="color:#c084fc; font-weight:700;">🔍 2ª Opinião com:</span>
+              <select id="review-ai-select" class="ai-selector-select" style="font-size:11px; max-width:180px;">
+                <option value="mistral" ${reviewProvider === 'mistral' ? 'selected' : ''}>Mistral Large (PhD)</option>
+                <option value="groq" ${reviewProvider === 'groq' ? 'selected' : ''}>Groq Llama 70B</option>
+                <option value="gemini" ${reviewProvider === 'gemini' ? 'selected' : ''}>Gemini Flash</option>
+                <option value="openai" ${reviewProvider === 'openai' ? 'selected' : ''}>ChatGPT (4o)</option>
+                <option value="deepseek" ${reviewProvider === 'deepseek' ? 'selected' : ''}>DeepSeek R1</option>
               </select>
-              <button id="btn-review-action" class="review-btn" title="Reavaliar esta questão com outra IA">Reavaliar</button>
             </div>
           ` : `
             <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
@@ -724,9 +719,9 @@
           <!-- Painel Visual do Gabarito Persistente -->
           <div id="gabarito-panel" class="gabarito-container" style="display:none;">
             <div class="gabarito-header">
-              <span>📝 Gabarito Salvo</span>
+              <span>📝 Gabarito (Clique na questão p/ revisar)</span>
               <button id="btn-copy-gabarito" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:11px; font-weight:700;">
-                📋 Copiar Gabarito
+                📋 Copiar
               </button>
             </div>
             <div id="gabarito-badges" class="gabarito-badges"></div>
@@ -807,6 +802,16 @@
       }
     });
 
+    const reviewSelect = document.getElementById('review-ai-select');
+    if (reviewSelect) {
+      reviewSelect.addEventListener('change', (e) => {
+        reviewProvider = e.target.value;
+        setSaved('review_provider', reviewProvider);
+        log(`2ª Opinião configurada para: ${PROVIDERS_CONFIG[reviewProvider]?.name}`, 'info');
+        renderSavedGabarito();
+      });
+    }
+
     document.getElementById('btn-copy-header').addEventListener('click', (e) => {
       e.stopPropagation();
       copyAllLogs();
@@ -836,12 +841,6 @@
     if (isExamPage) {
       actionBtn.addEventListener('click', runExamQueue);
       renderSavedGabarito();
-
-      document.getElementById('btn-review-action').addEventListener('click', () => {
-        const qNum = parseInt(document.getElementById('review-q-num').value);
-        const targetProvider = document.getElementById('review-ai-select').value;
-        reviewSingleQuestion(qNum, targetProvider);
-      });
     } else {
       actionBtn.addEventListener('click', runThemeCompletion);
     }
@@ -872,11 +871,14 @@
     const q = cards.find(c => c.index === qNum);
 
     if (!q || !q.element) {
-      log(`Questão ${qNum} não encontrada.`, 'error');
+      log(`Questão ${qNum} não encontrada na página.`, 'error');
       return;
     }
 
-    log(`[Revisão Q${qNum}] Analisando com ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
+    const badge = document.getElementById(`badge-q-${qNum}`);
+    if (badge) badge.classList.add('reviewing');
+
+    log(`[Revisão Q${qNum}] 🔍 Consultando ${PROVIDERS_CONFIG[targetProvider]?.name || targetProvider}...`, 'info');
     q.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     const statement = extractStatement(q.element, qNum);
@@ -884,6 +886,7 @@
 
     if (alternatives.length < 2) {
       log(`[Revisão Q${qNum}] Alternativas não encontradas.`, 'error');
+      if (badge) badge.classList.remove('reviewing');
       return;
     }
 
@@ -892,13 +895,15 @@
       const ans = await executeAICall(targetProvider, model, statement, alternatives);
       const chosenLetter = ans.letra?.toUpperCase() || 'A';
 
-      log(`[Revisão Q${qNum}] ${PROVIDERS_CONFIG[targetProvider]?.name} sugere: ${chosenLetter} (${ans.explicacao || ''})`, 'success');
+      log(`[Revisão Q${qNum}] ✅ ${PROVIDERS_CONFIG[targetProvider]?.name} sugere alternativa: [ ${chosenLetter} ] (${ans.explicacao || ''})`, 'success');
 
+      // Aplica a nova resposta na tela
       const target = alternatives.find(o => o.letter === chosenLetter);
       if (target && target.element) {
         clickOptionReact(target.element);
       }
 
+      // Atualiza o Gabarito Salvo
       const savedRaw = localStorage.getItem('estacio_last_gabarito');
       let gabData = { timestamp: new Date().toLocaleString(), provider: currentProvider, answers: [] };
       if (savedRaw) {
@@ -919,6 +924,8 @@
 
     } catch (err) {
       log(`[Revisão Q${qNum}] Erro: ${err.message}`, 'error');
+    } finally {
+      if (badge) badge.classList.remove('reviewing');
     }
   }
 
