@@ -30,6 +30,7 @@ Thumbs.db
 
 # Logs and Artifacts
 *.log
+*.mp4
 .tempmediaStorage/
 .system_generated/
 browser/
