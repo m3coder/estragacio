@@ -290,18 +290,25 @@ export function createSuiteWidget() {
       }
     });
   } else {
-    actionBtn.addEventListener('click', async () => {
-      if (isBusy) return;
-      isBusy = true;
-      actionBtn.disabled = true;
-      try {
-        await startThemeCompletion(log);
-      } finally {
-        isBusy = false;
-        actionBtn.disabled = false;
-      }
+    actionBtn.addEventListener('click', () => {
+      startThemeCompletion(log);
     });
   }
 
+  // Executa State Machine inicial
   processAutomatorStateMachine(log);
+
+  // Monitor Ativo de Rotas SPA (Detecta navegações do React Router sem refresh)
+  let lastMonitoredUrl = window.location.href;
+  setInterval(() => {
+    if (window.location.href !== lastMonitoredUrl) {
+      lastMonitoredUrl = window.location.href;
+      processAutomatorStateMachine(log);
+    }
+  }, 1000);
+
+  window.addEventListener('popstate', () => {
+    lastMonitoredUrl = window.location.href;
+    processAutomatorStateMachine(log);
+  });
 }
