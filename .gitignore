@@ -14,6 +14,11 @@ estacio_session/
 debug/
 storage_state.json
 
+# Node and Bundler
+node_modules/
+dist/
+.esbuild/
+
 # IDE and OS files
 .vscode/
 .idea/

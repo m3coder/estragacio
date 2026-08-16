@@ -3,9 +3,10 @@
 [![JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
 [![Chrome Extension](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Tampermonkey](https://img.shields.io/badge/Userscript-Tampermonkey-00485B?logo=tampermonkey&logoColor=white)](https://www.tampermonkey.net/)
+[![Build Tool](https://img.shields.io/badge/Bundler-esbuild-FFCF00?logo=esbuild&logoColor=black)](https://esbuild.github.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A suíte definitiva de produtividade e automação para estudantes da **Estácio**, integrando **resolução de provas com inteligência artificial multi-provedor**, **gabarito persistente com 1-clique para cópia**, **revisão com segunda opinião de IA** e **conclusão automática de temas/matérias** diretamente no navegador.
+A suíte definitiva de produtividade e automação para estudantes da **Estácio**, integrando **resolução de provas com inteligência artificial multi-provedor**, **gabarito persistente com 1-clique para cópia**, **revisão com 1-clique na questão (Segunda Opinião)** e **conclusão automática de temas/matérias** diretamente no navegador.
 
 ---
 
@@ -14,9 +15,9 @@ A suíte definitiva de produtividade e automação para estudantes da **Estácio
 ### 1. 🎯 Resolução Inteligente de Provas & Simulados (`saladeavaliacoes.com.br`)
 - 🤖 **Suporte Multi-Model IA**: Escolha entre **Groq** (`llama-3.3-70b`), **Mistral AI** (`mistral-large`, `codestral`), **Google Gemini** (`gemini-flash-latest`), **OpenAI** (`gpt-4o`, `o3-mini`) e **DeepSeek** (`V3`, `R1`).
 - ⚡ **Auto-Fallback Inteligente**: Se a IA principal sofrer instabilidade ou limite de cota, o sistema recorre automaticamente ao Groq ou Mistral em milissegundos sem interromper sua prova.
-- 📝 **Gabarito Visual Persistente**: Exibe badges com o gabarito completo na interface (`[Q1: B] [Q2: D]...`). Persiste contra `F5` / recarregamento de página.
+- 📝 **Gabarito Visual Persistente**: Exibe badges com o gabarito completo na interface (`[Q1: B 🔍] [Q2: D 🔍]...`). Persiste contra `F5` / recarregamento de página.
 - 📋 **Cópia Instantânea de Gabarito**: Botão de 1-clique para copiar o gabarito formatado e detalhado para sua área de transferência.
-- 🔍 **Revisão com Segunda Opinião**: Permite selecionar qualquer questão individual e reavaliá-la com outra IA diferente (ex: revisar uma questão de cálculo com *Mistral Large* enquanto resolve o resto com *Groq*).
+- 🔍 **Revisão com 1-Clique Direto no Gabarito**: Basta clicar em qualquer badge do gabarito para que a questão seja reavaliada instantaneamente com a 2ª IA escolhida (ex: conferir questão de cálculo com *Mistral Large PhD*).
 - 🖱️ **Clique Nativo React Fiber**: Dispara o `setState` real do React para registrar as marcações de forma 100% persistente no banco da Estácio.
 
 ---
@@ -34,6 +35,54 @@ A suíte definitiva de produtividade e automação para estudantes da **Estácio
 - 💾 **Memória de Posição**: As coordenadas da interface são salvas no `localStorage`, mantendo a posição exata mesmo após navegações e recarregamentos.
 - 🪟 **Modo Minimizável & Ocultável**: Minimize em bolha flutuante (`_`) ou oculte completamente (`✕`).
 - 📋 **Logs Interativos**: Acompanhamento detalhado em tempo real com botão de cópia de logs com timestamps.
+
+---
+
+## 🏗️ Arquitetura Modular (`src/`)
+
+O projeto é estruturado em módulos independentes de alta coesão e baixo acoplamento:
+
+```text
+extensao_estacio/
+├── src/
+│   ├── config/
+│   │   ├── providers.js       # Registro de IAs, modelos e endpoints
+│   │   └── storage.js         # Camada de armazenamento e token extraction
+│   │
+│   ├── core/
+│   │   ├── ai_engine.js       # Chamadas HTTP para IAs e Auto-Fallback
+│   │   ├── prompt_builder.js  # Formatação do prompt PhD com JSON estrito
+│   │   └── react_fiber.js     # Dispatchers nativos do React (__reactProps$)
+│   │
+│   ├── modules/
+│   │   ├── dom_parser.js      # Extração de questões e grade de matérias
+│   │   ├── exam_solver.js     # Orquestrador da fila de resolução da prova
+│   │   ├── gabarito.js        # Gerenciador de gabarito persistente e cópia
+│   │   ├── reviewer.js        # Revisão com 1-clique (Segunda Opinião)
+│   │   └── theme_automator.js # State Machine de conclusão automática
+│   │
+│   ├── ui/
+│   │   ├── draggable.js       # Mecânica universal de drag & drop com memória
+│   │   ├── widget.js          # Construtor da interface e eventos
+│   │   └── widget.css         # Folha de estilo desacoplada
+│   │
+│   └── index.js               # Entry point do projeto
+│
+├── build.js                   # Empacotador rápido (esbuild)
+├── package.json
+└── estacio_solver.user.js     # Bundle compilado final pronto para uso
+```
+
+### ⚡ Como compilar após fazer alterações:
+```bash
+cd extensao_estacio
+npm install
+npm run build
+```
+O script `npm run build` compila todos os módulos em milissegundos e atualiza simultaneamente:
+- `estacio_solver.user.js` (Tampermonkey Userscript com banner completo)
+- `content/content.js` (Extensão Chrome MV3)
+- `content/overlay.css` (CSS sincronizado)
 
 ---
 
@@ -62,9 +111,9 @@ A suíte definitiva de produtividade e automação para estudantes da **Estácio
 
 ## 🔑 Configuração de Chaves de API (Multi-Keys)
 
-Você pode salvar as chaves de todos os seus provedores simultaneamente no Popup da extensão ou no campo do Widget:
+Você pode salvar as chaves de todos os seus provedores diretamente no campo do Widget ou no Popup da extensão:
 
-| Provedor | Modelo Recomendado | Onde Obter Chave Gratuita |
+| Provedor | Modelo Padrão | Onde Obter Chave Gratuita |
 | :--- | :--- | :--- |
 | **Groq** *(Ultra Rápido)* | `llama-3.3-70b-versatile` | [console.groq.com/keys](https://console.groq.com/keys) |
 | **Mistral AI** *(PhD / Raciocínio)* | `mistral-large-latest` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
@@ -72,7 +121,7 @@ Você pode salvar as chaves de todos os seus provedores simultaneamente no Popup
 | **OpenAI** | `gpt-4o` / `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **DeepSeek** | `deepseek-chat` / `deepseek-reasoner` | [platform.deepseek.com](https://platform.deepseek.com) |
 
-> 🔒 **Segurança & Privacidade**: Suas chaves de API ficam salvas **exclusivamente no armazenamento local do seu próprio navegador** (`chrome.storage` / `localStorage`). Nenhuma chave ou dado é enviado para servidores externos além da API oficial de IA escolhida por você.
+> 🔒 **Segurança & Privacidade**: Suas chaves de API ficam salvas **exclusivamente no armazenamento local do seu próprio navegador** (`chrome.storage` / `localStorage`). Nenhuma chave ou dado é enviado para servidores de terceiros.
 
 ---
 
@@ -83,8 +132,8 @@ Você pode salvar as chaves de todos os seus provedores simultaneamente no Popup
 2. Abra a prova ou simulado desejado.
 3. No widget flutuante, selecione sua IA principal (ex: **Groq** ou **Mistral**).
 4. Clique em **`[🎯 Resolver e Marcar Prova]`**.
-5. Acompanhe a resolução questão a questão. Ao terminar, o **Gabarito** será exibido com a opção de copiar!
-6. Se tiver dúvida em alguma questão específica, selecione o número da questão no campo `🔍 Revisar Q: [ ]` e clique em **`Reavaliar`** com outra IA para obter uma segunda opinião.
+5. Ao terminar, o **Gabarito** será exibido com as opções de copiar e revisar.
+6. Se quiser revisar qualquer questão individual, basta dar **1 clique na badge da questão no gabarito** (ex: `[Q3: B 🔍]`) e a 2ª IA reavaliará a questão instantaneamente!
 
 ### 📚 Concluindo Temas de Matérias:
 1. Acesse a página de conteúdos de uma disciplina no portal do aluno (`https://estudante.estacio.br/disciplinas/{idTurma}/conteudos`).
@@ -95,10 +144,10 @@ Você pode salvar as chaves de todos os seus provedores simultaneamente no Popup
 
 ## ⚖️ Aviso Legal / Disclaimer
 
-Este projeto foi desenvolvido estritamente para **fins educacionais e de estudo sobre automação web, extensões de navegadores e integração de APIs de inteligência artificial**. Os desenvolvedores não se responsabilizam pelo uso indevido da ferramenta. Utilize com responsabilidade e em conformidade com as diretrizes da sua instituição de ensino.
+Este projeto foi desenvolvido estritamente para **fins educacionais e de estudo sobre automação web, engenharia reversa de front-ends modernos e integração de APIs de inteligência artificial**. Os desenvolvedores não se responsabilizam pelo uso indevido da ferramenta. Utilize com responsabilidade.
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença **MIT**. Consulte o arquivo `LICENSE` para mais detalhes.
+Distribuído sob a licença **MIT**.
