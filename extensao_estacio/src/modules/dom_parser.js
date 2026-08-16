@@ -1,4 +1,4 @@
-// Extrator do DOM (Questões, Enunciados, Alternativas e Grade de Temas com Suporte a Múltiplos Sub-Itens)
+// Extrator do DOM (Questões, Enunciados, Alternativas e Grade de Temas com Botão de Ação Preciso)
 
 export function getQuestionCards() {
   const allTestIds = Array.from(document.querySelectorAll('[data-testid]'));
@@ -71,32 +71,38 @@ export function getThemeCardsFromDom() {
   const grid = document.querySelector('[data-testid="grid-conteudos"]') || document.querySelector('.eap9uh52') || document.body;
   const cards = [];
   const seen = new Set();
-  const candidates = Array.from(grid.querySelectorAll('button, a[href*="/conteudos/"]'));
+  
+  // Localiza todos os containers de cards que mencionam "Tema X"
+  const allContainers = Array.from(grid.querySelectorAll('section, article, [class*="card"], div[class*="css-"], div'));
 
-  candidates.forEach((btn) => {
-    const card = btn.closest('section, article, [class*="card"], div[class*="css-"]');
-    if (card && !seen.has(card) && card !== grid) {
-      const text = card.innerText.replace(/\s+/g, ' ').trim();
-      const match = text.match(/Tema\s*(\d+)/i);
+  allContainers.forEach((card) => {
+    if (seen.has(card) || card === grid) return;
+    const text = (card.innerText || '').replace(/\s+/g, ' ').trim();
+    const match = text.match(/^Tema\s*(\d+)/i) || (text.includes('Tema ') && text.match(/Tema\s*(\d+)/i));
 
-      if (match && text.length < 350) {
+    if (match && text.length < 350) {
+      // Verifica se é o container mais específico do card
+      const hasNestedThemeCard = Array.from(card.children).some(child => (child.innerText || '').includes('Tema '));
+      if (!hasNestedThemeCard || card.tagName === 'ARTICLE' || card.tagName === 'SECTION') {
         seen.add(card);
         const isConcluido = /conclu[ií]do/i.test(text);
         const temaNum = parseInt(match[1]);
         
-        // Extrai contagem de itens se houver (ex: "Tema 1 | 2 Itens")
         const itemsMatch = text.match(/(\d+)\s*Itens?/i);
         const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
 
         const link = card.querySelector('a[href*="/conteudos/"]');
         const href = link ? link.href : (card.getAttribute('href') || '');
 
+        // Identifica o botão de ação (seta redonda [ → ] ou link de clique)
+        const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
+
         cards.push({
           temaNum: temaNum,
           temaName: `Tema ${temaNum}`,
           totalItems: totalItems,
           cardEl: card,
-          actionBtn: btn,
+          actionBtn: actionBtn,
           href: href,
           isConcluido: isConcluido,
           isPendente: !isConcluido

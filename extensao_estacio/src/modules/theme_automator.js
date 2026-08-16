@@ -1,4 +1,4 @@
-// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com waitForCards e Fila de Concluídos)
+// Automação de Conclusão de Temas / Disciplinas (Portal do Aluno com Abertura Confiável de Temas)
 
 import { getBearerToken, getMatricula } from '../config/storage.js';
 import { triggerNativeClick } from '../core/react_fiber.js';
@@ -264,7 +264,6 @@ export async function processAutomatorStateMachine(onLog) {
   if (!insideTheme) {
     isStateMachineRunning = true;
     try {
-      // Espera assincronamente os cards serem renderizados pelo React na tela
       const gridCards = await waitForCards(12000);
       if (gridCards.length === 0) {
         return;
@@ -272,7 +271,7 @@ export async function processAutomatorStateMachine(onLog) {
 
       const completedSet = new Set(queue.completedThemes || []);
 
-      // Filtra os temas pendentes considerando os que já foram marcados nesta sessão
+      // Filtra temas pendentes considerando os já concluídos
       const pendentes = gridCards.filter(c => !c.isConcluido && !completedSet.has(c.temaNum));
 
       if (pendentes.length === 0) {
@@ -289,8 +288,25 @@ export async function processAutomatorStateMachine(onLog) {
       const nextTema = pendentes[0];
       if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, 'info');
 
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 600));
+
+      // Dispara clique no botão [ → ], no card e no link interno
       triggerNativeClick(nextTema.actionBtn);
+      if (nextTema.cardEl && nextTema.cardEl !== nextTema.actionBtn) {
+        triggerNativeClick(nextTema.cardEl);
+      }
+
+      const linkEl = nextTema.cardEl.querySelector('a[href*="/conteudos/"]');
+      if (linkEl) triggerNativeClick(linkEl);
+
+      // Fallback seguro se não abrir em 1.5s
+      if (nextTema.href && nextTema.href.includes('/conteudos/')) {
+        setTimeout(() => {
+          if (!isCurrentlyInsideTheme()) {
+            window.location.href = nextTema.href;
+          }
+        }, 1500);
+      }
 
     } finally {
       isStateMachineRunning = false;
@@ -356,6 +372,12 @@ export function startThemeCompletion(onLog) {
 
     const firstTema = pendentes[0];
     if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, 'info');
+    
     triggerNativeClick(firstTema.actionBtn);
+    if (firstTema.cardEl && firstTema.cardEl !== firstTema.actionBtn) {
+      triggerNativeClick(firstTema.cardEl);
+    }
+    const linkEl = firstTema.cardEl.querySelector('a[href*="/conteudos/"]');
+    if (linkEl) triggerNativeClick(linkEl);
   });
 }

@@ -214,19 +214,19 @@
 `;
       text += data.answers.map((a) => `${a.q}-${a.letter}`).join(" | ");
       copyTextToClipboard(text, () => {
-        if (onSuccess) onSuccess("\u{1F4CB} Gabarito copiado para a \xE1rea de transfer\xEAncia!");
+        if (onSuccess) onSuccess();
       }, () => {
-        if (onError) onError("Erro ao copiar gabarito.");
+        if (onError) onError();
       });
     } catch (e) {
-      if (onError) onError("Erro ao formatar gabarito.");
+      if (onError) onError();
     }
   }
   function copyAllLogs(logBoxElement, onSuccess) {
     if (!logBoxElement) return;
     const lines = Array.from(logBoxElement.querySelectorAll(".log-item, .widget-log-item")).map((el) => el.textContent);
     copyTextToClipboard(lines.join("\n"), () => {
-      if (onSuccess) onSuccess("\u{1F4CB} Logs copiados para a \xE1rea de transfer\xEAncia!");
+      if (onSuccess) onSuccess();
     });
   }
   function copyTextToClipboard(text, onSuccess, onError) {
@@ -264,7 +264,7 @@
       span.id = `badge-q-${a.q}`;
       const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
       span.title = `Clique para REVISAR Q${a.q} com ${pName}! (Resposta atual: ${a.letter})`;
-      span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span><span class="badge-rev-icon">\u{1F50D}</span>`;
+      span.innerHTML = `Q${a.q}: <b>${a.letter}</b> <span class="gabarito-search-icon">\u{1F50D}</span>`;
       span.addEventListener("click", () => {
         if (onBadgeClick) onBadgeClick(a.q);
       });
@@ -553,13 +553,14 @@ Responda ESTRITAMENTE em formato JSON:
     const grid = document.querySelector('[data-testid="grid-conteudos"]') || document.querySelector(".eap9uh52") || document.body;
     const cards = [];
     const seen = /* @__PURE__ */ new Set();
-    const candidates = Array.from(grid.querySelectorAll('button, a[href*="/conteudos/"]'));
-    candidates.forEach((btn) => {
-      const card = btn.closest('section, article, [class*="card"], div[class*="css-"]');
-      if (card && !seen.has(card) && card !== grid) {
-        const text = card.innerText.replace(/\s+/g, " ").trim();
-        const match = text.match(/Tema\s*(\d+)/i);
-        if (match && text.length < 350) {
+    const allContainers = Array.from(grid.querySelectorAll('section, article, [class*="card"], div[class*="css-"], div'));
+    allContainers.forEach((card) => {
+      if (seen.has(card) || card === grid) return;
+      const text = (card.innerText || "").replace(/\s+/g, " ").trim();
+      const match = text.match(/^Tema\s*(\d+)/i) || text.includes("Tema ") && text.match(/Tema\s*(\d+)/i);
+      if (match && text.length < 350) {
+        const hasNestedThemeCard = Array.from(card.children).some((child) => (child.innerText || "").includes("Tema "));
+        if (!hasNestedThemeCard || card.tagName === "ARTICLE" || card.tagName === "SECTION") {
           seen.add(card);
           const isConcluido = /conclu[ií]do/i.test(text);
           const temaNum = parseInt(match[1]);
@@ -567,12 +568,13 @@ Responda ESTRITAMENTE em formato JSON:
           const totalItems = itemsMatch ? parseInt(itemsMatch[1]) : 1;
           const link = card.querySelector('a[href*="/conteudos/"]');
           const href = link ? link.href : card.getAttribute("href") || "";
+          const actionBtn = card.querySelector('button, [role="button"], a[href*="/conteudos/"]') || card;
           cards.push({
             temaNum,
             temaName: `Tema ${temaNum}`,
             totalItems,
             cardEl: card,
-            actionBtn: btn,
+            actionBtn,
             href,
             isConcluido,
             isPendente: !isConcluido
@@ -917,8 +919,20 @@ Responda ESTRITAMENTE em formato JSON:
         localStorage.setItem("estacio_catalog_queue", JSON.stringify(queue));
         const nextTema = pendentes[0];
         if (onLog) onLog(`[${pendentes.length} restantes] Abrindo Tema ${nextTema.temaNum} (${nextTema.totalItems} itens)...`, "info");
-        await new Promise((r) => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 600));
         triggerNativeClick(nextTema.actionBtn);
+        if (nextTema.cardEl && nextTema.cardEl !== nextTema.actionBtn) {
+          triggerNativeClick(nextTema.cardEl);
+        }
+        const linkEl = nextTema.cardEl.querySelector('a[href*="/conteudos/"]');
+        if (linkEl) triggerNativeClick(linkEl);
+        if (nextTema.href && nextTema.href.includes("/conteudos/")) {
+          setTimeout(() => {
+            if (!isCurrentlyInsideTheme()) {
+              window.location.href = nextTema.href;
+            }
+          }, 1500);
+        }
       } finally {
         isStateMachineRunning = false;
       }
@@ -972,6 +986,11 @@ Responda ESTRITAMENTE em formato JSON:
       const firstTema = pendentes[0];
       if (onLog) onLog(`[1/${pendingNumbers.length}] Abrindo Tema ${firstTema.temaNum}...`, "info");
       triggerNativeClick(firstTema.actionBtn);
+      if (firstTema.cardEl && firstTema.cardEl !== firstTema.actionBtn) {
+        triggerNativeClick(firstTema.cardEl);
+      }
+      const linkEl = firstTema.cardEl.querySelector('a[href*="/conteudos/"]');
+      if (linkEl) triggerNativeClick(linkEl);
     });
   }
 

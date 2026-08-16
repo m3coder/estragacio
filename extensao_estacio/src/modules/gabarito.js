@@ -1,4 +1,4 @@
-// Sistema de Gabarito Persistente e Cópia Formatada
+// Sistema de Gabarito Persistente e Cópia Formatada (Cópia Silenciosa sem Poluir Logs)
 
 import { PROVIDERS_CONFIG } from '../config/providers.js';
 
@@ -41,12 +41,12 @@ export function copyGabarito(onSuccess, onError) {
     text += data.answers.map(a => `${a.q}-${a.letter}`).join(' | ');
 
     copyTextToClipboard(text, () => {
-      if (onSuccess) onSuccess('📋 Gabarito copiado para a área de transferência!');
+      if (onSuccess) onSuccess();
     }, () => {
-      if (onError) onError('Erro ao copiar gabarito.');
+      if (onError) onError();
     });
   } catch (e) {
-    if (onError) onError('Erro ao formatar gabarito.');
+    if (onError) onError();
   }
 }
 
@@ -54,7 +54,7 @@ export function copyAllLogs(logBoxElement, onSuccess) {
   if (!logBoxElement) return;
   const lines = Array.from(logBoxElement.querySelectorAll('.log-item, .widget-log-item')).map(el => el.textContent);
   copyTextToClipboard(lines.join('\n'), () => {
-    if (onSuccess) onSuccess('📋 Logs copiados para a área de transferência!');
+    if (onSuccess) onSuccess();
   });
 }
 
@@ -98,7 +98,7 @@ export function renderSavedGabarito(containerEl, badgesEl, reviewProvider, onBad
     span.id = `badge-q-${a.q}`;
     const pName = PROVIDERS_CONFIG[reviewProvider]?.name || reviewProvider;
     span.title = `Clique para REVISAR Q${a.q} com ${pName}! (Resposta atual: ${a.letter})`;
-    span.innerHTML = `<span class="badge-q">Q${a.q}:</span><span class="badge-a">${a.letter}</span><span class="badge-rev-icon">🔍</span>`;
+    span.innerHTML = `Q${a.q}: <b>${a.letter}</b> <span class="gabarito-search-icon">🔍</span>`;
 
     span.addEventListener('click', () => {
       if (onBadgeClick) onBadgeClick(a.q);
