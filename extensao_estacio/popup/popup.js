@@ -27,8 +27,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)", isFree: false }
       ]
     },
+    nous: {
+      name: "Nous Research / Portal",
+      defaultModel: "poolside/laguna-s-2.1:free",
+      endpoint: "https://inference-api.nousresearch.com/v1/chat/completions",
+      modelsEndpoint: "https://inference-api.nousresearch.com/v1/models",
+      models: [
+        { id: "poolside/laguna-s-2.1:free", name: "Poolside Laguna S 2.1 (🔥 100% Grátis • 118B Coding • Recomendado)", isFree: true },
+        { id: "meituan/longcat-2.0:free", name: "Meituan LongCat 2.0 (🔥 100% Grátis • 1.6T MoE / 1M Context)", isFree: true },
+        { id: "tencent/hy3:free", name: "Tencent Hy3 (🔥 100% Grátis • 295B MoE)", isFree: true },
+        { id: "stepfun/step-3.7-flash:free", name: "StepFun Step 3.7 Flash (🔥 100% Grátis • Ultra Rápido)", isFree: true },
+        { id: "upstage/solar-pro4:free", name: "Upstage Solar Pro 4 (🔥 100% Grátis • Raciocínio)", isFree: true },
+        { id: "poolside/laguna-xs-2.1:free", name: "Poolside Laguna XS 2.1 (🔥 100% Grátis • Leve)", isFree: true }
+      ]
+    },
     openrouter: {
-      name: "OpenRouter (Nous Hermes / Free)",
+      name: "OpenRouter (Free Router / Modelos Free)",
       defaultModel: "openrouter/free",
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       modelsEndpoint: "https://openrouter.ai/api/v1/models",
@@ -39,9 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)", isFree: true },
         { id: "minimax/minimax-m3:free", name: "MiniMax M3 (🔥 100% Grátis)", isFree: true },
         { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (🔥 100% Grátis)", isFree: true },
-        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true },
-        { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (💎 Pago / Nous Research)", isFree: false },
-        { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (💎 Pago)", isFree: false }
+        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true }
       ]
     },
     ollama: {
@@ -119,6 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const keyGroq = document.getElementById('keyGroq');
   const keyGemini = document.getElementById('keyGemini');
+  const keyNous = document.getElementById('keyNous');
   const keyOpenRouter = document.getElementById('keyOpenRouter');
   const keyOllama = document.getElementById('keyOllama');
   const keyMistral = document.getElementById('keyMistral');
@@ -164,6 +177,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modelId.includes('gemini-2.5-pro')) return 'Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)';
       if (modelId.includes('gemini-flash-latest')) return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
       if (modelId.includes('gemini-pro-latest')) return 'Gemini Pro Latest (💎 Pago AI Studio)';
+    } else if (provider === 'nous') {
+      const isFree = /hy3|longcat|solar|step|laguna/i.test(modelId) || /hy3|longcat|solar|step|laguna/i.test(rawName);
+      const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
+      if (modelId === 'poolside/laguna-s-2.1:free') return 'Poolside Laguna S 2.1 (🔥 100% Grátis • 118B Coding • Recomendado)';
+      if (modelId === 'poolside/laguna-xs-2.1:free') return 'Poolside Laguna XS 2.1 (🔥 100% Grátis • Leve)';
+      if (modelId === 'meituan/longcat-2.0:free') return 'Meituan LongCat 2.0 (🔥 100% Grátis • 1.6T MoE / 1M Context)';
+      if (modelId === 'tencent/hy3:free') return 'Tencent Hy3 (🔥 100% Grátis • 295B MoE)';
+      if (modelId === 'stepfun/step-3.7-flash:free') return 'StepFun Step 3.7 Flash (🔥 100% Grátis • Ultra Rápido)';
+      if (modelId === 'upstage/solar-pro4:free') return 'Upstage Solar Pro 4 (🔥 100% Grátis • Raciocínio)';
+      if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
+      return `${modelId}${freeBadge}`;
     } else if (provider === 'openrouter') {
       const isFree = modelId === 'openrouter/free' || modelId.includes(':free');
       const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
@@ -178,8 +202,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis)`;
       if (modelId.includes('gemini-2.0-flash-exp:free')) return `Gemini 2.0 Flash Exp (🔥 100% Grátis)`;
       if (modelId.includes('qwen-2.5-72b-instruct:free')) return `Qwen 2.5 72B (🔥 100% Grátis)`;
-      if (modelId.includes('hermes-3-llama-3.1-405b')) return `Nous Hermes 3 405B${freeBadge} (🎓 PhD)`;
-      if (modelId.includes('hermes-3-llama-3.1-70b')) return `Nous Hermes 3 70B${freeBadge}`;
       if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
       return `${modelId}${freeBadge}`;
     } else if (provider === 'ollama') {
@@ -233,6 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const keys = {
       groq: data.estacio_key_groq || localStorage.getItem('estacio_key_groq') || data.apiKey || localStorage.getItem('apiKey') || '',
       gemini: data.estacio_key_gemini || localStorage.getItem('estacio_key_gemini') || '',
+      nous: data.estacio_key_nous || localStorage.getItem('estacio_key_nous') || '',
       openrouter: data.estacio_key_openrouter || localStorage.getItem('estacio_key_openrouter') || '',
       ollama: data.estacio_key_ollama || localStorage.getItem('estacio_key_ollama') || 'http://localhost:11434',
       mistral: data.estacio_key_mistral || localStorage.getItem('estacio_key_mistral') || '',
@@ -251,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       estacio_show_paid_models: showPaidModels ? 'true' : 'false',
       estacio_key_groq: keys.groq || '',
       estacio_key_gemini: keys.gemini || '',
+      estacio_key_nous: keys.nous || '',
       estacio_key_openrouter: keys.openrouter || '',
       estacio_key_ollama: keys.ollama || 'http://localhost:11434',
       estacio_key_mistral: keys.mistral || '',
@@ -370,6 +394,49 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (filtered.length > 0) {
             await saveCachedModelsFor(providerKey, filtered);
             return showPaidModels ? filtered : filtered.filter(m => m.isFree);
+          }
+        }
+      }
+
+      // 2b. Nous Research
+      if (providerKey === 'nous') {
+        const res = await fetch('https://inference-api.nousresearch.com/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const raw = Array.isArray(json) ? json : (json.data || []);
+          const seen = new Set();
+          const filtered = raw
+            .filter(m => !/embed|moderation|audio/i.test(m.id))
+            .filter(m => /hy3|longcat|solar|step|laguna/i.test(m.id) || /hy3|longcat|solar|step|laguna/i.test(m.name || ''))
+            .filter(m => {
+              if (seen.has(m.id)) return false;
+              seen.add(m.id);
+              return true;
+            })
+            .map(m => ({ id: m.id, name: formatDisplayName('nous', m), isFree: true }));
+
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id.includes('laguna-s') || id.includes('laguna_s')) return 1;
+              if (id.includes('longcat')) return 2;
+              if (id.includes('hy3')) return 3;
+              if (id.includes('step')) return 4;
+              if (id.includes('solar')) return 5;
+              if (id.includes('laguna-xs') || id.includes('laguna_xs')) return 6;
+              if (id.includes('laguna')) return 7;
+              return 20;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+
+          if (filtered.length > 0) {
+            await saveCachedModelsFor(providerKey, filtered);
+            return filtered;
           }
         }
       }
@@ -593,6 +660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function syncKeysToInputs(keys) {
     keyGroq.value = keys.groq || '';
     keyGemini.value = keys.gemini || '';
+    keyNous.value = keys.nous || '';
     keyOpenRouter.value = keys.openrouter || '';
     keyOllama.value = keys.ollama || 'http://localhost:11434';
     keyMistral.value = keys.mistral || '';
@@ -608,6 +676,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return {
       groq: keyGroq.value.trim(),
       gemini: keyGemini.value.trim(),
+      nous: keyNous.value.trim(),
       openrouter: keyOpenRouter.value.trim(),
       ollama: keyOllama.value.trim() || 'http://localhost:11434',
       mistral: keyMistral.value.trim(),
@@ -644,6 +713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const val = apiKeyInput.value.trim();
     if (currentP === 'groq') keyGroq.value = val;
     if (currentP === 'gemini') keyGemini.value = val;
+    if (currentP === 'nous') keyNous.value = val;
     if (currentP === 'openrouter') keyOpenRouter.value = val;
     if (currentP === 'ollama') keyOllama.value = val;
     if (currentP === 'mistral') keyMistral.value = val;

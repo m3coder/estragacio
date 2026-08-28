@@ -228,11 +228,18 @@ export async function executeAICall(provider, model, statement, alternatives) {
     throw lastOpenRouterErr || new Error('Falha na requisição ao OpenRouter');
   }
 
-  // 4. OpenAI-compatible APIs (Groq, Ollama, Mistral, OpenAI, DeepSeek)
+  // 4. OpenAI-compatible APIs (Groq, Ollama, Mistral, OpenAI, DeepSeek, Nous)
   const endpoint = pConfig?.endpoint || 'https://api.groq.com/openai/v1/chat/completions';
   let selectedModel = (model || pConfig?.defaultModel || 'llama-3.3-70b-versatile').trim();
   // Sanitiza traços unicode que podem corromper IDs
   selectedModel = selectedModel.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-');
+
+  // Para o Nous Research Portal, se for modelo free e não tiver sufixo :free, adiciona
+  if (provider === 'nous') {
+    if (/hy3|longcat|solar|step|laguna/i.test(selectedModel) && !selectedModel.includes(':free')) {
+      selectedModel = `${selectedModel}:free`;
+    }
+  }
 
   const systemPrompt = `Você é um professor PhD especialista em provas acadêmicas e cálculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
 
@@ -250,13 +257,14 @@ export async function executeAICall(provider, model, statement, alternatives) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.1
+      temperature: 0.1,
+      max_tokens: 500
     })
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const rawMsg = err.error?.message || `Erro HTTP ${res.status}`;
+    const rawMsg = err.error?.message || err.message || err.detail || `Erro HTTP ${res.status}`;
     if (provider === 'groq' && /does not exist|model_not_found/i.test(rawMsg)) {
       // Tenta fallback interno imediato para Llama 3.1 8B no Groq
       try {
@@ -269,7 +277,8 @@ export async function executeAICall(provider, model, statement, alternatives) {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: prompt }
             ],
-            temperature: 0.1
+            temperature: 0.1,
+            max_tokens: 500
           })
         });
         if (fbRes.ok) {
@@ -279,6 +288,31 @@ export async function executeAICall(provider, model, statement, alternatives) {
         }
       } catch (e) {}
     }
+
+    if (provider === 'nous' && (/credit|balance|payment|insufficient|does not exist|model_not_found/i.test(rawMsg) || res.status === 402 || res.status === 404)) {
+      // Tenta fallback interno imediato para poolside/laguna-s-2.1:free no Nous Portal
+      try {
+        const fbRes = await universalFetch(endpoint, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            model: 'poolside/laguna-s-2.1:free',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.1,
+            max_tokens: 500
+          })
+        });
+        if (fbRes.ok) {
+          const fbData = await fbRes.json();
+          const fbContent = fbData.choices?.[0]?.message?.content || '';
+          return parseAIResponse(fbContent);
+        }
+      } catch (e) {}
+    }
+
     throw new Error(rawMsg);
   }
 
@@ -320,8 +354,7 @@ export async function testProviderKey(provider, testKey, specificModel = null) {
         'google/gemma-4-26b-a4b-it:free',
         'nvidia/nemotron-3-ultra-550b-a55b:free',
         'minimax/minimax-m3:free',
-        'z-ai/glm-5.2:free',
-        'nousresearch/hermes-3-llama-3.1-405b'
+        'z-ai/glm-5.2:free'
       ];
       for (const fallbackModel of openRouterFallbacks) {
         if (fallbackModel !== modelToTest) {
@@ -335,6 +368,35 @@ export async function testProviderKey(provider, testKey, specificModel = null) {
                 result: fbResult,
                 model: fallbackModel,
                 warning: `O modelo ${modelToTest} não aceitou requisição no OpenRouter. Chave validada via ${fallbackModel}!`
+              };
+            }
+          } catch (fbErr) {}
+        }
+      }
+    }
+
+    // 1b. Auto-recovery para Nous Research / Portal
+    if (provider === 'nous') {
+      const nousFallbacks = [
+        'poolside/laguna-s-2.1:free',
+        'meituan/longcat-2.0:free',
+        'tencent/hy3:free',
+        'stepfun/step-3.7-flash:free',
+        'upstage/solar-pro4:free',
+        'poolside/laguna-xs-2.1:free'
+      ];
+      for (const fallbackModel of nousFallbacks) {
+        if (fallbackModel !== modelToTest) {
+          try {
+            const fbResult = await executeAICall(provider, fallbackModel, testStatement, testAlternatives);
+            if (fbResult && fbResult.letra) {
+              setProviderStatus(provider, 'live');
+              setSaved('active_model', fallbackModel);
+              return {
+                success: true,
+                result: fbResult,
+                model: fallbackModel,
+                warning: `Chave do Nous Portal validada via ${fallbackModel}!`
               };
             }
           } catch (fbErr) {}

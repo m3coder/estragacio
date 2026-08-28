@@ -24,8 +24,21 @@ export const PROVIDERS_CONFIG = {
       { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)", isFree: false }
     ]
   },
+  nous: {
+    name: "Nous Research / Portal",
+    defaultModel: "poolside/laguna-s-2.1:free",
+    endpoint: "https://inference-api.nousresearch.com/v1/chat/completions",
+    models: [
+      { id: "poolside/laguna-s-2.1:free", name: "Poolside Laguna S 2.1 (🔥 100% Grátis • 118B Coding • Recomendado)", isFree: true },
+      { id: "meituan/longcat-2.0:free", name: "Meituan LongCat 2.0 (🔥 100% Grátis • 1.6T MoE / 1M Context)", isFree: true },
+      { id: "tencent/hy3:free", name: "Tencent Hy3 (🔥 100% Grátis • 295B MoE)", isFree: true },
+      { id: "stepfun/step-3.7-flash:free", name: "StepFun Step 3.7 Flash (🔥 100% Grátis • Ultra Rápido)", isFree: true },
+      { id: "upstage/solar-pro4:free", name: "Upstage Solar Pro 4 (🔥 100% Grátis • Raciocínio)", isFree: true },
+      { id: "poolside/laguna-xs-2.1:free", name: "Poolside Laguna XS 2.1 (🔥 100% Grátis • Leve)", isFree: true }
+    ]
+  },
   openrouter: {
-    name: "OpenRouter (Nous Hermes / Free Tier)",
+    name: "OpenRouter (Free Tier & Router)",
     defaultModel: "openrouter/free",
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     models: [
@@ -35,9 +48,7 @@ export const PROVIDERS_CONFIG = {
       { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)", isFree: true },
       { id: "minimax/minimax-m3:free", name: "MiniMax M3 (🔥 100% Grátis)", isFree: true },
       { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (🔥 100% Grátis)", isFree: true },
-      { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true },
-      { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (💎 Pago / Nous Research)", isFree: false },
-      { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (💎 Pago)", isFree: false }
+      { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true }
     ]
   },
   ollama: {

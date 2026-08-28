@@ -16,7 +16,7 @@ import { reviewSingleQuestion } from '../modules/reviewer.js';
 export function createSuiteWidget() {
   if (document.getElementById('estacio-suite-box')) return;
 
-  const ALL_PROVIDERS = ['groq', 'gemini', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
+  const ALL_PROVIDERS = ['groq', 'gemini', 'nous', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
 
   const isExam = window.location.hostname.includes('saladeavaliacoes.com.br');
   let currentProvider = getSaved('active_provider', 'groq');
@@ -84,7 +84,8 @@ export function createSuiteWidget() {
             <select id="config-target-select" class="ui-select" style="max-width:145px; padding:3px 6px; font-size:10.5px;">
               <option value="groq">Groq</option>
               <option value="gemini">Google Gemini</option>
-              <option value="openrouter">OpenRouter (Hermes)</option>
+              <option value="nous">Nous Research / Portal</option>
+              <option value="openrouter">OpenRouter (Free Tier)</option>
               <option value="ollama">Ollama (Local)</option>
               <option value="mistral">Mistral AI</option>
               <option value="claude">Anthropic Claude</option>

@@ -60,7 +60,12 @@ export function isModelFree(provider, modelId, displayName = '') {
     return /codestral|small/i.test(id) && !/large|pixtral|embed/i.test(id);
   }
 
-  // 6. Provedores pagos por token (Claude, OpenAI, DeepSeek)
+  // 6. Nous Research / Portal (portal.nousresearch.com)
+  if (provider === 'nous') {
+    return id.endsWith(':free') || /:free$/i.test(id) || id.includes(':free');
+  }
+
+  // 7. Provedores pagos por token (Claude, OpenAI, DeepSeek)
   return false;
 }
 
@@ -117,8 +122,17 @@ function formatDisplayName(provider, modelItem) {
     if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis)`;
     if (modelId.includes('gemini-2.0-flash-exp:free')) return `Gemini 2.0 Flash Exp (🔥 100% Grátis)`;
     if (modelId.includes('qwen-2.5-72b-instruct:free')) return `Qwen 2.5 72B (🔥 100% Grátis)`;
-    if (modelId.includes('hermes-3-llama-3.1-405b')) return `Nous Hermes 3 405B${freeBadge} (🎓 PhD)`;
-    if (modelId.includes('hermes-3-llama-3.1-70b')) return `Nous Hermes 3 70B${freeBadge}`;
+    if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
+    return `${modelId}${freeBadge}`;
+  } else if (provider === 'nous') {
+    const isFree = isModelFree('nous', modelId, rawName);
+    const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
+    if (modelId === 'poolside/laguna-s-2.1:free') return 'Poolside Laguna S 2.1 (🔥 100% Grátis • 118B Coding • Recomendado)';
+    if (modelId === 'poolside/laguna-xs-2.1:free') return 'Poolside Laguna XS 2.1 (🔥 100% Grátis • Leve)';
+    if (modelId === 'meituan/longcat-2.0:free') return 'Meituan LongCat 2.0 (🔥 100% Grátis • 1.6T MoE / 1M Context)';
+    if (modelId === 'tencent/hy3:free') return 'Tencent Hy3 (🔥 100% Grátis • 295B MoE)';
+    if (modelId === 'stepfun/step-3.7-flash:free') return 'StepFun Step 3.7 Flash (🔥 100% Grátis • Ultra Rápido)';
+    if (modelId === 'upstage/solar-pro4:free') return 'Upstage Solar Pro 4 (🔥 100% Grátis • Raciocínio)';
     if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
     return `${modelId}${freeBadge}`;
   } else if (provider === 'ollama') {
@@ -263,6 +277,59 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null, force =
           return allowPaid ? filtered : filtered.filter(m => m.isFree);
         }
       }
+    }
+
+    // 3. Nous Research / Portal (/v1/models)
+    if (provider === 'nous') {
+      try {
+        const res = await universalFetch('https://inference-api.nousresearch.com/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = Array.isArray(json) ? json : (json.data || []);
+          const seen = new Set();
+          const models = rawList
+            .filter(m => !/embed|moderation|audio/i.test(m.id))
+            .filter(m => isModelFree('nous', m.id, m.name))
+            .filter(m => {
+              if (seen.has(m.id)) return false;
+              seen.add(m.id);
+              return true;
+            })
+            .map(m => ({
+              id: m.id,
+              name: formatDisplayName('nous', m),
+              isFree: true
+            }));
+
+          models.sort((a, b) => {
+            const priority = (id) => {
+              if (id.includes('laguna-s') || id.includes('laguna_s')) return 1;
+              if (id.includes('longcat')) return 2;
+              if (id.includes('hy3')) return 3;
+              if (id.includes('step')) return 4;
+              if (id.includes('solar')) return 5;
+              if (id.includes('laguna-xs') || id.includes('laguna_xs')) return 6;
+              if (id.includes('laguna')) return 7;
+              return 20;
+            };
+            return priority(a.id) - priority(b.id);
+          });
+
+          if (models.length > 0) {
+            saveCachedModels(provider, models);
+            return models;
+          }
+        }
+      } catch (e) {}
+
+      const curatedNous = PROVIDERS_CONFIG.nous?.models || [];
+      saveCachedModels(provider, curatedNous);
+      return curatedNous;
     }
 
     // 3. Ollama (Local / Offline Server) - Todos 100% Free

@@ -177,8 +177,21 @@
         { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Frontier Reasoning)", isFree: false }
       ]
     },
+    nous: {
+      name: "Nous Research / Portal",
+      defaultModel: "poolside/laguna-s-2.1:free",
+      endpoint: "https://inference-api.nousresearch.com/v1/chat/completions",
+      models: [
+        { id: "poolside/laguna-s-2.1:free", name: "Poolside Laguna S 2.1 (\u{1F525} 100% Gr\xE1tis \u2022 118B Coding \u2022 Recomendado)", isFree: true },
+        { id: "meituan/longcat-2.0:free", name: "Meituan LongCat 2.0 (\u{1F525} 100% Gr\xE1tis \u2022 1.6T MoE / 1M Context)", isFree: true },
+        { id: "tencent/hy3:free", name: "Tencent Hy3 (\u{1F525} 100% Gr\xE1tis \u2022 295B MoE)", isFree: true },
+        { id: "stepfun/step-3.7-flash:free", name: "StepFun Step 3.7 Flash (\u{1F525} 100% Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
+        { id: "upstage/solar-pro4:free", name: "Upstage Solar Pro 4 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio)", isFree: true },
+        { id: "poolside/laguna-xs-2.1:free", name: "Poolside Laguna XS 2.1 (\u{1F525} 100% Gr\xE1tis \u2022 Leve)", isFree: true }
+      ]
+    },
     openrouter: {
-      name: "OpenRouter (Nous Hermes / Free Tier)",
+      name: "OpenRouter (Free Tier & Router)",
       defaultModel: "openrouter/free",
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       models: [
@@ -188,9 +201,7 @@
         { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (\u{1F525} 100% Gr\xE1tis)", isFree: true },
         { id: "minimax/minimax-m3:free", name: "MiniMax M3 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
         { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
-        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
-        { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (\u{1F48E} Pago / Nous Research)", isFree: false },
-        { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (\u{1F48E} Pago)", isFree: false }
+        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (\u{1F525} 100% Gr\xE1tis)", isFree: true }
       ]
     },
     ollama: {
@@ -306,7 +317,7 @@
     setSaved("show_paid_models", showPaid ? "true" : "false");
   }
   function getLiveProviders() {
-    const all = ["groq", "gemini", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
+    const all = ["groq", "gemini", "nous", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
     return all.filter((p) => {
       const key = getApiKeyFor(p);
       const status = getProviderStatus(p);
@@ -879,6 +890,11 @@ Responda ESTRITAMENTE em formato JSON:
     const endpoint = pConfig?.endpoint || "https://api.groq.com/openai/v1/chat/completions";
     let selectedModel = (model || pConfig?.defaultModel || "llama-3.3-70b-versatile").trim();
     selectedModel = selectedModel.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, "-");
+    if (provider === "nous") {
+      if (/hy3|longcat|solar|step|laguna/i.test(selectedModel) && !selectedModel.includes(":free")) {
+        selectedModel = `${selectedModel}:free`;
+      }
+    }
     const systemPrompt = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
     const headers = { "Content-Type": "application/json" };
     if (apiKey) {
@@ -893,12 +909,13 @@ Responda ESTRITAMENTE em formato JSON:
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
         ],
-        temperature: 0.1
+        temperature: 0.1,
+        max_tokens: 500
       })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const rawMsg = err.error?.message || `Erro HTTP ${res.status}`;
+      const rawMsg = err.error?.message || err.message || err.detail || `Erro HTTP ${res.status}`;
       if (provider === "groq" && /does not exist|model_not_found/i.test(rawMsg)) {
         try {
           const fbRes = await universalFetch(endpoint, {
@@ -910,7 +927,31 @@ Responda ESTRITAMENTE em formato JSON:
                 { role: "system", content: systemPrompt },
                 { role: "user", content: prompt }
               ],
-              temperature: 0.1
+              temperature: 0.1,
+              max_tokens: 500
+            })
+          });
+          if (fbRes.ok) {
+            const fbData = await fbRes.json();
+            const fbContent = fbData.choices?.[0]?.message?.content || "";
+            return parseAIResponse(fbContent);
+          }
+        } catch (e) {
+        }
+      }
+      if (provider === "nous" && (/credit|balance|payment|insufficient|does not exist|model_not_found/i.test(rawMsg) || res.status === 402 || res.status === 404)) {
+        try {
+          const fbRes = await universalFetch(endpoint, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              model: "poolside/laguna-s-2.1:free",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: prompt }
+              ],
+              temperature: 0.1,
+              max_tokens: 500
             })
           });
           if (fbRes.ok) {
@@ -955,8 +996,7 @@ Responda ESTRITAMENTE em formato JSON:
           "google/gemma-4-26b-a4b-it:free",
           "nvidia/nemotron-3-ultra-550b-a55b:free",
           "minimax/minimax-m3:free",
-          "z-ai/glm-5.2:free",
-          "nousresearch/hermes-3-llama-3.1-405b"
+          "z-ai/glm-5.2:free"
         ];
         for (const fallbackModel of openRouterFallbacks) {
           if (fallbackModel !== modelToTest) {
@@ -970,6 +1010,34 @@ Responda ESTRITAMENTE em formato JSON:
                   result: fbResult,
                   model: fallbackModel,
                   warning: `O modelo ${modelToTest} n\xE3o aceitou requisi\xE7\xE3o no OpenRouter. Chave validada via ${fallbackModel}!`
+                };
+              }
+            } catch (fbErr) {
+            }
+          }
+        }
+      }
+      if (provider === "nous") {
+        const nousFallbacks = [
+          "poolside/laguna-s-2.1:free",
+          "meituan/longcat-2.0:free",
+          "tencent/hy3:free",
+          "stepfun/step-3.7-flash:free",
+          "upstage/solar-pro4:free",
+          "poolside/laguna-xs-2.1:free"
+        ];
+        for (const fallbackModel of nousFallbacks) {
+          if (fallbackModel !== modelToTest) {
+            try {
+              const fbResult = await executeAICall(provider, fallbackModel, testStatement, testAlternatives);
+              if (fbResult && fbResult.letra) {
+                setProviderStatus(provider, "live");
+                setSaved("active_model", fallbackModel);
+                return {
+                  success: true,
+                  result: fbResult,
+                  model: fallbackModel,
+                  warning: `Chave do Nous Portal validada via ${fallbackModel}!`
                 };
               }
             } catch (fbErr) {
@@ -2088,6 +2156,9 @@ Responda ESTRITAMENTE em formato JSON:
     if (provider === "mistral") {
       return /codestral|small/i.test(id) && !/large|pixtral|embed/i.test(id);
     }
+    if (provider === "nous") {
+      return id.endsWith(":free") || /:free$/i.test(id) || id.includes(":free");
+    }
     return false;
   }
   function getModelsForProvider(provider, showPaid = null) {
@@ -2137,8 +2208,17 @@ Responda ESTRITAMENTE em formato JSON:
       if (modelId.includes("deepseek-r1:free")) return `DeepSeek R1 (\u{1F525} 100% Gr\xE1tis)`;
       if (modelId.includes("gemini-2.0-flash-exp:free")) return `Gemini 2.0 Flash Exp (\u{1F525} 100% Gr\xE1tis)`;
       if (modelId.includes("qwen-2.5-72b-instruct:free")) return `Qwen 2.5 72B (\u{1F525} 100% Gr\xE1tis)`;
-      if (modelId.includes("hermes-3-llama-3.1-405b")) return `Nous Hermes 3 405B${freeBadge} (\u{1F393} PhD)`;
-      if (modelId.includes("hermes-3-llama-3.1-70b")) return `Nous Hermes 3 70B${freeBadge}`;
+      if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
+      return `${modelId}${freeBadge}`;
+    } else if (provider === "nous") {
+      const isFree = isModelFree("nous", modelId, rawName);
+      const freeBadge = isFree ? " (\u{1F525} 100% Gr\xE1tis)" : " (\u{1F48E} Pago)";
+      if (modelId === "poolside/laguna-s-2.1:free") return "Poolside Laguna S 2.1 (\u{1F525} 100% Gr\xE1tis \u2022 118B Coding \u2022 Recomendado)";
+      if (modelId === "poolside/laguna-xs-2.1:free") return "Poolside Laguna XS 2.1 (\u{1F525} 100% Gr\xE1tis \u2022 Leve)";
+      if (modelId === "meituan/longcat-2.0:free") return "Meituan LongCat 2.0 (\u{1F525} 100% Gr\xE1tis \u2022 1.6T MoE / 1M Context)";
+      if (modelId === "tencent/hy3:free") return "Tencent Hy3 (\u{1F525} 100% Gr\xE1tis \u2022 295B MoE)";
+      if (modelId === "stepfun/step-3.7-flash:free") return "StepFun Step 3.7 Flash (\u{1F525} 100% Gr\xE1tis \u2022 Ultra R\xE1pido)";
+      if (modelId === "upstage/solar-pro4:free") return "Upstage Solar Pro 4 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio)";
       if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
       return `${modelId}${freeBadge}`;
     } else if (provider === "ollama") {
@@ -2266,6 +2346,51 @@ Responda ESTRITAMENTE em formato JSON:
               return allowPaid ? filtered : filtered.filter((m) => m.isFree);
             }
           }
+        }
+        if (provider === "nous") {
+          try {
+            const res = await universalFetch("https://inference-api.nousresearch.com/v1/models", {
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+              }
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const rawList = Array.isArray(json) ? json : json.data || [];
+              const seen = /* @__PURE__ */ new Set();
+              const models = rawList.filter((m) => !/embed|moderation|audio/i.test(m.id)).filter((m) => isModelFree("nous", m.id, m.name)).filter((m) => {
+                if (seen.has(m.id)) return false;
+                seen.add(m.id);
+                return true;
+              }).map((m) => ({
+                id: m.id,
+                name: formatDisplayName("nous", m),
+                isFree: true
+              }));
+              models.sort((a, b) => {
+                const priority = (id) => {
+                  if (id.includes("laguna-s") || id.includes("laguna_s")) return 1;
+                  if (id.includes("longcat")) return 2;
+                  if (id.includes("hy3")) return 3;
+                  if (id.includes("step")) return 4;
+                  if (id.includes("solar")) return 5;
+                  if (id.includes("laguna-xs") || id.includes("laguna_xs")) return 6;
+                  if (id.includes("laguna")) return 7;
+                  return 20;
+                };
+                return priority(a.id) - priority(b.id);
+              });
+              if (models.length > 0) {
+                saveCachedModels(provider, models);
+                return models;
+              }
+            }
+          } catch (e) {
+          }
+          const curatedNous = PROVIDERS_CONFIG.nous?.models || [];
+          saveCachedModels(provider, curatedNous);
+          return curatedNous;
         }
         if (provider === "ollama") {
           try {
@@ -2549,7 +2674,7 @@ Responda ESTRITAMENTE em formato JSON:
   // src/ui/widget.js
   function createSuiteWidget() {
     if (document.getElementById("estacio-suite-box")) return;
-    const ALL_PROVIDERS = ["groq", "gemini", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
+    const ALL_PROVIDERS = ["groq", "gemini", "nous", "openrouter", "ollama", "mistral", "claude", "openai", "deepseek"];
     const isExam = window.location.hostname.includes("saladeavaliacoes.com.br");
     let currentProvider = getSaved("active_provider", "groq");
     let currentModel = getSaved("active_model", PROVIDERS_CONFIG[currentProvider]?.defaultModel || "llama-3.3-70b-versatile");
@@ -2616,7 +2741,8 @@ Responda ESTRITAMENTE em formato JSON:
             <select id="config-target-select" class="ui-select" style="max-width:145px; padding:3px 6px; font-size:10.5px;">
               <option value="groq">Groq</option>
               <option value="gemini">Google Gemini</option>
-              <option value="openrouter">OpenRouter (Hermes)</option>
+              <option value="nous">Nous Research / Portal</option>
+              <option value="openrouter">OpenRouter (Free Tier)</option>
               <option value="ollama">Ollama (Local)</option>
               <option value="mistral">Mistral AI</option>
               <option value="claude">Anthropic Claude</option>

@@ -70,7 +70,7 @@ export function setShowPaidModels(showPaid) {
 }
 
 export function getLiveProviders() {
-  const all = ['groq', 'gemini', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
+  const all = ['groq', 'gemini', 'nous', 'openrouter', 'ollama', 'mistral', 'claude', 'openai', 'deepseek'];
   return all.filter(p => {
     const key = getApiKeyFor(p);
     const status = getProviderStatus(p);
