@@ -113,7 +113,8 @@ sequenceDiagram
 | :--- | :--- | :--- | :--- |
 | **Groq** *(100% Free / Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
 | **Google Gemini** | `gemini-2.5-flash` | `Gemini 2.5 Flash`, `Gemini 2.0 Flash`, `Gemini 1.5 Flash`, `Gemini 1.5 Pro` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** *(Nous Hermes & Free Router)* | `openrouter/free` | `OpenRouter Free Router`, `Gemma 4 31B`, `Nemotron 3 Ultra`, `Hermes 3` | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **Nous Research / Portal** *(100% Free Tier)* | `poolside/laguna-s-2.1:free` | `Poolside Laguna S 2.1 (118B Coding)`, `Meituan LongCat 2.0 (1.6T MoE)`, `Tencent Hy3 (295B MoE)` | [portal.nousresearch.com](https://portal.nousresearch.com) |
+| **OpenRouter** *(Free Tier & Router)* | `openrouter/free` | `OpenRouter Free Router`, `Gemma 4 31B`, `Nemotron 3 Ultra`, `GLM 5.2` | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Ollama** *(100% Local Offline)* | `llama3.3` | `Llama 3.3`, `DeepSeek R1`, `Hermes 3`, `Qwen 2.5`, `Mistral` | [ollama.com](https://ollama.com) |
 | **Mistral AI** *(PhD)* | `codestral-latest` | `Codestral Latest`, `Mistral Small`, `Mistral Large` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
 | **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |

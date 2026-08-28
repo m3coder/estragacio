@@ -1,6 +1,4 @@
 # Environment variables (SENSITIVE)
-.env
-.env.*
 *.env
 
 # Ignore Python files in extension repo
@@ -20,7 +18,6 @@ dist/
 .esbuild/
 
 # IDE and OS files
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -34,3 +31,5 @@ Thumbs.db
 .tempmediaStorage/
 .system_generated/
 browser/
+contabilidade-v2-backend/
+config.bat
