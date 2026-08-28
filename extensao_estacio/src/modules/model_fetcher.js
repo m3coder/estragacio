@@ -34,22 +34,22 @@ export function isModelFree(provider, modelId, displayName = '') {
     return !/whisper|tts|guard|embeddings|safeguard|distilbert/i.test(id);
   }
 
-  // 2. OpenRouter (Apenas modelos oficiais com tag :free)
+  // 2. OpenRouter (Modelos com tag :free ou roteador openrouter/free)
   if (provider === 'openrouter') {
-    return id.endsWith(':free') || id.includes(':free');
+    return id === 'openrouter/free' || id.endsWith(':free') || id.includes(':free');
   }
 
   // 3. Gemini (Apenas Flash text models da cota gratuita de 1.500 req/dia do AI Studio)
   if (provider === 'gemini') {
     // Rejeita qualquer modelo com imagem, gemma, custom tools, pro, embeddings, etc.
-    if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|pro|deep-research|live|audio/i.test(id)) {
+    if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|deep-research|live|audio/i.test(id)) {
       return false;
     }
-    if (/banana|image|pro|gemma|vision/i.test(name)) {
+    if (/banana|image|gemma|vision/i.test(name)) {
       return false;
     }
-    // Aceita apenas modelos Flash de texto padrão
-    return /flash/i.test(id);
+    // Aceita modelos Flash de texto padrão
+    return /flash/i.test(id) || (!/pro/i.test(id) && /gemini-1\.5|gemini-2\.0|gemini-2\.5/i.test(id));
   }
 
   // 4. Ollama (100% Local e Ilimitado)
@@ -95,25 +95,28 @@ function formatDisplayName(provider, modelItem) {
     if (modelId.includes('gpt-oss-20b')) return 'GPT-OSS 20B (🔥 100% Grátis)';
     if (modelId.includes('compound')) return `Groq Compound (${modelId}) (🔥 100% Grátis)`;
   } else if (provider === 'gemini') {
-    if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)';
-    if (modelId === 'gemini-3.6-flash') return 'Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)';
-    if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
-    if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)';
-    if (modelId === 'gemini-flash-latest') return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
-    if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
-    if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)';
-    if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (Descontinuado)';
-    if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (Descontinuado)';
-    if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
-    if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (💎 Pago AI Studio)';
+    if (modelId.includes('gemini-2.5-flash')) return 'Gemini 2.5 Flash (🎁 Grátis • Raciocínio & Rapidez • Recomendado)';
+    if (modelId.includes('gemini-2.0-flash')) return 'Gemini 2.0 Flash (⚡ Grátis 1.500 req/dia • Mais Rápido)';
+    if (modelId.includes('gemini-1.5-flash')) return 'Gemini 1.5 Flash (🎁 Grátis 1.500 req/dia • Estável)';
+    if (modelId.includes('gemini-1.5-pro')) return 'Gemini 1.5 Pro (🧠 Grátis Cota Diária • Máximo Raciocínio)';
+    if (modelId.includes('gemini-2.0-flash-lite')) return 'Gemini 2.0 Flash-Lite (⚡ Grátis • Ultra Rápido)';
+    if (modelId.includes('gemini-2.5-pro')) return 'Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)';
+    if (modelId.includes('gemini-flash-latest')) return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
+    if (modelId.includes('gemini-pro-latest')) return 'Gemini Pro Latest (💎 Pago AI Studio)';
   } else if (provider === 'openrouter') {
-    const isFree = modelId.includes(':free');
+    const isFree = modelId === 'openrouter/free' || modelId.includes(':free');
     const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
-    if (modelId.includes('llama-3.3-70b-instruct:free')) return `Llama 3.3 70B Instruct (🔥 100% Grátis • Recomendado)`;
-    if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis • Raciocínio Puro)`;
+    if (modelId === 'openrouter/free') return 'OpenRouter Free Router (🔥 100% Grátis • Roteamento Automático)';
+    if (modelId.includes('gemma-4-31b')) return 'Google Gemma 4 31B (🔥 100% Grátis)';
+    if (modelId.includes('gemma-4-26b')) return 'Google Gemma 4 26B (🔥 100% Grátis)';
+    if (modelId.includes('nemotron-3-ultra')) return 'NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)';
+    if (modelId.includes('minimax-m3')) return 'MiniMax M3 (🔥 100% Grátis)';
+    if (modelId.includes('glm-5.2')) return 'GLM 5.2 (🔥 100% Grátis)';
+    if (modelId.includes('lfm-2.5')) return 'Liquid LFM 2.5 (🔥 100% Grátis)';
+    if (modelId.includes('llama-3.3-70b-instruct:free')) return `Llama 3.3 70B Instruct (🔥 100% Grátis)`;
+    if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis)`;
     if (modelId.includes('gemini-2.0-flash-exp:free')) return `Gemini 2.0 Flash Exp (🔥 100% Grátis)`;
     if (modelId.includes('qwen-2.5-72b-instruct:free')) return `Qwen 2.5 72B (🔥 100% Grátis)`;
-    if (modelId.includes('openrouter/auto:free')) return `OpenRouter Auto (🔥 100% Grátis • Roteamento)`;
     if (modelId.includes('hermes-3-llama-3.1-405b')) return `Nous Hermes 3 405B${freeBadge} (🎓 PhD)`;
     if (modelId.includes('hermes-3-llama-3.1-70b')) return `Nous Hermes 3 70B${freeBadge}`;
     if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
@@ -139,10 +142,11 @@ function formatDisplayName(provider, modelItem) {
   } else if (provider === 'claude') {
     let suffix = '';
     if (modelItem?.capabilities?.thinking?.supported) suffix = ' (🧠 Thinking)';
-    if (modelId === 'claude-opus-4-6') return `Claude Opus 4.6 (💎 Pago • Frontier PhD)${suffix}`;
     if (modelId.includes('claude-3-7-sonnet')) return `Claude 3.7 Sonnet (💎 Pago • Raciocínio Híbrido)${suffix}`;
     if (modelId.includes('claude-3-5-sonnet')) return `Claude 3.5 Sonnet (💎 Pago • Alta Precisão)${suffix}`;
-    if (modelId.includes('claude-3-5-haiku')) return `Claude 3.5 Haiku (💎 Pago • Ultra Rápido)${suffix}`;
+    if (modelId.includes('claude-3-5-haiku')) return `Claude 3.5 Haiku (💎 Pago • Ultra Rápido & Econômico)${suffix}`;
+    if (modelId.includes('claude-3-haiku')) return `Claude 3 Haiku (💎 Pago • Econômico)${suffix}`;
+    if (modelId.includes('claude-3-opus')) return `Claude 3 Opus (💎 Pago • Frontier PhD)${suffix}`;
   } else if (provider === 'openai') {
     if (modelId === 'gpt-4o-mini') return 'GPT-4o Mini (💎 Pago • Econômico)';
     if (modelId === 'gpt-4o') return 'GPT-4o (💎 Pago • Precisão Máxima)';
@@ -225,7 +229,9 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null, force =
       const res = await universalFetch('https://openrouter.ai/api/v1/models', {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://estudante.estacio.br',
+          'X-Title': 'Estacio Suite AI'
         }
       });
       if (res.ok) {
@@ -234,7 +240,7 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null, force =
         const filtered = rawList
           .filter(m => !/audio|whisper|moderation|embedding/i.test(m.id))
           .map(m => {
-            const isFree = isModelFree('openrouter', m.id, m.name);
+            const isFree = isModelFree('openrouter', m.id, m.name) || (m.pricing && m.pricing.prompt === "0" && m.pricing.completion === "0");
             return {
               id: m.id,
               name: formatDisplayName('openrouter', m),
@@ -243,10 +249,12 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null, force =
           });
 
         filtered.sort((a, b) => {
+          if (a.id === 'openrouter/free') return -1;
+          if (b.id === 'openrouter/free') return 1;
           if (a.isFree && !b.isFree) return -1;
           if (!a.isFree && b.isFree) return 1;
-          if (a.id.includes('llama-3.3-70b') && !b.id.includes('llama-3.3-70b')) return -1;
-          if (a.id.includes('deepseek-r1') && !b.id.includes('deepseek-r1')) return -1;
+          if (a.id.includes('gemma-4') && !b.id.includes('gemma-4')) return -1;
+          if (a.id.includes('nemotron') && !b.id.includes('nemotron')) return -1;
           return a.id.localeCompare(b.id);
         });
 
@@ -415,17 +423,14 @@ export async function fetchLiveModels(provider, apiKey, showPaid = null, force =
 
         filtered.sort((a, b) => {
           const priority = (id) => {
-            if (id === 'gemini-3.7-flash') return 1;
-            if (id === 'gemini-3.6-flash') return 2;
-            if (id === 'gemini-3.5-flash') return 3;
-            if (id === 'gemini-3.1-flash-lite') return 4;
-            if (id === 'gemini-flash-latest') return 5;
-            if (id === 'gemini-3-flash-preview') return 6;
-            if (id === 'gemini-3.1-pro-preview') return 7;
-            if (id === 'gemini-2.5-pro') return 8;
-            if (id === 'gemini-pro-latest') return 9;
-            if (id === 'gemini-2.5-flash') return 50;
-            if (id === 'gemini-2.5-flash-lite') return 51;
+            if (id.includes('gemini-2.5-flash')) return 1;
+            if (id.includes('gemini-2.0-flash')) return 2;
+            if (id.includes('gemini-1.5-flash')) return 3;
+            if (id.includes('gemini-1.5-pro')) return 4;
+            if (id.includes('gemini-2.0-flash-lite')) return 5;
+            if (id.includes('gemini-2.5-pro')) return 6;
+            if (id.includes('gemini-flash-latest')) return 7;
+            if (id.includes('gemini-pro-latest')) return 8;
             return 20;
           };
           return priority(a.id) - priority(b.id);

@@ -144,27 +144,29 @@
     },
     gemini: {
       name: "Google Gemini",
-      defaultModel: "gemini-3.7-flash",
+      defaultModel: "gemini-2.5-flash",
       endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       models: [
-        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido \u2022 Recomendado)", isFree: true },
-        { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)", isFree: true },
-        { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
-        { id: "gemini-flash-latest", name: "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)", isFree: true },
-        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)", isFree: true }
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio & Rapidez \u2022 Recomendado)", isFree: true },
+        { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (\u26A1 Gr\xE1tis 1.500 req/dia \u2022 Mais R\xE1pido)", isFree: true },
+        { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Est\xE1vel)", isFree: true },
+        { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (\u{1F9E0} Gr\xE1tis Cota Di\xE1ria \u2022 M\xE1ximo Racioc\xEDnio)", isFree: true },
+        { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)", isFree: true },
+        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Frontier Reasoning)", isFree: false }
       ]
     },
     openrouter: {
       name: "OpenRouter (Nous Hermes / Free Tier)",
-      defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
+      defaultModel: "openrouter/free",
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       models: [
-        { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B Instruct (\u{1F525} 100% Gr\xE1tis \u2022 Recomendado)", isFree: true },
-        { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio Puro)", isFree: true },
-        { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash Exp (\u{1F525} 100% Gr\xE1tis)", isFree: true },
-        { id: "qwen/qwen-2.5-72b-instruct:free", name: "Qwen 2.5 72B (\u{1F525} 100% Gr\xE1tis)", isFree: true },
-        { id: "openrouter/auto:free", name: "OpenRouter Auto (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento Autom\xE1tico)", isFree: true },
+        { id: "openrouter/free", name: "OpenRouter Free Router (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento Autom\xE1tico)", isFree: true },
+        { id: "google/gemma-4-31b-it:free", name: "Google Gemma 4 31B (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "google/gemma-4-26b-a4b-it:free", name: "Google Gemma 4 26B (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "minimax/minimax-m3:free", name: "MiniMax M3 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
+        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (\u{1F525} 100% Gr\xE1tis)", isFree: true },
         { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (\u{1F48E} Pago / Nous Research)", isFree: false },
         { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (\u{1F48E} Pago)", isFree: false }
       ]
@@ -197,9 +199,10 @@
       endpoint: "https://api.anthropic.com/v1/messages",
       models: [
         { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (\u{1F48E} Pago \u2022 Racioc\xEDnio H\xEDbrido)", isFree: false },
-        { id: "claude-opus-4-6", name: "Claude Opus 4.6 (\u{1F48E} Pago \u2022 Frontier PhD)", isFree: false },
         { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (\u{1F48E} Pago \u2022 Alta Precis\xE3o)", isFree: false },
-        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido)", isFree: false }
+        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido & Econ\xF4mico)", isFree: false },
+        { id: "claude-3-haiku-20240307", name: "Claude 3 Haiku (\u{1F48E} Pago \u2022 Econ\xF4mico)", isFree: false },
+        { id: "claude-3-opus-20240229", name: "Claude 3 Opus (\u{1F48E} Pago \u2022 Frontier PhD)", isFree: false }
       ]
     },
     openai: {
@@ -672,15 +675,51 @@ Responda ESTRITAMENTE em formato JSON:
   }
 
   // src/core/ai_engine.js
+  function parseAIResponse(rawText) {
+    if (!rawText) return { letra: "A", explicacao: "" };
+    let letra = null;
+    let explicacao = "";
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*?\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.letra && typeof parsed.letra === "string") {
+          const lMatch = parsed.letra.match(/[A-E]/i);
+          if (lMatch) letra = lMatch[0].toUpperCase();
+        }
+        if (parsed.explicacao && typeof parsed.explicacao === "string") {
+          explicacao = parsed.explicacao.trim();
+        }
+      }
+    } catch (e) {
+    }
+    if (!letra) {
+      const lMatch = rawText.match(/"letra"\s*:\s*"([A-E])"/i) || rawText.match(/(?:letra|alternativa|opção|resposta|correta|item)\s*[:\s-]*\**([A-E])\b/i) || rawText.match(/\b([A-E])\s*\)/i) || rawText.match(/\b([A-E])\b/i);
+      letra = lMatch ? lMatch[1].toUpperCase() : "A";
+    }
+    if (!explicacao) {
+      const expMatch = rawText.match(/"explicacao"\s*:\s*"([^"]+)"/i);
+      if (expMatch) {
+        explicacao = expMatch[1].trim();
+      } else {
+        explicacao = rawText.replace(/```(?:json)?[\s\S]*?```/gi, "").replace(/\{[\s\S]*?\}/g, "").replace(/["'{}]/g, "").trim();
+        if (!explicacao) {
+          explicacao = rawText.replace(/```(?:json)?\s*|\s*```/gi, "").trim();
+        }
+      }
+    }
+    explicacao = explicacao.replace(/\s+/g, " ").slice(0, 150).trim();
+    return { letra: letra || "A", explicacao };
+  }
   async function executeAICall(provider, model, statement, alternatives) {
     const apiKey = getApiKeyFor(provider);
     const pConfig = PROVIDERS_CONFIG[provider];
     if (!apiKey && provider !== "ollama") {
-      throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Testar & Salvar.`);
+      throw new Error(`Chave de API do ${pConfig?.name || provider} n\xE3o configurada. Insira sua chave no campo e clique em Salvar.`);
     }
     const prompt = buildPhDExamPrompt(statement, alternatives);
     if (provider === "claude") {
-      const selectedModel2 = model || pConfig.defaultModel;
+      const selectedModel2 = (model || pConfig?.defaultModel || "claude-3-7-sonnet-20250219").trim();
       const claudeUrl = "https://api.anthropic.com/v1/messages";
       const systemPrompt2 = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON no formato: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
       const res2 = await universalFetch(claudeUrl, {
@@ -703,18 +742,21 @@ Responda ESTRITAMENTE em formato JSON:
       });
       if (!res2.ok) {
         const err = await res2.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${res2.status}`);
+        const rawMsg = err.error?.message || `HTTP ${res2.status}`;
+        if (/credit balance is too low|insufficient credits|purchase credits/i.test(rawMsg)) {
+          throw new Error("Saldo insuficiente na Anthropic ($0.00). Sua chave \xE9 v\xE1lida, mas sua conta em console.anthropic.com precisa de cr\xE9ditos pr\xE9-pagos.");
+        }
+        if (res2.status === 401 || /invalid api key/i.test(rawMsg)) {
+          throw new Error("Chave da Anthropic Claude inv\xE1lida ou revogada.");
+        }
+        throw new Error(rawMsg);
       }
       const data2 = await res2.json();
       const content2 = data2.content?.[0]?.text || "";
-      const match2 = content2.match(/"letra"\s*:\s*"([A-E])"/i) || content2.match(/\b([A-E])\b/i);
-      return {
-        letra: match2 ? match2[1].toUpperCase() : "A",
-        explicacao: content2.slice(0, 100)
-      };
+      return parseAIResponse(content2);
     }
     if (provider === "gemini") {
-      const selectedModel2 = model || pConfig.defaultModel;
+      let selectedModel2 = (model || pConfig?.defaultModel || "gemini-2.5-flash").replace(/^models\//, "").trim();
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel2}:generateContent`;
       const res2 = await universalFetch(geminiUrl, {
         method: "POST",
@@ -730,18 +772,91 @@ Responda ESTRITAMENTE em formato JSON:
       if (!res2.ok) {
         const err = await res2.json().catch(() => ({}));
         const msg = err.error?.message || `HTTP ${res2.status}`;
+        if (/not_found|404|is not found/i.test(msg)) {
+          throw new Error(`Modelo '${selectedModel2}' n\xE3o encontrado na API do Gemini. Use 'gemini-2.5-flash' ou 'gemini-2.0-flash'.`);
+        }
+        if (/api_key_invalid|invalid api key/i.test(msg)) {
+          throw new Error("Chave da API do Google Gemini inv\xE1lida.");
+        }
         throw new Error(msg);
       }
       const data2 = await res2.json();
       const txt = data2.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const match2 = txt.match(/"letra"\s*:\s*"([A-E])"/i) || txt.match(/\b([A-E])\b/i);
-      return {
-        letra: match2 ? match2[1].toUpperCase() : "A",
-        explicacao: txt.slice(0, 100)
+      return parseAIResponse(txt);
+    }
+    if (provider === "openrouter") {
+      let selectedModel2 = (model || pConfig?.defaultModel || "openrouter/free").trim();
+      const endpoint2 = "https://openrouter.ai/api/v1/chat/completions";
+      const systemPrompt2 = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
+      const headers2 = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://estudante.estacio.br",
+        "X-Title": "Estacio Suite AI"
       };
+      const payloadModels = [
+        selectedModel2,
+        "openrouter/free",
+        "google/gemma-4-31b-it:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "minimax/minimax-m3:free",
+        "z-ai/glm-5.2:free"
+      ].filter((v, i, a) => a.indexOf(v) === i);
+      let lastOpenRouterErr = null;
+      try {
+        const res2 = await universalFetch(endpoint2, {
+          method: "POST",
+          headers: headers2,
+          body: JSON.stringify({
+            model: selectedModel2,
+            models: payloadModels,
+            messages: [
+              { role: "system", content: systemPrompt2 },
+              { role: "user", content: prompt }
+            ],
+            temperature: 0.1
+          })
+        });
+        if (res2.ok) {
+          const data2 = await res2.json();
+          const content2 = data2.choices?.[0]?.message?.content || "";
+          return parseAIResponse(content2);
+        } else {
+          const err = await res2.json().catch(() => ({}));
+          lastOpenRouterErr = new Error(err.error?.message || `HTTP ${res2.status}`);
+        }
+      } catch (netErr) {
+        lastOpenRouterErr = netErr;
+      }
+      for (const fbModel of payloadModels) {
+        if (fbModel === selectedModel2) continue;
+        try {
+          const res2 = await universalFetch(endpoint2, {
+            method: "POST",
+            headers: headers2,
+            body: JSON.stringify({
+              model: fbModel,
+              messages: [
+                { role: "system", content: systemPrompt2 },
+                { role: "user", content: prompt }
+              ],
+              temperature: 0.1
+            })
+          });
+          if (res2.ok) {
+            const data2 = await res2.json();
+            const content2 = data2.choices?.[0]?.message?.content || "";
+            return parseAIResponse(content2);
+          }
+        } catch (e) {
+        }
+      }
+      throw lastOpenRouterErr || new Error("Falha na requisi\xE7\xE3o ao OpenRouter");
     }
     const endpoint = pConfig?.endpoint || "https://api.groq.com/openai/v1/chat/completions";
-    const selectedModel = model || pConfig?.defaultModel;
+    let selectedModel = (model || pConfig?.defaultModel || "llama-3.3-70b-versatile").trim();
+    selectedModel = selectedModel.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, "-");
     const systemPrompt = `Voc\xEA \xE9 um professor PhD especialista em provas acad\xEAmicas e c\xE1lculo exato. Responda ESTRITAMENTE em formato JSON: {"letra": "A", "explicacao": "justificativa em 1 frase"}`;
     const headers = { "Content-Type": "application/json" };
     if (apiKey) {
@@ -761,15 +876,34 @@ Responda ESTRITAMENTE em formato JSON:
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Erro HTTP ${res.status}`);
+      const rawMsg = err.error?.message || `Erro HTTP ${res.status}`;
+      if (provider === "groq" && /does not exist|model_not_found/i.test(rawMsg)) {
+        try {
+          const fbRes = await universalFetch(endpoint, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              model: "llama-3.1-8b-instant",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: prompt }
+              ],
+              temperature: 0.1
+            })
+          });
+          if (fbRes.ok) {
+            const fbData = await fbRes.json();
+            const fbContent = fbData.choices?.[0]?.message?.content || "";
+            return parseAIResponse(fbContent);
+          }
+        } catch (e) {
+        }
+      }
+      throw new Error(rawMsg);
     }
     const data = await res.json();
     const content = data.choices?.[0]?.message?.content || "";
-    const match = content.match(/"letra"\s*:\s*"([A-E])"/i) || content.match(/\b([A-E])\b/i);
-    return {
-      letra: match ? match[1].toUpperCase() : "A",
-      explicacao: content.slice(0, 100)
-    };
+    return parseAIResponse(content);
   }
   async function testProviderKey(provider, testKey, specificModel = null) {
     const pConfig = PROVIDERS_CONFIG[provider];
@@ -794,10 +928,12 @@ Responda ESTRITAMENTE em formato JSON:
     } catch (err) {
       if (provider === "openrouter") {
         const openRouterFallbacks = [
-          "meta-llama/llama-3.3-70b-instruct:free",
-          "deepseek/deepseek-r1:free",
-          "google/gemini-2.0-flash-exp:free",
-          "openrouter/auto:free",
+          "openrouter/free",
+          "google/gemma-4-31b-it:free",
+          "google/gemma-4-26b-a4b-it:free",
+          "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "minimax/minimax-m3:free",
+          "z-ai/glm-5.2:free",
           "nousresearch/hermes-3-llama-3.1-405b"
         ];
         for (const fallbackModel of openRouterFallbacks) {
@@ -811,7 +947,7 @@ Responda ESTRITAMENTE em formato JSON:
                   success: true,
                   result: fbResult,
                   model: fallbackModel,
-                  warning: `O modelo ${modelToTest} n\xE3o aceitou requisi\xE7\xE3o gratuita no OpenRouter. Chave validada via ${fallbackModel}!`
+                  warning: `O modelo ${modelToTest} n\xE3o aceitou requisi\xE7\xE3o no OpenRouter. Chave validada via ${fallbackModel}!`
                 };
               }
             } catch (fbErr) {
@@ -819,8 +955,8 @@ Responda ESTRITAMENTE em formato JSON:
           }
         }
       }
-      if (provider === "gemini" && /quota|rate limit|429|no longer available|not_found|404/i.test(err.message)) {
-        const geminiFallbacks = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+      if (provider === "gemini" && /quota|rate limit|429|no longer available|not_found|404|is not found/i.test(err.message)) {
+        const geminiFallbacks = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"];
         for (const fbModel of geminiFallbacks) {
           if (fbModel !== modelToTest) {
             try {
@@ -840,15 +976,25 @@ Responda ESTRITAMENTE em formato JSON:
           }
         }
       }
-      if (provider === "groq" && /quota|rate limit|429/i.test(err.message)) {
-        try {
-          const fbResult = await executeAICall(provider, "llama-3.1-8b-instant", testStatement, testAlternatives);
-          if (fbResult && fbResult.letra) {
-            setProviderStatus(provider, "live");
-            setSaved("active_model", "llama-3.1-8b-instant");
-            return { success: true, result: fbResult, model: "llama-3.1-8b-instant", warning: `Chave validada via Llama 3.1 8B!` };
+      if (provider === "groq" && /quota|rate limit|429|does not exist/i.test(err.message)) {
+        const groqFallbacks = ["llama-3.1-8b-instant", "deepseek-r1-distill-llama-70b", "llama-3.3-70b-versatile"];
+        for (const fbModel of groqFallbacks) {
+          if (fbModel !== modelToTest) {
+            try {
+              const fbResult = await executeAICall(provider, fbModel, testStatement, testAlternatives);
+              if (fbResult && fbResult.letra) {
+                setProviderStatus(provider, "live");
+                setSaved("active_model", fbModel);
+                return {
+                  success: true,
+                  result: fbResult,
+                  model: fbModel,
+                  warning: `Chave do Groq validada via ${fbModel}!`
+                };
+              }
+            } catch (fbErr) {
+            }
           }
-        } catch (fbErr) {
         }
       }
       setProviderStatus(provider, "error");
@@ -1905,16 +2051,16 @@ Responda ESTRITAMENTE em formato JSON:
       return !/whisper|tts|guard|embeddings|safeguard|distilbert/i.test(id);
     }
     if (provider === "openrouter") {
-      return id.endsWith(":free") || id.includes(":free");
+      return id === "openrouter/free" || id.endsWith(":free") || id.includes(":free");
     }
     if (provider === "gemini") {
-      if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|pro|deep-research|live|audio/i.test(id)) {
+      if (/image|imagen|gemma|custom|banana|veo|lyria|aqa|embed|deep-research|live|audio/i.test(id)) {
         return false;
       }
-      if (/banana|image|pro|gemma|vision/i.test(name)) {
+      if (/banana|image|gemma|vision/i.test(name)) {
         return false;
       }
-      return /flash/i.test(id);
+      return /flash/i.test(id) || !/pro/i.test(id) && /gemini-1\.5|gemini-2\.0|gemini-2\.5/i.test(id);
     }
     if (provider === "ollama") return true;
     if (provider === "mistral") {
@@ -1947,25 +2093,28 @@ Responda ESTRITAMENTE em formato JSON:
       if (modelId.includes("gpt-oss-20b")) return "GPT-OSS 20B (\u{1F525} 100% Gr\xE1tis)";
       if (modelId.includes("compound")) return `Groq Compound (${modelId}) (\u{1F525} 100% Gr\xE1tis)`;
     } else if (provider === "gemini") {
-      if (modelId === "gemini-3.7-flash") return "Gemini 3.7 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio H\xEDbrido \u2022 Recomendado)";
-      if (modelId === "gemini-3.6-flash") return "Gemini 3.6 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia)";
-      if (modelId === "gemini-3.5-flash") return "Gemini 3.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Mais Est\xE1vel)";
-      if (modelId === "gemini-3.1-flash-lite") return "Gemini 3.1 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)";
-      if (modelId === "gemini-flash-latest") return "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)";
-      if (modelId === "gemini-3-flash-preview") return "Gemini 3 Flash Preview (\u{1F381} Gr\xE1tis)";
-      if (modelId === "gemini-3.1-pro-preview") return "Gemini 3.1 Pro Preview (\u{1F9E0} Racioc\xEDnio & C\xF3digo)";
-      if (modelId === "gemini-2.5-flash") return "Gemini 2.5 Flash (Descontinuado)";
-      if (modelId === "gemini-2.5-flash-lite") return "Gemini 2.5 Flash-Lite (Descontinuado)";
-      if (modelId === "gemini-2.5-pro") return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Deep Reasoning)";
-      if (modelId === "gemini-pro-latest") return "Gemini Pro Latest (\u{1F48E} Pago AI Studio)";
+      if (modelId.includes("gemini-2.5-flash")) return "Gemini 2.5 Flash (\u{1F381} Gr\xE1tis \u2022 Racioc\xEDnio & Rapidez \u2022 Recomendado)";
+      if (modelId.includes("gemini-2.0-flash")) return "Gemini 2.0 Flash (\u26A1 Gr\xE1tis 1.500 req/dia \u2022 Mais R\xE1pido)";
+      if (modelId.includes("gemini-1.5-flash")) return "Gemini 1.5 Flash (\u{1F381} Gr\xE1tis 1.500 req/dia \u2022 Est\xE1vel)";
+      if (modelId.includes("gemini-1.5-pro")) return "Gemini 1.5 Pro (\u{1F9E0} Gr\xE1tis Cota Di\xE1ria \u2022 M\xE1ximo Racioc\xEDnio)";
+      if (modelId.includes("gemini-2.0-flash-lite")) return "Gemini 2.0 Flash-Lite (\u26A1 Gr\xE1tis \u2022 Ultra R\xE1pido)";
+      if (modelId.includes("gemini-2.5-pro")) return "Gemini 2.5 Pro (\u{1F48E} Pago \u2022 Frontier Reasoning)";
+      if (modelId.includes("gemini-flash-latest")) return "Gemini Flash Latest (\u{1F381} Gr\xE1tis AI Studio)";
+      if (modelId.includes("gemini-pro-latest")) return "Gemini Pro Latest (\u{1F48E} Pago AI Studio)";
     } else if (provider === "openrouter") {
-      const isFree = modelId.includes(":free");
+      const isFree = modelId === "openrouter/free" || modelId.includes(":free");
       const freeBadge = isFree ? " (\u{1F525} 100% Gr\xE1tis)" : " (\u{1F48E} Pago)";
-      if (modelId.includes("llama-3.3-70b-instruct:free")) return `Llama 3.3 70B Instruct (\u{1F525} 100% Gr\xE1tis \u2022 Recomendado)`;
-      if (modelId.includes("deepseek-r1:free")) return `DeepSeek R1 (\u{1F525} 100% Gr\xE1tis \u2022 Racioc\xEDnio Puro)`;
+      if (modelId === "openrouter/free") return "OpenRouter Free Router (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento Autom\xE1tico)";
+      if (modelId.includes("gemma-4-31b")) return "Google Gemma 4 31B (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("gemma-4-26b")) return "Google Gemma 4 26B (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("nemotron-3-ultra")) return "NVIDIA Nemotron 3 Ultra (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("minimax-m3")) return "MiniMax M3 (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("glm-5.2")) return "GLM 5.2 (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("lfm-2.5")) return "Liquid LFM 2.5 (\u{1F525} 100% Gr\xE1tis)";
+      if (modelId.includes("llama-3.3-70b-instruct:free")) return `Llama 3.3 70B Instruct (\u{1F525} 100% Gr\xE1tis)`;
+      if (modelId.includes("deepseek-r1:free")) return `DeepSeek R1 (\u{1F525} 100% Gr\xE1tis)`;
       if (modelId.includes("gemini-2.0-flash-exp:free")) return `Gemini 2.0 Flash Exp (\u{1F525} 100% Gr\xE1tis)`;
       if (modelId.includes("qwen-2.5-72b-instruct:free")) return `Qwen 2.5 72B (\u{1F525} 100% Gr\xE1tis)`;
-      if (modelId.includes("openrouter/auto:free")) return `OpenRouter Auto (\u{1F525} 100% Gr\xE1tis \u2022 Roteamento)`;
       if (modelId.includes("hermes-3-llama-3.1-405b")) return `Nous Hermes 3 405B${freeBadge} (\u{1F393} PhD)`;
       if (modelId.includes("hermes-3-llama-3.1-70b")) return `Nous Hermes 3 70B${freeBadge}`;
       if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
@@ -1990,10 +2139,11 @@ Responda ESTRITAMENTE em formato JSON:
     } else if (provider === "claude") {
       let suffix = "";
       if (modelItem?.capabilities?.thinking?.supported) suffix = " (\u{1F9E0} Thinking)";
-      if (modelId === "claude-opus-4-6") return `Claude Opus 4.6 (\u{1F48E} Pago \u2022 Frontier PhD)${suffix}`;
       if (modelId.includes("claude-3-7-sonnet")) return `Claude 3.7 Sonnet (\u{1F48E} Pago \u2022 Racioc\xEDnio H\xEDbrido)${suffix}`;
       if (modelId.includes("claude-3-5-sonnet")) return `Claude 3.5 Sonnet (\u{1F48E} Pago \u2022 Alta Precis\xE3o)${suffix}`;
-      if (modelId.includes("claude-3-5-haiku")) return `Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido)${suffix}`;
+      if (modelId.includes("claude-3-5-haiku")) return `Claude 3.5 Haiku (\u{1F48E} Pago \u2022 Ultra R\xE1pido & Econ\xF4mico)${suffix}`;
+      if (modelId.includes("claude-3-haiku")) return `Claude 3 Haiku (\u{1F48E} Pago \u2022 Econ\xF4mico)${suffix}`;
+      if (modelId.includes("claude-3-opus")) return `Claude 3 Opus (\u{1F48E} Pago \u2022 Frontier PhD)${suffix}`;
     } else if (provider === "openai") {
       if (modelId === "gpt-4o-mini") return "GPT-4o Mini (\u{1F48E} Pago \u2022 Econ\xF4mico)";
       if (modelId === "gpt-4o") return "GPT-4o (\u{1F48E} Pago \u2022 Precis\xE3o M\xE1xima)";
@@ -2064,14 +2214,16 @@ Responda ESTRITAMENTE em formato JSON:
           const res = await universalFetch("https://openrouter.ai/api/v1/models", {
             headers: {
               "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json"
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://estudante.estacio.br",
+              "X-Title": "Estacio Suite AI"
             }
           });
           if (res.ok) {
             const json = await res.json();
             const rawList = Array.isArray(json) ? json : json.data || [];
             const filtered = rawList.filter((m) => !/audio|whisper|moderation|embedding/i.test(m.id)).map((m) => {
-              const isFree = isModelFree("openrouter", m.id, m.name);
+              const isFree = isModelFree("openrouter", m.id, m.name) || m.pricing && m.pricing.prompt === "0" && m.pricing.completion === "0";
               return {
                 id: m.id,
                 name: formatDisplayName("openrouter", m),
@@ -2079,10 +2231,12 @@ Responda ESTRITAMENTE em formato JSON:
               };
             });
             filtered.sort((a, b) => {
+              if (a.id === "openrouter/free") return -1;
+              if (b.id === "openrouter/free") return 1;
               if (a.isFree && !b.isFree) return -1;
               if (!a.isFree && b.isFree) return 1;
-              if (a.id.includes("llama-3.3-70b") && !b.id.includes("llama-3.3-70b")) return -1;
-              if (a.id.includes("deepseek-r1") && !b.id.includes("deepseek-r1")) return -1;
+              if (a.id.includes("gemma-4") && !b.id.includes("gemma-4")) return -1;
+              if (a.id.includes("nemotron") && !b.id.includes("nemotron")) return -1;
               return a.id.localeCompare(b.id);
             });
             if (filtered.length > 0) {
@@ -2229,17 +2383,14 @@ Responda ESTRITAMENTE em formato JSON:
             });
             filtered.sort((a, b) => {
               const priority = (id) => {
-                if (id === "gemini-3.7-flash") return 1;
-                if (id === "gemini-3.6-flash") return 2;
-                if (id === "gemini-3.5-flash") return 3;
-                if (id === "gemini-3.1-flash-lite") return 4;
-                if (id === "gemini-flash-latest") return 5;
-                if (id === "gemini-3-flash-preview") return 6;
-                if (id === "gemini-3.1-pro-preview") return 7;
-                if (id === "gemini-2.5-pro") return 8;
-                if (id === "gemini-pro-latest") return 9;
-                if (id === "gemini-2.5-flash") return 50;
-                if (id === "gemini-2.5-flash-lite") return 51;
+                if (id.includes("gemini-2.5-flash")) return 1;
+                if (id.includes("gemini-2.0-flash")) return 2;
+                if (id.includes("gemini-1.5-flash")) return 3;
+                if (id.includes("gemini-1.5-pro")) return 4;
+                if (id.includes("gemini-2.0-flash-lite")) return 5;
+                if (id.includes("gemini-2.5-pro")) return 6;
+                if (id.includes("gemini-flash-latest")) return 7;
+                if (id.includes("gemini-pro-latest")) return 8;
                 return 20;
               };
               return priority(a.id) - priority(b.id);

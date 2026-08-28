@@ -15,29 +15,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
     gemini: {
       name: "Google Gemini",
-      defaultModel: "gemini-3.7-flash",
+      defaultModel: "gemini-2.5-flash",
       endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       modelsEndpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       models: [
-        { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)", isFree: true },
-        { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
-        { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
-        { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true },
-        { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true }
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (🎁 Grátis • Raciocínio & Rapidez • Recomendado)", isFree: true },
+        { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (⚡ Grátis 1.500 req/dia • Mais Rápido)", isFree: true },
+        { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (🎁 Grátis 1.500 req/dia • Estável)", isFree: true },
+        { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (🧠 Grátis Cota Diária • Máximo Raciocínio)", isFree: true },
+        { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
+        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)", isFree: false }
       ]
     },
     openrouter: {
       name: "OpenRouter (Nous Hermes / Free)",
-      defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
+      defaultModel: "openrouter/free",
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       modelsEndpoint: "https://openrouter.ai/api/v1/models",
       models: [
-        { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B Instruct (🔥 100% Grátis • Recomendado)", isFree: true },
-        { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1 (🔥 100% Grátis • Raciocínio Puro)", isFree: true },
-        { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash Exp (🔥 100% Grátis)", isFree: true },
-        { id: "qwen/qwen-2.5-72b-instruct:free", name: "Qwen 2.5 72B (🔥 100% Grátis)", isFree: true },
-        { id: "openrouter/auto:free", name: "OpenRouter Auto (🔥 100% Grátis • Roteamento)", isFree: true },
+        { id: "openrouter/free", name: "OpenRouter Free Router (🔥 100% Grátis • Roteamento Automático)", isFree: true },
+        { id: "google/gemma-4-31b-it:free", name: "Google Gemma 4 31B (🔥 100% Grátis)", isFree: true },
+        { id: "google/gemma-4-26b-a4b-it:free", name: "Google Gemma 4 26B (🔥 100% Grátis)", isFree: true },
+        { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)", isFree: true },
+        { id: "minimax/minimax-m3:free", name: "MiniMax M3 (🔥 100% Grátis)", isFree: true },
+        { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (🔥 100% Grátis)", isFree: true },
+        { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true },
         { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (💎 Pago / Nous Research)", isFree: false },
         { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (💎 Pago)", isFree: false }
       ]
@@ -73,9 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       modelsEndpoint: "https://api.anthropic.com/v1/models",
       models: [
         { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (💎 Pago • Raciocínio Híbrido)", isFree: false },
-        { id: "claude-opus-4-6", name: "Claude Opus 4.6 (💎 Pago • Frontier PhD)", isFree: false },
         { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (💎 Pago • Alta Precisão)", isFree: false },
-        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (💎 Pago • Ultra Rápido)", isFree: false }
+        { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (💎 Pago • Ultra Rápido & Econômico)", isFree: false },
+        { id: "claude-3-haiku-20240307", name: "Claude 3 Haiku (💎 Pago • Econômico)", isFree: false },
+        { id: "claude-3-opus-20240229", name: "Claude 3 Opus (💎 Pago • Frontier PhD)", isFree: false }
       ]
     },
     openai: {
@@ -153,25 +156,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modelId.includes('gpt-oss-20b')) return 'GPT-OSS 20B (🔥 100% Grátis)';
       if (modelId.includes('compound')) return `Groq Compound (${modelId}) (🔥 100% Grátis)`;
     } else if (provider === 'gemini') {
-      if (modelId === 'gemini-3.7-flash') return 'Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)';
-      if (modelId === 'gemini-3.6-flash') return 'Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)';
-      if (modelId === 'gemini-3.5-flash') return 'Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)';
-      if (modelId === 'gemini-3.1-flash-lite') return 'Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)';
-      if (modelId === 'gemini-flash-latest') return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
-      if (modelId === 'gemini-3-flash-preview') return 'Gemini 3 Flash Preview (🎁 Grátis)';
-      if (modelId === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)';
-      if (modelId === 'gemini-2.5-flash') return 'Gemini 2.5 Flash (Descontinuado)';
-      if (modelId === 'gemini-2.5-flash-lite') return 'Gemini 2.5 Flash-Lite (Descontinuado)';
-      if (modelId === 'gemini-2.5-pro') return 'Gemini 2.5 Pro (💎 Pago • Deep Reasoning)';
-      if (modelId === 'gemini-pro-latest') return 'Gemini Pro Latest (💎 Pago AI Studio)';
+      if (modelId.includes('gemini-2.5-flash')) return 'Gemini 2.5 Flash (🎁 Grátis • Raciocínio & Rapidez • Recomendado)';
+      if (modelId.includes('gemini-2.0-flash')) return 'Gemini 2.0 Flash (⚡ Grátis 1.500 req/dia • Mais Rápido)';
+      if (modelId.includes('gemini-1.5-flash')) return 'Gemini 1.5 Flash (🎁 Grátis 1.500 req/dia • Estável)';
+      if (modelId.includes('gemini-1.5-pro')) return 'Gemini 1.5 Pro (🧠 Grátis Cota Diária • Máximo Raciocínio)';
+      if (modelId.includes('gemini-2.0-flash-lite')) return 'Gemini 2.0 Flash-Lite (⚡ Grátis • Ultra Rápido)';
+      if (modelId.includes('gemini-2.5-pro')) return 'Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)';
+      if (modelId.includes('gemini-flash-latest')) return 'Gemini Flash Latest (🎁 Grátis AI Studio)';
+      if (modelId.includes('gemini-pro-latest')) return 'Gemini Pro Latest (💎 Pago AI Studio)';
     } else if (provider === 'openrouter') {
-      const isFree = modelId.includes(':free');
+      const isFree = modelId === 'openrouter/free' || modelId.includes(':free');
       const freeBadge = isFree ? ' (🔥 100% Grátis)' : ' (💎 Pago)';
-      if (modelId.includes('llama-3.3-70b-instruct:free')) return `Llama 3.3 70B Instruct (🔥 100% Grátis • Recomendado)`;
-      if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis • Raciocínio Puro)`;
+      if (modelId === 'openrouter/free') return 'OpenRouter Free Router (🔥 100% Grátis • Roteamento Automático)';
+      if (modelId.includes('gemma-4-31b')) return 'Google Gemma 4 31B (🔥 100% Grátis)';
+      if (modelId.includes('gemma-4-26b')) return 'Google Gemma 4 26B (🔥 100% Grátis)';
+      if (modelId.includes('nemotron-3-ultra')) return 'NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)';
+      if (modelId.includes('minimax-m3')) return 'MiniMax M3 (🔥 100% Grátis)';
+      if (modelId.includes('glm-5.2')) return 'GLM 5.2 (🔥 100% Grátis)';
+      if (modelId.includes('lfm-2.5')) return 'Liquid LFM 2.5 (🔥 100% Grátis)';
+      if (modelId.includes('llama-3.3-70b-instruct:free')) return `Llama 3.3 70B Instruct (🔥 100% Grátis)`;
+      if (modelId.includes('deepseek-r1:free')) return `DeepSeek R1 (🔥 100% Grátis)`;
       if (modelId.includes('gemini-2.0-flash-exp:free')) return `Gemini 2.0 Flash Exp (🔥 100% Grátis)`;
       if (modelId.includes('qwen-2.5-72b-instruct:free')) return `Qwen 2.5 72B (🔥 100% Grátis)`;
-      if (modelId.includes('openrouter/auto:free')) return `OpenRouter Auto (🔥 100% Grátis • Roteamento)`;
       if (modelId.includes('hermes-3-llama-3.1-405b')) return `Nous Hermes 3 405B${freeBadge} (🎓 PhD)`;
       if (modelId.includes('hermes-3-llama-3.1-70b')) return `Nous Hermes 3 70B${freeBadge}`;
       if (rawName && rawName !== modelId) return `${rawName}${freeBadge}`;
@@ -194,10 +200,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (provider === 'claude') {
       let suffix = '';
       if (modelItem?.capabilities?.thinking?.supported) suffix = ' (🧠 Thinking)';
-      if (modelId === 'claude-opus-4-6') return `Claude Opus 4.6 (💎 Pago • Frontier PhD)${suffix}`;
       if (modelId.includes('claude-3-7-sonnet')) return `Claude 3.7 Sonnet (💎 Pago • Raciocínio Híbrido)${suffix}`;
       if (modelId.includes('claude-3-5-sonnet')) return `Claude 3.5 Sonnet (💎 Pago • Alta Precisão)${suffix}`;
-      if (modelId.includes('claude-3-5-haiku')) return `Claude 3.5 Haiku (💎 Pago • Ultra Rápido)${suffix}`;
+      if (modelId.includes('claude-3-5-haiku')) return `Claude 3.5 Haiku (💎 Pago • Ultra Rápido & Econômico)${suffix}`;
+      if (modelId.includes('claude-3-haiku')) return `Claude 3 Haiku (💎 Pago • Econômico)${suffix}`;
+      if (modelId.includes('claude-3-opus')) return `Claude 3 Opus (💎 Pago • Frontier PhD)${suffix}`;
     } else if (provider === 'openai') {
       if (modelId === 'gpt-4o-mini') return 'GPT-4o Mini (💎 Pago • Econômico)';
       if (modelId === 'gpt-4o') return 'GPT-4o (💎 Pago • Precisão Máxima)';
@@ -218,12 +225,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       data = await chrome.storage.local.get(null) || {};
     }
 
-    const provider = data.estacio_active_provider || localStorage.getItem('estacio_active_provider') || 'groq';
-    const model = data.estacio_active_model || localStorage.getItem('estacio_active_model') || PROVIDERS[provider]?.defaultModel;
-    showPaidModels = (data.estacio_show_paid_models === 'true' || localStorage.getItem('estacio_show_paid_models') === 'true');
+    const savedProvider = data.estacio_active_provider || localStorage.getItem('estacio_active_provider') || 'groq';
+    const savedModel = data.estacio_active_model || localStorage.getItem('estacio_active_model') || PROVIDERS[savedProvider]?.defaultModel || 'llama-3.3-70b-versatile';
+    const showPaidSaved = data.estacio_show_paid_models !== undefined ? (data.estacio_show_paid_models === 'true' || data.estacio_show_paid_models === true) : (localStorage.getItem('estacio_show_paid_models') === 'true');
+    showPaidModels = showPaidSaved;
 
     const keys = {
-      groq: data.estacio_key_groq || localStorage.getItem('estacio_key_groq') || '',
+      groq: data.estacio_key_groq || localStorage.getItem('estacio_key_groq') || data.apiKey || localStorage.getItem('apiKey') || '',
       gemini: data.estacio_key_gemini || localStorage.getItem('estacio_key_gemini') || '',
       openrouter: data.estacio_key_openrouter || localStorage.getItem('estacio_key_openrouter') || '',
       ollama: data.estacio_key_ollama || localStorage.getItem('estacio_key_ollama') || 'http://localhost:11434',
@@ -233,63 +241,73 @@ document.addEventListener('DOMContentLoaded', async () => {
       deepseek: data.estacio_key_deepseek || localStorage.getItem('estacio_key_deepseek') || ''
     };
 
-    return { provider, model, keys, data };
-  }
-
-  async function getCachedModelsFor(provider, storageData = {}) {
-    let cached = storageData[`estacio_models_${provider}`] || localStorage.getItem(`estacio_models_${provider}`);
-    if (cached) {
-      try {
-        if (typeof cached === 'string') cached = JSON.parse(cached);
-        if (Array.isArray(cached) && cached.length > 0) {
-          return showPaidModels ? cached : cached.filter(m => m.isFree !== false);
-        }
-      } catch (e) {}
-    }
-    const fallback = PROVIDERS[provider]?.models || [];
-    return showPaidModels ? fallback : fallback.filter(m => m.isFree !== false);
-  }
-
-  async function saveCachedModelsFor(provider, list) {
-    if (!Array.isArray(list) || list.length === 0) return;
-    const str = JSON.stringify(list);
-    try { localStorage.setItem(`estacio_models_${provider}`, str); } catch (e) {}
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      await chrome.storage.local.set({ [`estacio_models_${provider}`]: str }).catch(() => {});
-    }
+    return { provider: savedProvider, model: savedModel, keys, data };
   }
 
   async function saveStorageSettings(provider, model, keys) {
-    const payload = {
+    const toSave = {
       estacio_active_provider: provider,
       estacio_active_model: model,
       estacio_show_paid_models: showPaidModels ? 'true' : 'false',
       estacio_key_groq: keys.groq || '',
       estacio_key_gemini: keys.gemini || '',
       estacio_key_openrouter: keys.openrouter || '',
-      estacio_key_ollama: keys.ollama || '',
+      estacio_key_ollama: keys.ollama || 'http://localhost:11434',
       estacio_key_mistral: keys.mistral || '',
       estacio_key_claude: keys.claude || '',
       estacio_key_openai: keys.openai || '',
-      estacio_key_deepseek: keys.deepseek || ''
+      estacio_key_deepseek: keys.deepseek || '',
+      apiKey: keys.groq || keys[provider] || ''
     };
 
-    Object.keys(payload).forEach(k => {
-      try { localStorage.setItem(k, payload[k]); } catch (e) {}
+    Object.keys(toSave).forEach(k => {
+      try { localStorage.setItem(k, toSave[k]); } catch (e) {}
     });
 
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      await chrome.storage.local.set(payload).catch(() => {});
+      await chrome.storage.local.set(toSave);
     }
   }
 
-  // BUSCADOR AO VIVO DE MODELOS DA API
+  async function getCachedModelsFor(providerKey, data = null) {
+    const defaultList = PROVIDERS[providerKey]?.models || [];
+    try {
+      let cached = null;
+      if (data && data[`estacio_models_${providerKey}`]) {
+        cached = data[`estacio_models_${providerKey}`];
+      } else if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        const res = await chrome.storage.local.get([`estacio_models_${providerKey}`]);
+        cached = res[`estacio_models_${providerKey}`];
+      }
+
+      if (!cached) {
+        const localCached = localStorage.getItem(`estacio_models_${providerKey}`);
+        if (localCached) cached = JSON.parse(localCached);
+      }
+
+      if (Array.isArray(cached) && cached.length > 0) return cached;
+    } catch (e) {}
+    return defaultList;
+  }
+
+  async function saveCachedModelsFor(providerKey, modelsList) {
+    try {
+      localStorage.setItem(`estacio_models_${providerKey}`, JSON.stringify(modelsList));
+      localStorage.setItem(`estacio_models_ts_${providerKey}`, Date.now().toString());
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        await chrome.storage.local.set({
+          [`estacio_models_${providerKey}`]: modelsList,
+          [`estacio_models_ts_${providerKey}`]: Date.now()
+        });
+      }
+    } catch (e) {}
+  }
+
   async function fetchLiveModelsFromAPI(providerKey, apiKey) {
     if (!apiKey && providerKey !== 'ollama') return getCachedModelsFor(providerKey);
 
     if (modelLoadingNotice) {
       modelLoadingNotice.style.display = 'block';
-      modelLoadingNotice.textContent = `⏳ Buscando modelos ao vivo de ${PROVIDERS[providerKey]?.name}...`;
     }
 
     try {
@@ -320,7 +338,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const res = await fetch('https://openrouter.ai/api/v1/models', {
           headers: {
             'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://estudante.estacio.br',
+            'X-Title': 'Estacio Suite AI'
           }
         });
         if (res.ok) {
@@ -328,15 +348,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           const raw = json.data || [];
           const filtered = raw
             .filter(m => !/audio|whisper|moderation|embedding/i.test(m.id))
-            .map(m => ({
-              id: m.id,
-              name: formatDisplayName('openrouter', m),
-              isFree: m.id.includes(':free')
-            }));
+            .map(m => {
+              const isFree = m.id === 'openrouter/free' || m.id.includes(':free') || (m.pricing && m.pricing.prompt === '0' && m.pricing.completion === '0');
+              return {
+                id: m.id,
+                name: formatDisplayName('openrouter', m),
+                isFree: isFree
+              };
+            });
 
           filtered.sort((a, b) => {
+            if (a.id === 'openrouter/free') return -1;
+            if (b.id === 'openrouter/free') return 1;
             if (a.isFree && !b.isFree) return -1;
             if (!a.isFree && b.isFree) return 1;
+            if (a.id.includes('gemma-4') && !b.id.includes('gemma-4')) return -1;
+            if (a.id.includes('nemotron') && !b.id.includes('nemotron')) return -1;
             return a.id.localeCompare(b.id);
           });
 
@@ -437,6 +464,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 isFree: !/gemini-2.5-pro/i.test(cleanId)
               };
             });
+
+          filtered.sort((a, b) => {
+            const priority = (id) => {
+              if (id.includes('gemini-2.5-flash')) return 1;
+              if (id.includes('gemini-2.0-flash')) return 2;
+              if (id.includes('gemini-1.5-flash')) return 3;
+              if (id.includes('gemini-1.5-pro')) return 4;
+              if (id.includes('gemini-2.0-flash-lite')) return 5;
+              if (id.includes('gemini-2.5-pro')) return 6;
+              return 20;
+            };
+            return priority(a.id) - priority(b.id);
+          });
 
           if (filtered.length > 0) {
             await saveCachedModelsFor(providerKey, filtered);
@@ -709,10 +749,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         isSuccess = res.ok;
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error?.message || `HTTP ${res.status}`);
+          const msg = err.error?.message || `HTTP ${res.status}`;
+          if (/credit balance is too low|purchase credits/i.test(msg)) {
+            throw new Error('Saldo insuficiente na Anthropic ($0.00). Sua chave é válida, mas seu saldo em console.anthropic.com está zerado.');
+          }
+          throw new Error(msg);
         }
       } else if (currentP === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentM || 'gemini-3.7-flash'}:generateContent`, {
+        const selectedM = (currentM || 'gemini-2.5-flash').replace(/^models\//, '');
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedM}:generateContent`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -720,6 +765,25 @@ document.addEventListener('DOMContentLoaded', async () => {
           },
           body: JSON.stringify({
             contents: [{ parts: [{ text: testPrompt }] }]
+          })
+        });
+        isSuccess = res.ok;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `HTTP ${res.status}`);
+        }
+      } else if (currentP === 'openrouter') {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentKey}`,
+            'HTTP-Referer': 'https://estudante.estacio.br',
+            'X-Title': 'Estacio Suite AI'
+          },
+          body: JSON.stringify({
+            model: currentM || 'openrouter/free',
+            messages: [{ role: 'user', content: testPrompt }]
           })
         });
         isSuccess = res.ok;

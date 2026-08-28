@@ -13,27 +13,29 @@ export const PROVIDERS_CONFIG = {
   },
   gemini: {
     name: "Google Gemini",
-    defaultModel: "gemini-3.7-flash",
+    defaultModel: "gemini-2.5-flash",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
     models: [
-      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (🎁 Grátis • Raciocínio Híbrido • Recomendado)", isFree: true },
-      { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (🎁 Grátis 1.500 req/dia)", isFree: true },
-      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (🎁 Grátis 1.500 req/dia • Mais Estável)", isFree: true },
-      { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
-      { id: "gemini-flash-latest", name: "Gemini Flash Latest (🎁 Grátis AI Studio)", isFree: true },
-      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (🧠 Raciocínio & Código)", isFree: true }
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (🎁 Grátis • Raciocínio & Rapidez • Recomendado)", isFree: true },
+      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (⚡ Grátis 1.500 req/dia • Mais Rápido)", isFree: true },
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (🎁 Grátis 1.500 req/dia • Estável)", isFree: true },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (🧠 Grátis Cota Diária • Máximo Raciocínio)", isFree: true },
+      { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash-Lite (⚡ Grátis • Ultra Rápido)", isFree: true },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (💎 Pago • Frontier Reasoning)", isFree: false }
     ]
   },
   openrouter: {
     name: "OpenRouter (Nous Hermes / Free Tier)",
-    defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
+    defaultModel: "openrouter/free",
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     models: [
-      { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B Instruct (🔥 100% Grátis • Recomendado)", isFree: true },
-      { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1 (🔥 100% Grátis • Raciocínio Puro)", isFree: true },
-      { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash Exp (🔥 100% Grátis)", isFree: true },
-      { id: "qwen/qwen-2.5-72b-instruct:free", name: "Qwen 2.5 72B (🔥 100% Grátis)", isFree: true },
-      { id: "openrouter/auto:free", name: "OpenRouter Auto (🔥 100% Grátis • Roteamento Automático)", isFree: true },
+      { id: "openrouter/free", name: "OpenRouter Free Router (🔥 100% Grátis • Roteamento Automático)", isFree: true },
+      { id: "google/gemma-4-31b-it:free", name: "Google Gemma 4 31B (🔥 100% Grátis)", isFree: true },
+      { id: "google/gemma-4-26b-a4b-it:free", name: "Google Gemma 4 26B (🔥 100% Grátis)", isFree: true },
+      { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "NVIDIA Nemotron 3 Ultra (🔥 100% Grátis)", isFree: true },
+      { id: "minimax/minimax-m3:free", name: "MiniMax M3 (🔥 100% Grátis)", isFree: true },
+      { id: "z-ai/glm-5.2:free", name: "GLM 5.2 (🔥 100% Grátis)", isFree: true },
+      { id: "liquid/lfm-2.5-2.6b:free", name: "Liquid LFM 2.5 (🔥 100% Grátis)", isFree: true },
       { id: "nousresearch/hermes-3-llama-3.1-405b", name: "Nous Hermes 3 405B (💎 Pago / Nous Research)", isFree: false },
       { id: "nousresearch/hermes-3-llama-3.1-70b", name: "Nous Hermes 3 70B (💎 Pago)", isFree: false }
     ]
@@ -66,9 +68,10 @@ export const PROVIDERS_CONFIG = {
     endpoint: "https://api.anthropic.com/v1/messages",
     models: [
       { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet (💎 Pago • Raciocínio Híbrido)", isFree: false },
-      { id: "claude-opus-4-6", name: "Claude Opus 4.6 (💎 Pago • Frontier PhD)", isFree: false },
       { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet (💎 Pago • Alta Precisão)", isFree: false },
-      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (💎 Pago • Ultra Rápido)", isFree: false }
+      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (💎 Pago • Ultra Rápido & Econômico)", isFree: false },
+      { id: "claude-3-haiku-20240307", name: "Claude 3 Haiku (💎 Pago • Econômico)", isFree: false },
+      { id: "claude-3-opus-20240229", name: "Claude 3 Opus (💎 Pago • Frontier PhD)", isFree: false }
     ]
   },
   openai: {

@@ -112,11 +112,11 @@ sequenceDiagram
 | Provedor | Modelo Padrão Free | Modelos Disponíveis | Onde Obter Chave |
 | :--- | :--- | :--- | :--- |
 | **Groq** *(100% Free / Ultra Rápido)* | `llama-3.3-70b-versatile` | `Llama 3.3 70B`, `DeepSeek R1 Distill 70B`, `Llama 3.1 8B` | [console.groq.com/keys](https://console.groq.com/keys) |
-| **Google Gemini** | `gemini-3.7-flash` | `Gemini 3.7 Flash`, `Gemini 3.6 Flash`, `Gemini 3.5 Flash`, `Gemini 3.1 Flash-Lite` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** *(Nous Hermes)* | `meta-llama/llama-3.3-70b-instruct:free` | `Hermes 3`, `DeepSeek R1 (free)`, `Gemini 2.0 Flash (free)` | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **Google Gemini** | `gemini-2.5-flash` | `Gemini 2.5 Flash`, `Gemini 2.0 Flash`, `Gemini 1.5 Flash`, `Gemini 1.5 Pro` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| **OpenRouter** *(Nous Hermes & Free Router)* | `openrouter/free` | `OpenRouter Free Router`, `Gemma 4 31B`, `Nemotron 3 Ultra`, `Hermes 3` | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Ollama** *(100% Local Offline)* | `llama3.3` | `Llama 3.3`, `DeepSeek R1`, `Hermes 3`, `Qwen 2.5`, `Mistral` | [ollama.com](https://ollama.com) |
 | **Mistral AI** *(PhD)* | `codestral-latest` | `Codestral Latest`, `Mistral Small`, `Mistral Large` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
-| **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude Opus 4.6`, `Claude 3.5 Sonnet` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
+| **Anthropic Claude** | `claude-3-7-sonnet-20250219` | `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku` | [console.anthropic.com/keys](https://console.anthropic.com/settings/keys) |
 | **OpenAI** | `gpt-4o-mini` | `GPT-4o Mini`, `GPT-4o`, `o3-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **DeepSeek** | `deepseek-chat` | `DeepSeek V3`, `DeepSeek R1` | [platform.deepseek.com](https://platform.deepseek.com) |
 
